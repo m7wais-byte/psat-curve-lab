@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=6" />
+    <link rel="stylesheet" href="style.css?v=7" />
   </head>
   <body>
     <header>
@@ -228,6 +228,52 @@
                   ><input id="shade" type="checkbox" checked /> Shade fit ranges</label
                 ><button id="undo" disabled>↶ Undo</button>
               </div>
+            </div>
+            <details class="scale-panel" id="scalePanel">
+              <summary>Graph scale <span id="scaleMode">Automatic</span></summary>
+              <div class="scale-actions">
+                <button id="zoomIn" disabled>＋ Zoom in</button
+                ><button id="zoomOut" disabled>− Zoom out</button
+                ><button id="focusScale" disabled>◎ Focus on intersection</button
+                ><button id="autoScale" disabled>↺ Auto scale</button>
+              </div>
+              <div class="scale-inputs">
+                <fieldset>
+                  <legend id="volumeScaleLabel">Volume · X axis</legend>
+                  <label
+                    >Minimum<input
+                      id="vMin"
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled /></label
+                  ><label
+                    >Maximum<input id="vMax" type="number" step="any" min="0" disabled
+                  /></label>
+                </fieldset>
+                <fieldset>
+                  <legend id="pressureScaleLabel">Pressure · Y axis</legend>
+                  <label
+                    >Minimum<input
+                      id="pMin"
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled /></label
+                  ><label
+                    >Maximum<input id="pMax" type="number" step="any" min="0" disabled
+                  /></label>
+                </fieldset>
+              </div>
+              <button id="applyScale" disabled>Apply axis limits</button>
+              <p class="small">
+                Changes only the view. Points outside the view remain in their fitting
+                groups and still contribute to the calculation.
+              </p>
+              <div id="scaleError" role="alert"></div>
+            </details>
+            <div id="scaleStatus" class="scale-status" role="status">
+              Plot data to adjust the graph scale.
             </div>
             <div class="graph-guidance">
               <div id="toolHelp" class="tool-help">
@@ -504,7 +550,7 @@
         <span>Independent trends. Transparent selections. Reviewable results.</span>
       </footer>
     </main>
-    <script src="engine.js?v=6"></script>
-    <script src="app.js?v=6"></script>
+    <script src="engine.js?v=7"></script>
+    <script src="app.js?v=7"></script>
   </body>
 </html>

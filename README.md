@@ -14,6 +14,7 @@ A focused, browser-local tool for drawing pressure–volume measurements, fittin
 - Assign points to the high-pressure fit, low-pressure fit, or neither fit.
 - Fit gently curved quadratic trends; straight trends remain an explicit option.
 - Review the graphical intersection, equations, RMSE, R² and warnings.
+- Zoom in/out, focus on the intersection, or set exact pressure/volume axis limits without changing the fitted result.
 - Keep the result strip visible while scrolling through the analysis.
 - Undo point-selection changes, shade fitting ranges, inspect point values, and switch to presentation view.
 - Download an SVG graph, print through the browser, or export the analysis as JSON.
