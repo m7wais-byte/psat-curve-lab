@@ -23,6 +23,8 @@ No framework, runtime dependencies, remote fonts, external graph libraries, anal
 - `history`: up to 25 previous point-group snapshots.
 - `demo`: whether the analysis uses the bundled synthetic demonstration.
 - `presentation`: whether editing controls are hidden and graph reassignment is blocked.
+- `viewBounds`: user-selected display limits, or null for the automatic view.
+- `autoBounds`: the latest bounds covering measurements and the fitted crossing.
 - `loadedText`: input text retained from the last parse; no persistence mechanism is attached.
 
 The browser state is in memory. No persistence or analysis-file import exists.
@@ -33,7 +35,7 @@ The browser state is in memory. No persistence or analysis-file import exists.
 2. `load` calls `PV.parse`, then `PV.autoAssign` and `PV.analyze` where possible.
 3. Manual point/range changes preserve an undo snapshot and call `fitNow`.
 4. `render` updates result cards, point table, graph, equations and the case summary.
-5. `chart` renders an inline SVG. Gridlines, shading and point readouts are display operations only.
+5. `chart` renders an inline SVG. Gridlines, shading, axis bounds and point readouts are display operations only. Scaling calls the graph renderer without refitting or changing point groups.
 6. `equations` renders coefficients in normalized-volume form.
 7. JSON export serializes data and diagnostics; SVG export serializes the chart; print uses browser layout.
 

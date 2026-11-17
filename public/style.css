@@ -2725,3 +2725,123 @@ main {
     margin-top: 0;
   }
 }
+
+/* Axis controls change the viewport only. */
+.scale-panel {
+  margin: 10px 0 7px;
+  padding: 0;
+  border: 1px solid #dce5ef;
+  border-radius: 7px;
+  background: #f8fafd;
+}
+.scale-panel > summary {
+  padding: 10px 12px;
+  font-size: 11px;
+  color: #476b94;
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+}
+.scale-panel > summary:before {
+  content: '↔';
+  margin-right: 8px;
+}
+.scale-panel > summary span {
+  margin-left: auto;
+  font-size: 9px;
+  color: #8297b0;
+}
+.scale-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 0 12px 12px;
+}
+.scale-actions button,
+.scale-panel > button {
+  font-size: 10px;
+  padding: 7px 10px;
+}
+.scale-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+.scale-inputs fieldset {
+  border: 1px solid #e1e8f1;
+  border-radius: 6px;
+  margin: 0;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  min-width: 0;
+}
+.scale-inputs legend {
+  font-size: 10px;
+  color: #587493;
+  padding: 0 5px;
+}
+.scale-inputs label {
+  font-size: 10px;
+  margin: 0;
+}
+.scale-inputs input {
+  font-size: 11px;
+  padding: 8px;
+  min-width: 0;
+}
+.scale-panel > button {
+  margin: 0 12px 9px;
+  background: #edf3fc;
+}
+.scale-panel > .small {
+  font-size: 10px;
+  margin: 0 12px 10px;
+}
+.scale-status {
+  font-size: 9px;
+  color: #738aa4;
+  margin: 7px 0;
+  font-variant-numeric: tabular-nums;
+}
+#scaleError:not(:empty) {
+  color: #a44b32;
+  background: #fff3ed;
+  font-size: 11px;
+  padding: 8px 11px;
+  margin: 0 12px 12px;
+  border-radius: 5px;
+}
+.presentation .scale-panel {
+  display: none;
+}
+.presentation .scale-status {
+  font-size: 10px;
+  color: #7a8ea5;
+}
+@media (max-width: 600px) {
+  .scale-inputs {
+    grid-template-columns: 1fr;
+  }
+  .scale-actions {
+    gap: 5px;
+  }
+  .scale-actions button {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  .scale-status {
+    font-size: 8px;
+    line-height: 1.7;
+  }
+}
+@media print {
+  .scale-panel {
+    display: none !important;
+  }
+  .scale-status {
+    font-size: 9px;
+  }
+}

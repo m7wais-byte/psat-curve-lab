@@ -5,7 +5,9 @@ let points = [],
   demo = false,
   loadedText = '',
   history = [],
-  presentation = false;
+  presentation = false,
+  viewBounds = null,
+  autoBounds = null;
 const num = (v, d = 3) =>
   Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
 function err(s) {
@@ -41,6 +43,8 @@ function load() {
   err('');
   if (!phaseReady()) return;
   history = [];
+  viewBounds = null;
+  $('scaleError').textContent = '';
   let parsed = PV.parse($('data').value);
   if (parsed.errors.length) {
     points = [];
@@ -167,6 +171,8 @@ function render() {
 }
 function chart() {
   if (!points.length) {
+    autoBounds = null;
+    updateScaleControls();
     $('chart').innerHTML =
       '<div class="empty"><div class="empty-chart-icon">⌁</div><h3>Your analysis starts with a few points.</h3><p>Choose a phase, paste your measurements,<br>then select <strong>Plot & fit curves</strong>.</p><span class="empty-note">Or explore the workflow with sample data.</span></div>';
     return;
@@ -191,13 +197,23 @@ function chart() {
     pmax = Math.max(...pressures),
     vs = vmax - vmin || 1,
     ps = pmax - pmin || 1;
-  vmin -= vs * 0.045;
+  vmin = Math.max(0, vmin - vs * 0.045);
   vmax += vs * 0.045;
   pmin = Math.max(0, pmin - ps * 0.07);
   pmax += ps * 0.1;
+  autoBounds = { vmin, vmax, pmin, pmax };
+  if (viewBounds) ({ vmin, vmax, pmin, pmax } = viewBounds);
+  updateScaleControls();
+  const inside = (p) => p.v >= vmin && p.v <= vmax && p.p >= pmin && p.p <= pmax;
+  const visible = points.filter(inside).length;
+  $('scaleStatus').textContent =
+    `${viewBounds ? 'Custom scale' : 'Auto scale'} · ${visible} of ${points.length} points visible. All assigned points still contribute to the fits.` +
+    (c && !inside(c)
+      ? ' The intersection is outside this view; use Focus on intersection or Auto scale.'
+      : '');
   const x = (v) => l + ((v - vmin) / (vmax - vmin)) * (W - l - rt),
     y = (p) => H - b - ((p - pmin) / (pmax - pmin)) * (H - t - b);
-  let h = `<svg id="pvplot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pressure on vertical axis, volume on horizontal axis; independent branch fits and their intersection"><defs><clipPath id="area"><rect x="${l}" y="${t}" width="${W - l - rt}" height="${H - t - b}"/></clipPath></defs>`;
+  let h = `<svg id="pvplot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pressure on vertical axis, volume on horizontal axis; independent branch fits and their intersection"><desc>Graphical pressure-volume analysis. Changing axis limits changes only the view, not the fitted result.</desc><defs><clipPath id="area"><rect x="${l}" y="${t}" width="${W - l - rt}" height="${H - t - b}"/></clipPath></defs>`;
   const grid = $('grid').value || 'paper';
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="white"/>`;
   if (r && $('shade').checked) {
@@ -205,8 +221,8 @@ function chart() {
       ['high', r.high, '#2563b9'],
       ['low', r.low, '#d47726'],
     ])
-      h += `<rect data-region="${name}" x="${x(f.min)}" y="${t}" width="${Math.max(0, x(f.max) - x(f.min))}" height="500" fill="${color}" opacity=".055"><title>Selected ${name}-pressure fitting range</title></rect>`;
-    h += `<rect data-region="gap" x="${x(r.gap[0])}" y="${t}" width="${Math.max(0, x(r.gap[1]) - x(r.gap[0]))}" height="500" fill="#758499" opacity=".065"><title>Interval between selected fitting ranges</title></rect>`;
+      h += `<rect clip-path="url(#area)" data-region="${name}" x="${x(f.min)}" y="${t}" width="${Math.max(0, x(f.max) - x(f.min))}" height="500" fill="${color}" opacity=".055"><title>Selected ${name}-pressure fitting range</title></rect>`;
+    h += `<rect clip-path="url(#area)" data-region="gap" x="${x(r.gap[0])}" y="${t}" width="${Math.max(0, x(r.gap[1]) - x(r.gap[0]))}" height="500" fill="#758499" opacity=".065"><title>Interval between selected fitting ranges</title></rect>`;
   }
 
   for (let i = 0; i <= 45; i++) {
@@ -224,11 +240,11 @@ function chart() {
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="none" stroke="#8191a4" stroke-width="1"/><path d="M${l} ${t}V${H - b}H${W - rt}" fill="none" stroke="#34475c" stroke-width="1.8"/>`;
   for (let i = 0; i <= 9; i++) {
     let v = vmin + ((vmax - vmin) * i) / 9;
-    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${num(v, 3)}</text>`;
+    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${axisTick(v, (vmax - vmin) / 9)}</text>`;
   }
   for (let i = 0; i <= 5; i++) {
     let p = pmin + ((pmax - pmin) * i) / 5;
-    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${num(p, 1)}</text>`;
+    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${axisTick(p, (pmax - pmin) / 5)}</text>`;
   }
   function path(f, start, end, color, dashed) {
     let d = '';
@@ -239,6 +255,7 @@ function chart() {
     }
     return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3.2" stroke-dasharray="${dashed ? '7 5' : ''}" clip-path="url(#area)"/>`;
   }
+  h += `<g clip-path="url(#area)">`;
   if (r) {
     for (let [f, color] of [
       [r.high, '#2563b9'],
@@ -249,15 +266,16 @@ function chart() {
       if (target > f.max) h += path(f, f.max, target, color, true);
       if (target < f.min) h += path(f, target, f.min, color, true);
     }
-    if (c) {
+    if (c && inside(c)) {
       h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${$('punit').value}</text>`;
     }
   }
-  points.forEach((p) => {
+  points.filter(inside).forEach((p) => {
     let color =
       p.group === 'high' ? '#2563b9' : p.group === 'low' ? '#d47726' : '#9ba69f';
     h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
   });
+  h += `</g>`;
   h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${$('punit').value}, ${$('basis').value.toLowerCase()})</text></svg>`;
   $('chart').innerHTML = h;
   $('chart')
@@ -339,6 +357,7 @@ document.querySelectorAll('[data-tool]').forEach(
 $('data').oninput = () => {
   points = [];
   history = [];
+  viewBounds = null;
   demo = false;
   $('demoNote').textContent = '';
   resetResult();
@@ -421,7 +440,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v6',
+      application: 'Psat Curve Lab v7',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -435,6 +454,10 @@ $('export').onclick = () => {
       dewBoundary: $('phase').value === 'dew' ? $('boundary').value : null,
       phaseLabels:
         'Expected from operator-selected test context, not confirmed by the fit',
+      graphView: {
+        mode: viewBounds ? 'custom' : 'auto',
+        bounds: viewBounds || autoBounds,
+      },
       estimatedIntersection: r?.intersection || null,
       warning: r ? r.warning : 'Fit incomplete',
       degree: Number($('model').value),
@@ -633,7 +656,7 @@ function updateWorkspace() {
       : 'Temperature not provided');
   $('sampleBadge').hidden = !demo;
   if (presentation && !ready) {
-    presentation = false;
+    ((presentation = false), (viewBounds = null), (autoBounds = null));
     document.body.classList.toggle('presentation', false);
     $('present').textContent = '▣ Presentation view';
     $('present').setAttribute('aria-pressed', 'false');
@@ -665,3 +688,111 @@ document.querySelectorAll('a[href="#aboutTool"]').forEach(
       $('aboutTool').open = true;
     }),
 );
+
+// Display bounds are deliberately independent of point selection and regression state.
+function axisTick(value, step) {
+  const decimals = Math.max(0, Math.ceil(-Math.log10(step)) + 1);
+  if (decimals > 8 || Math.abs(value) >= 1e9) {
+    const digits = Math.max(
+      3,
+      Math.min(14, Math.ceil(Math.log10(Math.max(Math.abs(value), step) / step)) + 1),
+    );
+    return value.toExponential(digits);
+  }
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: decimals });
+}
+function updateScaleControls() {
+  const ready = points.length > 0 && autoBounds !== null;
+  for (const id of [
+    'zoomIn',
+    'zoomOut',
+    'autoScale',
+    'applyScale',
+    'vMin',
+    'vMax',
+    'pMin',
+    'pMax',
+  ])
+    $(id).disabled = !ready;
+  $('focusScale').disabled = !ready || !result?.intersection;
+  $('scaleMode').textContent = viewBounds ? 'Custom' : 'Automatic';
+  $('volumeScaleLabel').textContent = 'Volume · X axis (' + $('vunit').value + ')';
+  $('pressureScaleLabel').textContent = 'Pressure · Y axis (' + $('punit').value + ')';
+  const bounds = viewBounds || autoBounds;
+  for (const [id, key] of [
+    ['vMin', 'vmin'],
+    ['vMax', 'vmax'],
+    ['pMin', 'pmin'],
+    ['pMax', 'pmax'],
+  ])
+    $(id).value = bounds ? String(bounds[key]) : '';
+  if (!ready) $('scaleStatus').textContent = 'Plot data to adjust the graph scale.';
+}
+function applyView(bounds) {
+  if (!points.length || !autoBounds) return;
+  const values = Object.values(bounds);
+  const valid =
+    values.length === 4 &&
+    values.every(Number.isFinite) &&
+    bounds.vmin >= 0 &&
+    bounds.pmin >= 0 &&
+    bounds.vmax > bounds.vmin &&
+    bounds.pmax > bounds.pmin;
+  if (!valid) {
+    $('scaleError').textContent =
+      'Enter finite, nonnegative limits. Each maximum must be greater than its minimum.';
+    return;
+  }
+  for (const [min, max] of [
+    [bounds.vmin, bounds.vmax],
+    [bounds.pmin, bounds.pmax],
+  ]) {
+    if (
+      !Number.isFinite(max - min) ||
+      max - min < Number.EPSILON * Math.max(Math.abs(min), Math.abs(max), 1) * 1000
+    ) {
+      $('scaleError').textContent =
+        'That range is too narrow to display reliably. Choose a wider axis range.';
+      return;
+    }
+  }
+  viewBounds = { ...bounds };
+  $('scaleError').textContent = '';
+  chart();
+}
+function zoomView(factor, focus = null) {
+  if (!autoBounds || !points.length) return;
+  const b = viewBounds || autoBounds,
+    base = focus ? autoBounds : b;
+  const vc = focus ? focus.v : b.vmin + (b.vmax - b.vmin) / 2;
+  const pc = focus ? focus.p : b.pmin + (b.pmax - b.pmin) / 2;
+  const vs = (base.vmax - base.vmin) * factor,
+    ps = (base.pmax - base.pmin) * factor;
+  const vmin = Math.max(0, vc - vs / 2),
+    pmin = Math.max(0, pc - ps / 2);
+  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+}
+$('applyScale').onclick = () => {
+  const ids = ['vMin', 'vMax', 'pMin', 'pMax'];
+  if (ids.some((id) => String($(id).value).trim() === '')) {
+    $('scaleError').textContent = 'Enter all four axis limits, or choose Auto scale.';
+    return;
+  }
+  applyView({
+    vmin: Number($('vMin').value),
+    vmax: Number($('vMax').value),
+    pmin: Number($('pMin').value),
+    pmax: Number($('pMax').value),
+  });
+};
+$('zoomIn').onclick = () => zoomView(1 / 1.4);
+$('zoomOut').onclick = () => zoomView(1.4);
+$('focusScale').onclick = () => {
+  if (result?.intersection) zoomView(0.25, result.intersection);
+};
+$('autoScale').onclick = () => {
+  viewBounds = null;
+  $('scaleError').textContent = '';
+  chart();
+};
+updateScaleControls();

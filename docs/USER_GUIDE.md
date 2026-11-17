@@ -52,6 +52,21 @@ A missing, multiple, reversing or distant crossing needs selection/model review.
 
 Exact coefficients and branch quality measures are in the collapsible equations panel. The adjacent method panel explains the equations. R² and RMSE describe the selected fits; neither establishes saturation-pressure accuracy.
 
+## Adjust the graph scale
+
+Open **Graph scale** after plotting data:
+
+- **Zoom in / Zoom out** narrows or widens both axes around the current view center.
+- **Focus on intersection** centers a closer view on the current graphical crossing.
+- **Minimum / Maximum** lets you set exact volume (X) and pressure (Y) limits. Select Apply axis limits to use them.
+- **Auto scale** restores the complete point range, including the fitted intersection when present.
+
+All limits must be finite and nonnegative, with each maximum greater than its minimum. An excessively narrow range is rejected to avoid unreliable labels. Tick-label precision adjusts as you zoom. The graph-paper squares remain square; the values represented by each square change with the axis limits.
+
+Scaling changes the viewport only. Points outside it remain in their fitting groups and contribute to the regression. The graph reports how many measurements are visible and warns if the intersection is outside the view. Curves and range shading are clipped at the graph boundaries; out-of-view measurements are not shown on the cropped graph but remain in the point table and JSON export.
+
+The current scale is retained when adjusting points or the background. Editing/importing/replotting data resets it to automatic. Presentation view uses the chosen scale and retains its visibility note, but hides the editing controls. SVG and print output use the current view, so restore Auto scale first if you want the whole dataset visible. Analysis JSON records the mode and axis bounds under `graphView`.
+
 ## Present and export
 
 Presentation view becomes available once there is an intersection. It emphasizes the case context, result strip and graph; editing controls are hidden and graph reassignment is disabled. Use Back to editing or Escape to return. Any review warning and the synthetic-example label remain visible.

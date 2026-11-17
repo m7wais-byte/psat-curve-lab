@@ -8,6 +8,7 @@
 - Minimum point counts, zero-pressure handling, separate branch ranges and malformed inputs.
 - Missing/parallel crossings and input-order independence.
 - Basic UI state: phase gate, expected phase labels, branch counts, range changes, undo, presentation mode, synthetic-data labeling, grid/shading display and unchanged numerical results.
+- Axis scaling, out-of-view reporting, finite/ordered limit validation and unchanged fits/point groups/history when zooming.
 - Source syntax, HTML control wiring, static assets and local development-server routes.
 
 These checks establish implementation behavior on the tested inputs. They do not measure real-fluid Psat accuracy or instrument uncertainty.
@@ -40,6 +41,8 @@ Use real Chrome/Edge/Firefox or the intended laboratory browser. Check at deskto
 - The result strip stays visible while scrolling through the graph and fitting controls without covering essential controls.
 - Point selection, hover, keyboard activation, Undo and range controls work.
 - Grid squares remain square and shading remains distinguishable.
+- Zoom, manual axis limits, focus/reset and adaptive tick labels are clear; clipped marks do not spill into labels.
+- Hidden points remain in the calculation and the out-of-view intersection note remains visible.
 - Presentation mode preserves warnings and synthetic-data labels.
 - SVG download, JSON export and printed/PDF output retain the expected information.
 - Cases with no intersection or warnings remain understandable.

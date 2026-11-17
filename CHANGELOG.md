@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Graph scale controls
+
+- Added zoom in/out, focus on intersection, manual volume/pressure limits and automatic reset.
+- Added adaptive tick labels, plot-boundary clipping and visible-point/out-of-view notes.
+- Recorded display bounds in JSON exports.
+- Kept display scaling independent of the numerical fitting method.
+
 ## 0.1.0 — Private review snapshot, 2026-11-17
 
 Prepared from the current working Psat Curve Lab application (internal UI/export version v6).
