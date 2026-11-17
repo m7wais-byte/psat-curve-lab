@@ -1,0 +1,21 @@
+{
+  "name": "psat-curve-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-local pressure-volume branch fitting and graphical saturation-pressure estimation.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "test": "node --test test/*.test.cjs",
+    "check": "node scripts/check.cjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run format:check && npm run check && npm test"
+  },
+  "devDependencies": {
+    "prettier": "3.10.1"
+  }
+}

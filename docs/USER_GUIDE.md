@@ -1,0 +1,80 @@
+# User guide
+
+## Set up the case
+
+Select Bubble point or Dew point first. Data entry is disabled until that choice is made. Enter the sample/case name and confirm pressure units, gauge/absolute basis and volume units.
+
+Temperature and pressure path are under Additional test conditions. Temperature may be blank. For dew points, select upper/retrograde, lower, or boundary not confirmed. The interface displays the expected regions for that context; it does not confirm phases from the curve.
+
+Units are descriptive. Changing psi to bar, or gauge to absolute, **does not convert the supplied numbers**. Convert externally before entering the data. cc, mL and cm³ represent the same volume unit; relative volume requires a consistent normalization that you understand.
+
+## Enter measurements
+
+Paste or upload exactly two columns, in this order:
+
+1. Pressure.
+2. Volume.
+
+Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header should be `Pressure,Volume`. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
+
+Use Plot & fit curves to read the current input, draw the points and propose fitting branches. Changing the text clears the previous result until it is replotted. A replot resets point assignments to the automatic proposal.
+
+The Try sample data button uses synthetic values and labels the analysis as a synthetic example. It preserves your selected bubble/dew context, but the example is a curve-fitting demonstration, not a simulation of the selected fluid. It sets its own case name, psi/gauge and cc units and clears temperature.
+
+## Review and adjust branches
+
+The graph always has volume on X and pressure on Y. Input order does not reverse these axes. The fitting engine uses volume ordering for its suggestion.
+
+| Point tool                | Meaning                                                       |
+| ------------------------- | ------------------------------------------------------------- |
+| Blue / High-pressure fit  | Include a point in the blue branch regression                 |
+| Orange / Low-pressure fit | Include a point in the orange branch regression               |
+| Gray / No fit             | Keep a point visible while excluding it from both regressions |
+
+Choose a tool, then click a measurement. Tool counts show how many points belong to each group. Hover or keyboard-focus a point to inspect its pressure, volume and group. Clickable points also respond to Enter or Space. Selection changes update the fit immediately.
+
+Undo restores the previous point-group assignment. Up to 25 assignment snapshots are retained. Undo covers per-point changes, range changes, clearing selections and automatic reassignment. It does not undo metadata, raw data edits or model changes. Importing or replotting data resets selection history.
+
+The range controls assign blue points at/below the high-range volume limit and orange points at/above the low-range volume limit. Intermediate points belong to neither fit. Zero-pressure readings are kept unassigned by automatic and range selection; they can be reviewed and assigned individually.
+
+The current model requires separate ranges: all blue volumes must be smaller than all orange volumes. Quadratic trends require four points per branch; straight trends require three.
+
+## Read the graph and result
+
+- The result strip stays pinned within the analysis as you scroll.
+- Solid curves cover the selected fitting ranges. Dashed portions extend the curves toward the crossing.
+- The marked crossing provides estimated pressure and volume. Bubble/dew selection determines the Pb/Pd label, not different regression mathematics.
+- Shading marks selected fitting ranges and the interval between them. It is **not** a measured or thermodynamically confirmed phase map.
+- Graph paper, major-square and no-grid backgrounds are available. Grid and shading changes do not affect the numerical fit.
+- No fit points do not disappear and do not influence either curve.
+
+A missing, multiple, reversing or distant crossing needs selection/model review. An intersection may be shown with a warning for extrapolation or nearly parallel trends. Do not treat the presence of a number as acceptance of the test.
+
+Exact coefficients and branch quality measures are in the collapsible equations panel. The adjacent method panel explains the equations. R² and RMSE describe the selected fits; neither establishes saturation-pressure accuracy.
+
+## Present and export
+
+Presentation view becomes available once there is an intersection. It emphasizes the case context, result strip and graph; editing controls are hidden and graph reassignment is disabled. Use Back to editing or Escape to return. Any review warning and the synthetic-example label remain visible.
+
+- **Save graph:** downloads the current SVG plot, including axes, fitted curves, points and optional shading. The surrounding page's case metadata, HTML legend and warnings are not embedded in the SVG. Pair it with the analysis export when preserving context.
+- **Print:** uses the browser's print dialog. The print layout includes case context, result cards, graph and review note. Select Save as PDF in the browser if available.
+- **Export analysis:** downloads JSON with measurements, point assignments, coefficients, errors and metadata. It is a record, not a supported reimport format in this version.
+
+The interface itself does not save cases to disk, localStorage, a database or the cloud. Reloading or closing the page loses the current state unless it was exported.
+
+## Common problems
+
+| Message or behavior                   | Action                                                              |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| Data entry is disabled                | Choose bubble or dew point first                                    |
+| Expected two numbers                  | Remove extra columns, units, thousands separators or malformed rows |
+| Not enough points                     | Include the required number in each branch                          |
+| Automatic suggestion unavailable      | Assign the two branches manually                                    |
+| Ranges overlap                        | Move the branch limits apart or reassign conflicting points         |
+| No nearby intersection                | Review the point groups and curvature; do not force a result        |
+| Reversing fitted trend                | Adjust the selected range or try the straight model                 |
+| Nearly parallel trends                | Treat the crossing as sensitive; review additional measurements     |
+| Unexpected zeros                      | Check whether these are true readings or missing-value placeholders |
+| Labels look wrong after a unit change | Remember that unit changes relabel rather than convert values       |
+
+For test-data-dependent issues, use an anonymized case with instrument units and the accepted reference result, where sharing is permitted.

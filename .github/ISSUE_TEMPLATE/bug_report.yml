@@ -1,0 +1,15 @@
+name: Bug report
+description: Report an observed problem with the current tool
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+      description: Include the steps, browser and selected model.
+    validations:
+      required: true
+  - type: textarea
+    id: case
+    attributes:
+      label: Reproduction case
+      description: Use only synthetic or permitted anonymized data. Include units, pressure basis and point selections.

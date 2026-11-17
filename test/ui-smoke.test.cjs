@@ -1,0 +1,125 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { harness } = require('./harness.cjs');
+
+test('phase choice gates entry and the synthetic example produces the known result', () => {
+  const h = harness();
+  assert(h.get('data').disabled);
+  h.get('load').onclick();
+  assert.match(h.get('errors').textContent, /Choose Bubble point or Dew point/);
+  h.demo();
+  assert(!h.get('data').disabled);
+  assert.match(h.get('psat').innerHTML, /1,000/);
+  assert.match(h.get('chart').innerHTML, /Volume \(cc\)/);
+  assert.match(h.get('chart').innerHTML, /Pressure \(psi, gauge\)/);
+  assert(h.get('analysis').scrolled);
+});
+
+test('phase/direction labels change without silently changing the numerical result', () => {
+  const h = harness();
+  h.demo();
+  const value = h.get('psat').innerHTML;
+  h.get('phase').value = 'dew';
+  h.get('phase').onchange();
+  assert.match(h.get('highLegend').textContent, /gas expected/);
+  assert.match(h.get('chart').innerHTML, /Pd /);
+  h.get('direction').value = 'increasing';
+  h.get('direction').onchange();
+  assert.match(h.get('phaseContext').textContent, /reverse compression/);
+  h.get('boundary').value = 'lower';
+  h.get('boundary').onchange();
+  assert.match(h.get('highLegend').textContent, /gas \+ liquid/);
+  assert.match(h.get('lowLegend').textContent, /gas expected/);
+  assert.equal(h.get('psat').innerHTML, value);
+});
+
+test('range changes, point changes and Undo preserve the selection workflow', () => {
+  const h = harness();
+  h.demo();
+  h.get('highEnd').value = '34.6';
+  h.get('lowStart').value = '35.4';
+  h.get('ranges').onclick();
+  const selected = h.get('count').textContent;
+  h.run('setGroup(0, "none")');
+  assert.notEqual(h.get('count').textContent, selected);
+  h.get('undo').onclick();
+  assert.equal(h.get('count').textContent, selected);
+  h.get('clear').onclick();
+  assert.equal(h.get('psat').textContent, '—');
+  h.get('undo').onclick();
+  assert.equal(h.get('evidence').textContent, 'Intersection found');
+});
+
+test('all display backgrounds preserve Psat and group counts match data', () => {
+  const h = harness();
+  h.demo();
+  const value = h.get('psat').innerHTML;
+  assert.equal(
+    Number(h.get('highCount').textContent) +
+      Number(h.get('lowCount').textContent) +
+      Number(h.get('noneCount').textContent),
+    21,
+  );
+  assert.match(h.get('chart').innerHTML, /data-region="high"/);
+  h.get('shade').checked = false;
+  h.get('shade').onchange();
+  assert(!h.get('chart').innerHTML.includes('data-region='));
+  for (const grid of ['major', 'none', 'paper']) {
+    h.get('grid').value = grid;
+    h.get('grid').onchange();
+    assert.equal(h.get('psat').innerHTML, value);
+  }
+  assert.match(h.get('axisReadout').textContent, /Y: Pressure \(psi\)/);
+});
+
+test('tool choice and point inspection use actual event handlers', () => {
+  const h = harness();
+  h.demo();
+  h.tools[2].onclick();
+  assert.match(h.get('toolHelp').textContent, /Neither fit selected/);
+  const point = h.get('chart').pointElements[0];
+  point.onmouseenter();
+  assert.match(h.get('pointReadout').textContent, /Point 1 · Pressure/);
+  point.onclick();
+  assert.equal(h.run('points[0].group'), 'none');
+});
+
+test('presentation prevents point reassignment and Escape returns to editing', () => {
+  const h = harness();
+  h.demo();
+  const selected = h.get('count').textContent;
+  h.get('present').onclick();
+  assert(h.document.body.classList.contains('presentation'));
+  h.run('setGroup(0, "none")');
+  assert.equal(h.get('count').textContent, selected);
+  h.events.keydown({ key: 'Escape' });
+  assert(!h.document.body.classList.contains('presentation'));
+});
+
+test('synthetic labeling survives replotting; input edits clear stale results', () => {
+  const h = harness();
+  h.demo();
+  h.get('load').onclick();
+  assert.equal(h.get('sampleBadge').hidden, false);
+  h.get('data').value = '100,12\n90,13';
+  h.get('data').oninput();
+  assert.equal(h.get('psat').textContent, '—');
+  assert.equal(h.get('dataState').textContent, 'Not plotted');
+  assert.equal(h.get('errors').textContent, '');
+  assert(h.get('present').disabled);
+});
+
+test('case names remain text and analysis export records method and point groups', async () => {
+  const h = harness();
+  h.demo();
+  h.get('case').value = '<img src=x onerror=alert(1)>';
+  h.get('case').oninput();
+  assert.equal(h.get('summaryCase').textContent, h.get('case').value);
+  h.get('export').onclick();
+  const record = JSON.parse(await h.blobs.at(-1).text());
+  assert.equal(record.syntheticDemo, true);
+  assert.equal(record.expectedTransition, 'bubble');
+  assert.equal(record.measurements.length, 21);
+  assert(record.branches.high.coefficients.length === 3);
+  assert.match(record.note, /not validated/);
+});
