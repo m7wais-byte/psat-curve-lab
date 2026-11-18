@@ -4,7 +4,7 @@
 
 - Exact synthetic curved and straight branch intersections.
 - Independence of points assigned to neither fit.
-- Automatic branch suggestions on a synthetic curve.
+- Automatic branch suggestions on a synthetic curve; isolated outliers in both branches; noisy-data R² improvements with retained coverage; order and pressure-scale invariance; insufficient/parallel-data rejection; Auto fit restoration and Undo.
 - Minimum point counts, zero-pressure handling, separate branch ranges and malformed inputs.
 - Missing/parallel crossings and input-order independence.
 - Basic UI state: phase gate, expected phase labels, branch counts, range changes, undo, presentation mode, synthetic-data labeling, grid/shading display and unchanged numerical results.

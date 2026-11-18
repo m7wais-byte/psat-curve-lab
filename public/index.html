@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=10" />
+    <link rel="stylesheet" href="style.css?v=11" />
   </head>
   <body>
     <header>
@@ -288,7 +288,7 @@
           <section class="fit-section">
             <div class="sectionhead">
               <h2>3. Adjust fit</h2>
-              <button id="suggest">Suggest ranges</button>
+              <button id="suggest">Auto fit</button>
             </div>
             <div class="fitcontrols">
               <label
@@ -353,11 +353,11 @@
                   constant-pressure branch. Neither metric proves Psat accuracy.
                 </p>
                 <p>
-                  <strong>Automatic suggestions:</strong> the current heuristic compares
-                  candidate outer regions using normalized pressure RMSE plus a penalty
-                  for skipped bend points. It can skip up to 8 points or 25% of
-                  nonzero-pressure readings, whichever is smaller. Always review the
-                  proposal; it is not a validated physical phase detector.
+                  <strong>Auto fit:</strong> compares both branches using adjusted R² and
+                  point coverage. It tests individual exclusions and restorations, keeps
+                  at least 80% of each candidate region and excludes at most 25% overall.
+                  Excluded points stay visible. This is a suggested selection, not a
+                  guarantee of the highest possible R² or Psat accuracy.
                 </p>
                 <p>
                   <strong>Limits:</strong> quadratic curves cannot represent every fluid
@@ -371,8 +371,8 @@
                 least-squares curves follow the selected measurements without being forced
                 through every noisy point. Dashed extensions find the crossing; neither
                 branch is forced to meet a chosen point. The automatic suggestion may
-                leave several bend points unassigned and is only a starting point for
-                review.
+                leave bend points or individual off-trend readings unassigned and is only
+                a starting point for review.
               </p>
               <p>
                 This is a graphical Psat estimate, not a thermodynamic phase confirmation.
@@ -519,9 +519,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=10"></script>
+    <script src="engine.js?v=11"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
     <script src="report.js?v=2"></script>
-    <script src="app.js?v=10"></script>
+    <script src="app.js?v=11"></script>
   </body>
 </html>

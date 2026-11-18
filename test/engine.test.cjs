@@ -178,3 +178,59 @@ test('constant-pressure branch has undefined R²', () => {
   );
   assert.equal(fitted.r2, null);
 });
+
+function contaminated(noisy = false) {
+  return Array.from({ length: 40 }, (_, id) => {
+    const v = 1 + (4 * id) / 39,
+      d = v - 3;
+    let p = d < 0 ? 1000 - 500 * d + 30 * d * d : 1000 - 100 * d + 5 * d * d;
+    if (noisy) p += Math.sin(id * 2.3) * 1.5;
+    if (id === 8) p += 250;
+    if (id === 32) p += 70;
+    return { id, v, p, group: 'none' };
+  });
+}
+test('auto fit excludes isolated off-trend readings in both branches and recovers known crossing', () => {
+  const points = contaminated();
+  const before = JSON.stringify(points);
+  const selected = PV.autoAssign(points),
+    r = PV.analyze(selected);
+  assert.equal(selected[8].group, 'none');
+  assert.equal(selected[32].group, 'none');
+  assert(Math.abs(r.intersection.p - 1000) < 1e-6);
+  assert(Math.abs(r.intersection.v - 3) < 1e-8);
+  assert(r.high.r2 > 0.999999);
+  assert(r.low.r2 > 0.999999);
+  assert.equal(JSON.stringify(points), before);
+  assert.equal(r.omitted, 2);
+});
+test('noisy auto fit improves both R² values without dropping most measurements', () => {
+  const points = contaminated(true);
+  const baseline = PV.analyze(
+    points.map((p) => ({ ...p, group: p.v < 3 ? 'high' : 'low' })),
+  );
+  const selected = PV.autoAssign(points),
+    r = PV.analyze(selected);
+  assert(r.high.r2 > baseline.high.r2);
+  assert(r.low.r2 > baseline.low.r2);
+  assert(r.used >= Math.ceil(0.75 * points.length));
+  assert(r.high.count >= 5 && r.low.count >= 5);
+  assert(Math.abs(r.intersection.p - 1000) < 10);
+  assert(r.high.r2 < 1 && r.low.r2 < 1);
+  assert.deepEqual(PV.autoAssign([...points].reverse()).reverse(), selected);
+  const scaled = PV.autoAssign(points.map((p) => ({ ...p, p: p.p * 0.01 })));
+  assert.deepEqual(
+    scaled.map((p) => p.group),
+    selected.map((p) => p.group),
+  );
+});
+test('automatic fitting rejects insufficient evidence and does not force parallel trends', () => {
+  assert.throws(() => PV.autoAssign(contaminated().slice(0, 9), 2), /at least 10/);
+  const parallel = Array.from({ length: 20 }, (_, id) => ({
+    id,
+    v: 1 + id / 10,
+    p: 2000 - 100 * (1 + id / 10),
+    group: 'none',
+  }));
+  assert.throws(() => PV.autoAssign(parallel, 1), /No reliable/);
+});

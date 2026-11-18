@@ -99,23 +99,17 @@ These thresholds are implementation choices; they have not been calibrated as la
 
 ## Automatic branch suggestion
 
-The algorithm:
+The automatic selection runs on data entry and when **Auto fit** is pressed. It is a bounded deterministic heuristic, not an exhaustive search or a guarantee of the globally highest R².
 
-1. Leaves all exactly zero-pressure readings unassigned for review. Zero gauge pressure can be a real reading; zero is not declared physically invalid.
-2. Sorts the remaining measurements by increasing volume.
-3. Tries candidate outer high/low ranges, each meeting the minimum point count.
-4. May skip a consecutive interval around the bend, up to `min(8, floor(0.25 × n))` points.
-5. Requires a single nearby root, nonnegative pressure at that root, decreasing branch behavior and separate volume ranges. The automatic root proximity allowance is **4% of the full nonzero-data volume span**, rather than the analysis allowance of 8% of the selected span.
-6. Minimizes the heuristic score:
+1. Leave exactly zero-pressure readings unassigned for review; zero gauge pressure can be real.
+2. Sort nonzero readings by volume, then ID for ties. Require at least `2 × (degree + 3)` readings (10 curved or 8 straight), with at least `degree + 3` selected in each branch.
+3. Try outer high/low ranges with a consecutive bend gap up to `min(8, floor(0.25 × n))` readings.
+4. Refine each range independently for up to eight passes. Try removing each of the three largest absolute residuals, and individually restoring previously excluded points in that range. Accept only strict score improvements greater than `1e−12`. Keep at least 80% of that range's original point count (rounded up), at least 80% of its volume span, and the minimum branch count.
+5. Define branch loss `L = max(0, 1 − R²) × (count − 1)/(count − degree − 1)`. This is adjusted unexplained variance. For an undefined R² on a constant-pressure branch, use zero loss; the displayed R² remains undefined. Range refinement minimizes `L + 0.01 × excluded_in_range/original_range_count`.
+6. Reject pairs excluding more than 25% of nonzero readings overall. Require separate volume ranges, nonnegative fitted pressures, decreasing trends and a single nearby root. Root allowance is the smaller of 4% of the full nonzero-data span and 8% of the selected span. The displayed analysis safeguards must also accept the crossing.
+7. Minimize `score = (L_high + L_low)/2 + 0.5 × max(L_high, L_low) + 0.01 × excluded/n`. Both branches matter, including the shallower branch. This discourages perfect-looking fits obtained by discarding most measurements. It is not a calibrated confidence score.
 
-```text
-score = sqrt((RSS_high + RSS_low) / (n − skipped)) / pressure_span
-        + 0.0025 × skipped
-```
-
-`pressure_span` is the range of the nonzero-pressure data. The first term favors close fits; the second discourages excessive exclusion. This is **not** BIC, a robust outlier detector, a phase-equilibrium model, or a calibrated confidence score.
-
-No usable suggestion results in a message inviting manual selection. Manual per-point assignments can leave points out anywhere, beyond the contiguous bend interval supported by the suggestion algorithm.
+Excluded readings stay visible and keep their original values. Manual selections are not silently optimized; Auto fit deliberately replaces them and can be undone. If no candidate is supported, the tool requests manual review. R² is assessed on the selected points, so it can increase through selection without improving true Psat accuracy. Validate against independent laboratory references. Performance depends on data size; the search is bounded to 500 imported points.
 
 ## Fit measures
 
