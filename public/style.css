@@ -1006,6 +1006,12 @@ td select {
   color: #899a84;
   background: #f9fbf5;
 }
+.auto-excluded td:first-child {
+  border-left-style: dashed;
+}
+.auto-excluded td:nth-child(2) {
+  color: #6f5a3a;
+}
 .about-tool {
   background: white;
   border: 1px solid var(--border);

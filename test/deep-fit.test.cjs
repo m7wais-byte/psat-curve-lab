@@ -217,3 +217,50 @@ test('intersection leader lines are drawn unfilled', () => {
   assert(leader, 'leader path present');
   assert.match(leader[0], /fill="none"/);
 });
+test('points left out by Deep fit are listed, marked on the graph and table, and exported', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.get('phase').value = 'bubble';
+  h.get('phase').onchange();
+  const data = synthetic();
+  h.get('data').value = data.map((p) => `${p.p},${p.v}`).join('\n');
+  h.get('load').onclick();
+  workers[0].complete();
+  const left = JSON.parse(
+    h.run('JSON.stringify(points.filter((p) => p.group === "none").map((p) => p.id))'),
+  );
+  assert(left.includes(2), 'the outlier is left out');
+  const numbers = left.map((id) => id + 1).join(', ');
+  assert(
+    h
+      .get('fitSearchStatus')
+      .textContent.includes(`Left out: points ${numbers} (marked ×)`),
+  );
+  const chart = h.get('chart').innerHTML;
+  for (const id of left) {
+    assert(chart.includes(`data-auto-excluded="${id}"`));
+    assert(chart.includes(`Point ${id + 1} · P`));
+  }
+  assert.equal((chart.match(/data-auto-excluded=/g) || []).length, left.length);
+  assert(!h.get('autoExcludedLegend').hidden);
+  const row = h.get('points').children[2];
+  assert.match(row.className, /auto-excluded/);
+  assert.match(row.children[1].textContent, /left out by Deep fit/);
+  h.get('export').onclick();
+  const exported = JSON.parse(await h.blobs.at(-1).text());
+  assert.deepEqual(exported.automaticSelection.excludedPointIds, left);
+  // A manual edit means the selection is no longer Deep fit's: markers are removed.
+  h.run('setGroup(2, "high")');
+  assert(!h.get('chart').innerHTML.includes('data-auto-excluded'));
+  assert(h.get('autoExcludedLegend').hidden);
+  assert(!h.get('points').children[0].className.includes('auto-excluded'));
+});
+test('a Deep fit that keeps every point says so', () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  workers[0].complete();
+  assert.match(h.get('fitSearchStatus').textContent, /No points left out/);
+  assert(!h.get('chart').innerHTML.includes('data-auto-excluded'));
+  assert(h.get('autoExcludedLegend').hidden);
+});

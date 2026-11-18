@@ -20,6 +20,17 @@ function stopFit(message = '', clearInfo = true) {
   $('cancelFit').hidden = true;
   $('fitSearchStatus').textContent = message;
 }
+// Nonzero points Deep fit left out of both fits. searchInfo is cleared by any selection
+// edit, so this only describes Deep fit's own, unchanged selection.
+function deepFitExcluded() {
+  return searchInfo ? points.filter((p) => p.group === 'none' && p.p !== 0) : [];
+}
+function pointNumbers(list) {
+  const ids = list.map((p) => p.id + 1);
+  return ids.length > 12
+    ? ids.slice(0, 12).join(', ') + ` and ${ids.length - 12} more`
+    : ids.join(', ');
+}
 function runDeepFit(saveUndo = false) {
   stopFit('', false);
   const requestId = fitSequence;
@@ -56,8 +67,12 @@ function runDeepFit(saveUndo = false) {
     searchInfo = data.search;
     syncRanges();
     fitNow(false);
+    const excluded = deepFitExcluded();
     $('fitSearchStatus').textContent =
-      `Deep fit · ${searchInfo.complete ? 'All permitted selections compared' : 'Bounded search — optimum not guaranteed'} · ${num(searchInfo.examined, 0)} tested · ${points.filter((p) => p.group !== 'none').length}/${points.length} points used`;
+      `Deep fit · ${searchInfo.complete ? 'All permitted selections compared' : 'Bounded search — optimum not guaranteed'} · ${num(searchInfo.examined, 0)} tested · ${points.filter((p) => p.group !== 'none').length}/${points.length} points used` +
+      (excluded.length
+        ? ` · Left out: point${excluded.length > 1 ? 's' : ''} ${pointNumbers(excluded)} (marked ×)`
+        : ' · No points left out');
   }
   if (typeof Worker !== 'undefined') {
     try {
@@ -167,11 +182,14 @@ function setGroup(id, group) {
   fitNow();
 }
 function table() {
-  const body = $('points');
+  const body = $('points'),
+    autoExcluded = new Set(deepFitExcluded().map((p) => p.id));
   body.replaceChildren();
   points.forEach((p) => {
     let tr = document.createElement('tr');
-    tr.className = p.group === 'none' ? 'unassigned' : 'row-' + p.group;
+    tr.className =
+      (p.group === 'none' ? 'unassigned' : 'row-' + p.group) +
+      (autoExcluded.has(p.id) ? ' auto-excluded' : '');
     let td = document.createElement('td'),
       select = document.createElement('select');
     [
@@ -189,13 +207,15 @@ function table() {
     select.onchange = () => setGroup(p.id, select.value);
     td.append(select);
     tr.append(td);
-    [p.id + 1, num(p.p, 6) + (p.p === 0 ? ' · review zero' : ''), num(p.v, 6)].forEach(
-      (value) => {
-        let cell = document.createElement('td');
-        cell.textContent = value;
-        tr.append(cell);
-      },
-    );
+    [
+      p.id + 1 + (autoExcluded.has(p.id) ? ' · left out by Deep fit' : ''),
+      num(p.p, 6) + (p.p === 0 ? ' · review zero' : ''),
+      num(p.v, 6),
+    ].forEach((value) => {
+      let cell = document.createElement('td');
+      cell.textContent = value;
+      tr.append(cell);
+    });
     body.append(tr);
   });
 }
@@ -351,10 +371,21 @@ function chart() {
       h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" fill="none" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
     }
   }
+  const autoExcluded = new Set(deepFitExcluded().map((p) => p.id));
+  $('autoExcludedLegend').hidden = !autoExcluded.size;
   points.filter(inside).forEach((p) => {
     let color =
-      p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c97725' : '#82918c';
-    h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
+        p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c97725' : '#82918c',
+      auto = autoExcluded.has(p.id),
+      cx = x(p.v),
+      cy = y(p.p),
+      state = auto
+        ? 'Left out by Deep fit'
+        : p.group === 'none'
+          ? 'Neither fit'
+          : p.group + ' branch';
+    // Deep fit exclusions get a cross so they read differently from manual "neither" points.
+    h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}${auto ? ', left out by Deep fit' : ''}"><circle cx="${cx}" cy="${cy}" r="11" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${state}</title></circle>${auto ? `<path data-auto-excluded="${p.id}" d="M${cx - 3} ${cy - 3}l6 6m0 -6l-6 6" stroke="${color}" stroke-width="1.6" pointer-events="none"/>` : ''}</g>`;
   });
   h += `</g>`;
   h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text></svg>`;
@@ -366,7 +397,7 @@ function chart() {
         const p = points.find((p) => p.id === Number(el.dataset.id));
         if (p)
           $('pointReadout').textContent =
-            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${pressureLabel()} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? 'No fit' : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
+            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${pressureLabel()} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? (autoExcluded.has(p.id) ? 'Left out by Deep fit' : 'No fit') : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
       };
       el.onmouseenter = inspect;
       el.onfocus = inspect;
@@ -562,7 +593,10 @@ $('export').onclick = () => {
         mode: viewBounds ? 'custom' : 'auto',
         bounds: viewBounds || autoBounds,
       },
-      automaticSelection: searchInfo,
+      automaticSelection: searchInfo && {
+        ...searchInfo,
+        excludedPointIds: deepFitExcluded().map((p) => p.id),
+      },
       estimatedIntersection: r?.intersection || null,
       warning: r ? r.warning : 'Fit incomplete',
       degree: Number($('model').value),
