@@ -180,3 +180,35 @@ test('repeated button zoom retains the intersection, is bounded, and double-clic
   assert.deepEqual(bounds(h), initial);
   assert.equal(fingerprint(h), state);
 });
+
+test('automatic, zoomed and focused views keep round tick values on the grid', () => {
+  const h = harness();
+  h.demo();
+  const ticks = () =>
+    [...h.get('chart').innerHTML.matchAll(/fill="#46596e">([^<]+)</g)].map((m) =>
+      Number(m[1].replace(/,/g, '')),
+    );
+  const isRound = (values) => {
+    const step = values[1] - values[0];
+    return h.run(`PVReport.niceStep(${step})`) === Number(step.toPrecision(12));
+  };
+  const check = () => {
+    const all = ticks(),
+      x = all.slice(0, 10),
+      y = all.slice(10);
+    assert.equal(x.length, 10);
+    assert.equal(y.length, 6);
+    assert(isRound(x), `x ticks ${x}`);
+    assert(isRound(y), `y ticks ${y}`);
+  };
+  check();
+  h.get('zoomIn').onclick();
+  check();
+  h.get('zoomOut').onclick();
+  h.get('zoomOut').onclick();
+  check();
+  h.get('focusScale').onclick();
+  check();
+  const b = bounds(h);
+  assert(b.vmin < 35 && b.vmax > 35 && b.pmin < 1000 && b.pmax > 1000);
+});

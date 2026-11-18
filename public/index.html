@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=14" />
+    <link rel="stylesheet" href="style.css?v=16" />
   </head>
   <body>
     <header>
@@ -279,7 +279,8 @@
                 ><span
                   ><i class="line orange"></i
                   ><span id="lowLegend">Low-pressure fit</span></span
-                ><span>┄ Extended trend</span><span>○ Not used in either fit</span>
+                ><span>┄ Extended trend</span><span>○ Not used in either fit</span
+                ><span id="autoExcludedLegend" hidden>⊗ Left out by Deep fit</span>
               </div>
             </details>
             <div id="pointReadout" class="point-readout" role="status"></div>
@@ -307,9 +308,14 @@
             ></p>
             <div class="fitcontrols">
               <label
-                >Trend shape<select id="model">
-                  <option value="2">Flexible · quadratic curves</option>
-                  <option value="1">Straight · linear trends</option>
+                >High fit · trend shape<select id="shapeHigh">
+                  <option value="2">Curved · quadratic</option>
+                  <option value="1">Straight · linear</option>
+                </select></label
+              ><label
+                >Low fit · trend shape<select id="shapeLow">
+                  <option value="2">Curved · quadratic</option>
+                  <option value="1">Straight · linear</option>
                 </select></label
               ><label
                 >High fit · last volume<input
@@ -342,6 +348,14 @@
               <button id="export" class="secondary-download">
                 Download analysis (JSON)
               </button>
+            </details>
+            <details id="yCheck" class="technical-details y-check" hidden>
+              <summary>
+                Y-function check <span id="ySummary" class="y-summary"></span>
+              </summary>
+              <p id="yResult" class="y-result" role="status"></p>
+              <div id="yChart" class="y-chart"></div>
+              <p id="yNote" class="small y-note"></p>
             </details>
             <details>
               <summary>Method details</summary>
@@ -536,7 +550,7 @@
     </main>
     <script src="engine.js?v=14"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
-    <script src="report.js?v=4"></script>
-    <script src="app.js?v=14"></script>
+    <script src="report.js?v=8"></script>
+    <script src="app.js?v=17"></script>
   </body>
 </html>

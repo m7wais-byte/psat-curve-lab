@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const PV = require('../public/engine.js');
 const { harness } = require('./harness.cjs');
+const R = require('../public/report.js');
 function synthetic(n = 12) {
   return Array.from({ length: n }, (_, id) => {
     const v = 1 + (2 * id) / (n - 1),
@@ -179,4 +180,127 @@ test('the shipped worker loads the same engine and returns plain results and err
   context.onmessage({ data: { requestId: 8, points: [], degree: 2 } });
   assert.equal(messages.at(-1).type, 'error');
   assert.equal(messages.at(-1).requestId, 8);
+});
+test('unit and temperature changes keep a running deep fit; trend-shape changes still cancel it', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  const running = workers[0];
+  h.get('punit').value = 'bar:Gauge';
+  h.get('punit').onchange();
+  h.get('temp').value = '90';
+  h.get('temp').onchange();
+  assert(!running.terminated);
+  assert(!h.get('cancelFit').hidden);
+  running.complete();
+  assert(h.run('points.filter((p) => p.group !== "none").length') > 0);
+  assert.match(h.get('psat').innerHTML, /bar \(gauge\)/);
+  h.get('vunit').value = 'mL';
+  h.get('vunit').onchange();
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert(data.automaticSelection, 'label changes keep the search record');
+  assert.equal(data.volumeUnit, 'mL');
+  h.get('suggest').onclick();
+  const cancelled = workers.at(-1);
+  h.get('shapeLow').value = '1';
+  h.get('shapeLow').onchange();
+  assert(cancelled.terminated);
+});
+test('intersection leader lines are drawn unfilled', () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  workers[0].complete();
+  const leader = h
+    .get('chart')
+    .innerHTML.match(/<path d="M\d+(\.\d+)? [^"]*H[^"]*V[^"]*"[^>]*>/);
+  assert(leader, 'leader path present');
+  assert.match(leader[0], /fill="none"/);
+});
+test('points left out by Deep fit are listed, marked on the graph and table, and exported', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.get('phase').value = 'bubble';
+  h.get('phase').onchange();
+  const data = synthetic();
+  h.get('data').value = data.map((p) => `${p.p},${p.v}`).join('\n');
+  h.get('load').onclick();
+  workers[0].complete();
+  const left = JSON.parse(
+    h.run('JSON.stringify(points.filter((p) => p.group === "none").map((p) => p.id))'),
+  );
+  assert(left.includes(2), 'the outlier is left out');
+  const numbers = left.map((id) => id + 1).join(', ');
+  assert(
+    h
+      .get('fitSearchStatus')
+      .textContent.includes(`Left out: points ${numbers} (marked ×)`),
+  );
+  const chart = h.get('chart').innerHTML;
+  for (const id of left) {
+    assert(chart.includes(`data-auto-excluded="${id}"`));
+    assert(chart.includes(`Point ${id + 1} · P`));
+  }
+  assert.equal((chart.match(/data-auto-excluded=/g) || []).length, left.length);
+  assert(!h.get('autoExcludedLegend').hidden);
+  const row = h.get('points').children[2];
+  assert.match(row.className, /auto-excluded/);
+  assert.match(row.children[1].textContent, /left out by Deep fit/);
+  h.get('export').onclick();
+  const exported = JSON.parse(await h.blobs.at(-1).text());
+  assert.deepEqual(exported.automaticSelection.excludedPointIds, left);
+  // A manual edit means the selection is no longer Deep fit's: markers are removed.
+  h.run('setGroup(2, "high")');
+  assert(!h.get('chart').innerHTML.includes('data-auto-excluded'));
+  assert(h.get('autoExcludedLegend').hidden);
+  assert(!h.get('points').children[0].className.includes('auto-excluded'));
+});
+test('a Deep fit that keeps every point says so', () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  workers[0].complete();
+  assert.match(h.get('fitSearchStatus').textContent, /No points left out/);
+  assert(!h.get('chart').innerHTML.includes('data-auto-excluded'));
+  assert(h.get('autoExcludedLegend').hidden);
+});
+test('branch trend shapes reach the fit, Deep fit, equations, messages, export and report', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.get('phase').value = 'bubble';
+  h.get('phase').onchange();
+  h.get('shapeHigh').value = '1';
+  h.get('data').value = synthetic()
+    .map((p) => `${p.p},${p.v}`)
+    .join('\n');
+  h.get('load').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(workers[0].message.degree)), {
+    high: 1,
+    low: 2,
+  });
+  workers[0].complete();
+  assert.deepEqual(JSON.parse(h.run('JSON.stringify(result.degrees)')), {
+    high: 1,
+    low: 2,
+  });
+  const [highEq, lowEq] = [
+    ...h.get('equations').innerHTML.matchAll(/<code>([^<]+)<\/code>/g),
+  ].map((m) => m[1]);
+  assert(!highEq.includes('z²') && highEq.includes('z'));
+  assert(lowEq.includes('z²'));
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert.deepEqual(data.trendShape, { high: 1, low: 2 });
+  assert.equal(data.degree, null);
+  assert.equal(data.branches.high.coefficients.length, 2);
+  assert.match(R.html(h.run('currentReport()')), /High straight · low quadratic/);
+  h.get('clear').onclick();
+  assert.match(
+    h.get('message').textContent,
+    /at least 3 high-pressure and 4 low-pressure points/,
+  );
+  h.get('shapeHigh').value = '2';
+  h.get('shapeHigh').onchange();
+  assert.match(h.get('message').textContent, /at least 4 points to each branch/);
 });
