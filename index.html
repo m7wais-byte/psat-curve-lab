@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=8" />
+    <link rel="stylesheet" href="style.css?v=9" />
   </head>
   <body>
     <header>
@@ -175,7 +175,9 @@
                 <h2>P–V graph</h2>
               </div>
               <div class="chartactions">
-                <button id="saveSvg">Save graph</button><button id="print">Print</button>
+                <button id="saveSvg">Save graph</button
+                ><button id="print" disabled>Print</button
+                ><button id="savePdf" disabled>Save as PDF</button>
               </div>
             </div>
             <div class="plot-toolbar">
@@ -516,7 +518,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=8"></script>
-    <script src="app.js?v=8"></script>
+    <script src="engine.js?v=9"></script>
+    <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
+    <script src="report.js?v=1"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>
