@@ -65,7 +65,7 @@ All limits must be finite and nonnegative, with each maximum greater than its mi
 
 Scaling changes the viewport only. Points outside it remain in their fitting groups and contribute to the regression. The graph reports how many measurements are visible and warns if the intersection is outside the view. Curves and range shading are clipped at the graph boundaries; out-of-view measurements are not shown on the cropped graph but remain in the point table and JSON export.
 
-The current scale is retained when adjusting points or the background. Editing/importing/replotting data resets it to automatic. Presentation view uses the chosen scale and retains its visibility note, but hides the editing controls. SVG and print output use the current view, so restore Auto scale first if you want the whole dataset visible. Analysis JSON records the mode and axis bounds under `graphView`.
+The current scale is retained when adjusting points or the background. Editing/importing/replotting data resets it to automatic. Presentation view uses the chosen scale and retains its visibility note, but hides the editing controls. SVG export uses the current view. The A4 print/PDF report always includes the full measurement range. Analysis JSON records the mode and axis bounds under `graphView`.
 
 ## Present and export
 
@@ -97,4 +97,6 @@ For test-data-dependent issues, use an anonymized case with instrument units and
 
 Pressure unit is one selector: choose psig for gauge pressure or psia for absolute pressure. Bar, MPa and kPa each also offer gauge and absolute choices. Enter measurements already in the selected unit/reference; changing the selector relabels values and does not convert them.
 
-Auto fit runs when you plot new measurements. It compares both regions using adjusted R², point retention and a supported intersection, testing isolated exclusions as well as the bend. Press Auto fit to recalculate after manual changes; Undo restores your previous selections. Excluded points remain on the graph. This bounded search does not guarantee a global maximum or measurement accuracy.
+Deep fit runs when you plot new measurements. For up to 20 nonzero readings, it compares every allowed selection and maximizes the weaker branch R², then average R², then retained points. It retains at least 75% overall and five points per quadratic branch (four for straight trends). Larger inputs use a bounded multi-start search. The status states which mode was used and how many selections were compared. The result is only optimal within the stated rules when the status says all permitted selections were compared.
+
+Press Deep fit to recalculate after manual edits. Progress appears while it runs; Stop search retains the current selection. Editing points, changing the context or entering new data cancels any pending search, so old results cannot overwrite your work. Successful requests can be undone. All excluded points stay visible. Search scope is also recorded in JSON export. R² is not a measure of physical saturation-pressure accuracy.

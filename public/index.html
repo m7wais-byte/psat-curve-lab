@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=11" />
+    <link rel="stylesheet" href="style.css?v=12" />
   </head>
   <body>
     <header>
@@ -288,8 +288,17 @@
           <section class="fit-section">
             <div class="sectionhead">
               <h2>3. Adjust fit</h2>
-              <button id="suggest">Auto fit</button>
+              <div class="deep-fit-actions">
+                <button id="suggest">Deep fit</button
+                ><button id="cancelFit" hidden>Stop search</button>
+              </div>
             </div>
+            <p
+              id="fitSearchStatus"
+              class="fit-search-status"
+              role="status"
+              aria-live="polite"
+            ></p>
             <div class="fitcontrols">
               <label
                 >Trend shape<select id="model">
@@ -353,11 +362,11 @@
                   constant-pressure branch. Neither metric proves Psat accuracy.
                 </p>
                 <p>
-                  <strong>Auto fit:</strong> compares both branches using adjusted R² and
-                  point coverage. It tests individual exclusions and restorations, keeps
-                  at least 80% of each candidate region and excludes at most 25% overall.
-                  Excluded points stay visible. This is a suggested selection, not a
-                  guarantee of the highest possible R² or Psat accuracy.
+                  <strong>Deep fit:</strong> maximizes the lower of the two R² values,
+                  then their average. With up to 20 nonzero readings it compares all
+                  permitted point selections; larger cases use a bounded search. At least
+                  75% of readings and five points per quadratic branch are retained.
+                  Excluded points stay visible. A high R² does not prove Psat accuracy.
                 </p>
                 <p>
                   <strong>Limits:</strong> quadratic curves cannot represent every fluid
@@ -519,9 +528,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=11"></script>
+    <script src="engine.js?v=12"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
     <script src="report.js?v=2"></script>
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
   </body>
 </html>

@@ -8,6 +8,83 @@ let points = [],
   presentation = false,
   viewBounds = null,
   autoBounds = null;
+let fitWorker = null,
+  fitSequence = 0,
+  searchInfo = null;
+function stopFit(message = '', clearInfo = true) {
+  fitSequence++;
+  fitWorker?.terminate();
+  fitWorker = null;
+  if (clearInfo) searchInfo = null;
+  $('suggest').disabled = false;
+  $('cancelFit').hidden = true;
+  $('fitSearchStatus').textContent = message;
+}
+function runDeepFit(saveUndo = false) {
+  stopFit('', false);
+  const requestId = fitSequence;
+  const snapshot = points.map((p) => ({ ...p }));
+  const degree = Number($('model').value);
+  $('suggest').disabled = true;
+  $('cancelFit').hidden = false;
+  $('fitSearchStatus').textContent = 'Deep fit is comparing point selections…';
+  err('');
+  $('evidence').textContent = 'Searching fits…';
+  function finish(data) {
+    if (
+      requestId !== fitSequence ||
+      (data.requestId != null && data.requestId !== requestId)
+    )
+      return;
+    if (data.type === 'progress') {
+      $('fitSearchStatus').textContent =
+        `Deep fit · ${num(data.progress.examined, 0)} selections compared…`;
+      return;
+    }
+    fitWorker?.terminate();
+    fitWorker = null;
+    $('suggest').disabled = false;
+    $('cancelFit').hidden = true;
+    if (data.type === 'error') {
+      $('fitSearchStatus').textContent = 'No new selection applied.';
+      err(data.message);
+      render();
+      return;
+    }
+    if (saveUndo) remember();
+    points = data.points;
+    searchInfo = data.search;
+    syncRanges();
+    fitNow(false);
+    $('fitSearchStatus').textContent =
+      `Deep fit · ${searchInfo.complete ? 'All permitted selections compared' : 'Bounded search — optimum not guaranteed'} · ${num(searchInfo.examined, 0)} tested · ${points.filter((p) => p.group !== 'none').length}/${points.length} points used`;
+  }
+  if (typeof Worker !== 'undefined') {
+    try {
+      fitWorker = new Worker('fit-worker.js?v=12');
+      fitWorker.onmessage = (event) => finish(event.data);
+      fitWorker.onerror = () =>
+        finish({
+          type: 'error',
+          message: 'Deep fit could not run. Try again or select points manually.',
+        });
+      fitWorker.postMessage({ requestId, points: snapshot, degree });
+    } catch (e) {
+      finish({ type: 'error', message: e.message });
+    }
+  } else {
+    // Compatibility path for environments without Web Workers.
+    try {
+      finish({ type: 'result', ...PV.deepFit(snapshot, degree) });
+    } catch (e) {
+      finish({ type: 'error', message: e.message });
+    }
+  }
+}
+$('cancelFit').onclick = () => {
+  stopFit('Search stopped. Current selections kept.', false);
+  render();
+};
 function pressureSelection() {
   const [unit, basis] = $('punit').value.split(':');
   return { unit, basis };
@@ -35,7 +112,8 @@ function resetResult() {
   $('equations').innerHTML =
     '<div class="equation-placeholder">Your branch equations and fit quality will appear here.</div>';
 }
-function fitNow() {
+function fitNow(clearSearch = true) {
+  if (clearSearch) stopFit();
   err('');
   resetResult();
   if (!phaseReady()) {
@@ -52,6 +130,7 @@ function fitNow() {
   render();
 }
 function load() {
+  stopFit();
   err('');
   if (!phaseReady()) return;
   history = [];
@@ -67,19 +146,10 @@ function load() {
   }
   points = parsed.points;
   loadedText = $('data').value;
-  try {
-    points = PV.autoAssign(points, Number($('model').value));
-  } catch (e) {
-    err(e.message);
-  }
   resetResult();
-  if (points.length) {
-    try {
-      result = PV.analyze(points, Number($('model').value));
-    } catch {}
-  }
   syncRanges();
   render();
+  if (points.length) runDeepFit();
   if (points.length)
     $('analysis').scrollIntoView?.({ block: 'start', behavior: 'smooth' });
 }
@@ -310,15 +380,7 @@ $('suggest').onclick = () => {
     err('Plot your data first.');
     return;
   }
-  try {
-    const suggested = PV.autoAssign(points, Number($('model').value));
-    remember();
-    points = suggested;
-    syncRanges();
-    fitNow();
-  } catch (e) {
-    err(e.message);
-  }
+  runDeepFit(true);
 };
 $('ranges').onclick = () => {
   if (!points.length) {
@@ -358,6 +420,7 @@ document.querySelectorAll('[data-tool]').forEach(
     }),
 );
 $('data').oninput = () => {
+  stopFit();
   points = [];
   history = [];
   viewBounds = null;
@@ -471,7 +534,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v11',
+      application: 'Psat Curve Lab v12',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -489,6 +552,7 @@ $('export').onclick = () => {
         mode: viewBounds ? 'custom' : 'auto',
         bounds: viewBounds || autoBounds,
       },
+      automaticSelection: searchInfo,
       estimatedIntersection: r?.intersection || null,
       warning: r ? r.warning : 'Fit incomplete',
       degree: Number($('model').value),
@@ -618,6 +682,7 @@ function setupPhase() {
       setupPhase();
       if (['bubble', 'dew'].includes($('phase').value)) fitNow();
       else {
+        stopFit();
         resetResult();
         render();
       }

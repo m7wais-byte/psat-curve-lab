@@ -10,7 +10,7 @@ A focused, browser-local tool for drawing pressure–volume measurements, fittin
 - Record the case name, pressure units and basis, volume units, optional temperature, pressure path and dew boundary.
 - Paste two columns from Excel or import CSV / TXT / TSV data.
 - Plot **volume on X** and **pressure on Y**, with square major/minor gridlines.
-- Suggest two independent fitting regions, then review and adjust them.
+- Run Deep fit: exhaustive point selection for up to 20 nonzero readings, bounded background search for larger cases. Review and adjust both regions.
 - Assign points to the high-pressure fit, low-pressure fit, or neither fit.
 - Fit gently curved quadratic trends; straight trends remain an explicit option.
 - Review the graphical intersection, equations, RMSE, R² and warnings.
@@ -78,7 +78,7 @@ P_low(z)  = a_low  + b_low·z  + c_low·z²
 
 The coefficients minimize the sum of squared pressure residuals for that branch. The crossing solves `P_high(z) = P_low(z)`. The program checks the location and direction of the fitted trends and flags ambiguous or sensitive crossings.
 
-**A high R² does not establish an accurate saturation pressure.** The automatic region suggestion is a heuristic, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Validate against representative laboratory cases before relying on estimates.
+**A high R² does not establish an accurate saturation pressure.** Deep fit is optimal only within its documented constraints in exhaustive mode; larger searches are bounded, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Validate against representative laboratory cases before relying on estimates.
 
 ## Repository guide
 

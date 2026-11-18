@@ -1,6 +1,6 @@
 # Repository notes
 
-- The buildless runtime is in public/: engine.js, app.js, report.js, HTML/CSS, and the pinned jsPDF vendor bundle.
+- The buildless runtime is in public/: engine.js, app.js, fit-worker.js, report.js, HTML/CSS, and the pinned jsPDF vendor bundle.
 - Use Node.js >=22. Run npm ci, then npm run verify for changes.
 - Keep engine changes separate from presentation changes; METHOD.md describes the implemented thresholds exactly.
 - The browser UI uses the global PV object exported by engine.js. Engine tests use its CommonJS export.

@@ -57,7 +57,7 @@ function element(id = '') {
     },
   };
 }
-function harness() {
+function harness(options = {}) {
   const els = {};
   const get = (id) => (els[id] ??= element(id));
   const tools = ['high', 'low', 'none'].map((group) => {
@@ -98,6 +98,7 @@ function harness() {
   const context = {
     document,
     window,
+    ...(options.Worker ? { Worker: options.Worker } : {}),
     console,
     Blob,
     setTimeout: (fn) => fn(),

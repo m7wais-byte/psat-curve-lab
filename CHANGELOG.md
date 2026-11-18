@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased — Automatic fit selection
+## Unreleased — Deep fit
+
+- Replaced the local adjusted-R² heuristic with exhaustive permitted-selection search for up to 20 nonzero readings.
+- Added bounded multi-start beam search for larger cases, with clear search-scope disclosure.
+- Prioritized the weaker branch R², then mean R² and retained count.
+- Added a dedicated worker, progress, Stop and stale-result protection.
+- Included search metadata in JSON exports and preserved manual editing/Undo.
+
+## Automatic fit selection
 
 - Added individual point exclusion/restoration search within automatic branch selection.
 - Balanced adjusted R² for both branches with point and volume coverage.
