@@ -61,4 +61,4 @@ The existing privately hosted Site continues using its own checkout. This GitHub
 
 Keep numerical changes separate from presentation changes. For engine changes, include cases where a fit should fail or warn, alongside successful crossings. For UI changes, rerun the smoke tests and complete browser checks where a real browser is available. Update the method documentation whenever numerical thresholds or assumptions change.
 
-The current CSS retains the incremental overrides used by the live tool. It is formatted for reading, but consolidating those overrides is future work and should include visual regression checks.
+The stylesheet uses a consolidated teal/orange palette, responsive layout, pinned result strip, and separate presentation/print rules. Real-browser visual review is still required for visual sign-off.

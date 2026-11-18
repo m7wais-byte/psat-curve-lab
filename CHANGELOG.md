@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased — Graph scale controls
+## Unreleased — Simpler interface
+
+- Changed to a softer teal, orange and neutral palette.
+- Removed header export and processing notices; moved JSON download into the fit-details panel.
+- Added pressure/volume column labels that follow selected input units.
+- Shortened routine guidance while retaining fit warnings and detailed help.
+- Consolidated the stylesheet without changing numerical fitting.
+
+## Graph scale controls
 
 - Added zoom in/out, focus on intersection, manual volume/pressure limits and automatic reset.
 - Added adaptive tick labels, plot-boundary clipping and visible-point/out-of-view notes.
