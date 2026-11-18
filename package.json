@@ -17,5 +17,8 @@
   },
   "devDependencies": {
     "prettier": "3.10.1"
+  },
+  "dependencies": {
+    "jspdf": "4.2.1"
   }
 }

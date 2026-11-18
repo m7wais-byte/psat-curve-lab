@@ -2,7 +2,7 @@
 
 A focused, browser-local tool for drawing pressure–volume measurements, fitting two independent trends, and estimating their intersection as saturation pressure.
 
-**Status: private review snapshot.** This repository contains the current working application, with readable source, documentation and repeatable checks. It is not a public release or a laboratory-validated universal Psat method.
+**Status: review-stage tool.** This repository contains the current working application, with readable source, documentation and repeatable checks. It is not a laboratory-validated universal Psat method.
 
 ## What you can do
 
@@ -17,7 +17,7 @@ A focused, browser-local tool for drawing pressure–volume measurements, fittin
 - Zoom in/out, focus on the intersection, or set exact pressure/volume axis limits without changing the fitted result.
 - Keep the result strip visible while scrolling through the analysis.
 - Undo point-selection changes, shade fitting ranges, inspect point values, and switch to presentation view.
-- Download an SVG graph, print through the browser, or export the analysis as JSON.
+- Download an SVG graph, print an A4 current-case report, save a vector PDF, or export the analysis as JSON.
 
 ## Run locally
 
@@ -105,3 +105,5 @@ Measurements are processed in the browser. This version has no analytics, applic
 The repository is intended to remain private until review. `package.json` is marked `private: true` to prevent accidental npm publication; **GitHub visibility is a separate setting**. No GitHub Pages deployment, release automation, hosting credentials or existing Site identity is included.
 
 No open-source license has been granted. The package is marked `UNLICENSED`; an appropriate license and ownership statement must be chosen before public distribution.
+
+A4 reports use the pinned, locally vendored jsPDF bundle in `public/vendor/`; no PDF service or external script request is required.

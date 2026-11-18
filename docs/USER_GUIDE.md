@@ -72,7 +72,8 @@ The current scale is retained when adjusting points or the background. Editing/i
 Presentation view becomes available once there is an intersection. It emphasizes the case context, result strip and graph; editing controls are hidden and graph reassignment is disabled. Use Edit or Escape to return. Any review warning and the synthetic-example label remain visible.
 
 - **Save graph:** downloads the current SVG plot, including axes, fitted curves, points and optional shading. The surrounding page's case metadata, HTML legend and warnings are not embedded in the SVG. Pair it with the analysis export when preserving context.
-- **Print:** uses the browser's print dialog. The print layout includes case context, result cards, graph and review note. Select Save as PDF in the browser if available.
+- **Print:** opens the current case as an A4 report and starts the browser print dialog. Allow pop-ups for this site if prompted.
+- **Save as PDF:** downloads a vector A4 report directly. Both actions include case details, separate Psat/Vsat values, the combined pressure/volume annotation inside the graph, both R² values and all excluded points. The report shows the full measurement range regardless of graph zoom. A fitted intersection is required. For case names with non-Latin characters, use Print and choose Save as PDF in the browser.
 - **Download analysis (JSON)**, under the collapsed Equations & fit quality panel: downloads JSON with measurements, point assignments, coefficients, errors and metadata. It is a record, not a supported reimport format in this version.
 
 The interface itself does not save cases to disk, localStorage, a database or the cloud. Reloading or closing the page loses the current state unless it was exported.

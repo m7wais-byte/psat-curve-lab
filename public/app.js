@@ -402,7 +402,37 @@ $('demo').onclick = () => {
 ['model', 'temp', 'tunit', 'punit', 'basis', 'vunit'].forEach(
   (id) => ($(id).onchange = () => fitNow()),
 );
-$('print').onclick = () => window.print();
+function currentReport() {
+  return PVReport.buildModel({
+    points,
+    result,
+    caseName: $('case').value,
+    phase: $('phase').value,
+    pressureUnit: $('punit').value,
+    pressureBasis: $('basis').value,
+    volumeUnit: $('vunit').value,
+    temperature: $('temp').value,
+    temperatureUnit: $('tunit').value,
+    boundary: $('boundary').value,
+    syntheticDemo: demo,
+    grid: $('grid').value,
+  });
+}
+$('print').onclick = () => {
+  try {
+    if (!PVReport.open(currentReport(), { print: true }))
+      err('Allow pop-ups for this site to open the printable report.');
+  } catch (e) {
+    err(e.message);
+  }
+};
+$('savePdf').onclick = () => {
+  try {
+    PVReport.save(currentReport());
+  } catch (e) {
+    err(e.message);
+  }
+};
 $('grid').onchange = () => chart();
 $('shade').onchange = () => chart();
 $('saveSvg').onclick = () => {
@@ -435,7 +465,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v8',
+      application: 'Psat Curve Lab v9',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -608,6 +638,8 @@ function updateWorkspace() {
   $('pointReadout').textContent = '';
   const ready = !!result?.intersection;
   $('present').disabled = !ready;
+  $('print').disabled = !ready;
+  $('savePdf').disabled = !ready;
   $('undo').disabled = !history.length;
   const raw = $('data').value.trim();
   $('dataState').textContent = points.length
