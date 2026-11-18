@@ -123,6 +123,7 @@
         }).format(new Date()),
       syntheticDemo: !!input.syntheticDemo,
       warning: String(r.warning || ''),
+      showPointNumbers: input.showPointNumbers !== false,
       grid: ['paper', 'major', 'none'].includes(input.grid) ? input.grid : 'paper',
       degrees: r.degrees ? { high: r.degrees.high, low: r.degrees.low } : null,
       // Bubble-point Y-function cross-check, when the app computed one.
@@ -352,7 +353,7 @@
           right: w - r,
           top: t,
           bottom: h - b,
-          numbered: m.points.length <= 32,
+          numbered: m.showPointNumbers !== false && m.points.length <= 32,
         });
     s += `<circle cx="${x(m.intersection.v)}" cy="${y(m.intersection.p)}" r="4" fill="white" stroke="${COLOR.ink}" stroke-width="1.7"/></g><text x="${(l + w - r) / 2}" y="${h - 2}" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Volume (${esc(m.volumeUnit)})</text><text transform="translate(11 ${(t + h - b) / 2}) rotate(-90)" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Pressure (${esc(unit(m, true))})</text></svg>`;
     return s;
@@ -418,7 +419,7 @@
         right: w - r,
         top: t,
         bottom: t + ph,
-        numbered: m.points.length <= 32,
+        numbered: m.showPointNumbers !== false && m.points.length <= 32,
       });
     });
     s += `<circle cx="${x(C.v)}" cy="${y(C.p)}" r="4.7" fill="white" stroke="${COLOR.ink}" stroke-width="1.6"/></g>`;
@@ -447,7 +448,7 @@
             .map((t, i) => `<p${i === 2 ? ' class="quiet"' : ''}>${esc(t)}</p>`)
             .join('')}</div>`
         : ''
-    }<div class="report-footer"><span>${m.points.length <= 32 ? 'Point numbers = input rows; crossed points excluded from fits' : 'Excluded points shown; not used in either fit'}</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=9"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    }<div class="report-footer"><span>${m.showPointNumbers !== false && m.points.length <= 32 ? 'Point numbers = input rows; crossed points excluded from fits' : 'Excluded points shown; not used in either fit'}</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=10"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -698,7 +699,7 @@
         line(xx - 1.7, yy - 1.7, xx + 1.7, yy + 1.7, color, 0.9);
         line(xx - 1.7, yy + 1.7, xx + 1.7, yy - 1.7, color, 0.9);
       }
-      if (m.points.length <= 32) {
+      if (m.showPointNumbers !== false && m.points.length <= 32) {
         let labelY = yy + (p.id % 2 ? 12 : -8);
         if (labelY > frame.bottom - 4) labelY = yy - 8;
         if (labelY < frame.top + 8) labelY = yy + 12;
@@ -996,7 +997,7 @@
     text(
       M,
       H - 48,
-      m.points.length <= 32
+      m.showPointNumbers !== false && m.points.length <= 32
         ? 'Point numbers = input rows; crossed points excluded from fits'
         : 'Excluded points shown; not used in either fit',
       8,
