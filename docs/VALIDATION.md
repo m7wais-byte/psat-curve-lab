@@ -9,6 +9,7 @@
 - Missing/parallel crossings and input-order independence.
 - Basic UI state: phase gate, expected phase labels, branch counts, range changes, undo, presentation mode, synthetic-data labeling, grid/shading display and unchanged numerical results.
 - Axis scaling, out-of-view reporting, finite/ordered limit validation and unchanged fits/point groups/history when zooming.
+- Current-case report snapshots, excluded-point visibility, safe HTML payloads, separate actions and one-page vector A4 PDF generation.
 - Source syntax, HTML control wiring, static assets and local development-server routes.
 
 These checks establish implementation behavior on the tested inputs. They do not measure real-fluid Psat accuracy or instrument uncertainty.
@@ -48,3 +49,5 @@ Use real Chrome/Edge/Firefox or the intended laboratory browser. Check at deskto
 - Cases with no intersection or warnings remain understandable.
 
 Record browser/version, viewport, dataset, expected behavior and observed result. Keep this review separate from the automated check results.
+
+The generated current-case PDF was rendered and visually inspected offline. Actual browser print pagination, popup handling and download interaction still require browser review.

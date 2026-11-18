@@ -67,7 +67,7 @@ The stylesheet uses a consolidated teal/orange palette, responsive layout, pinne
 
 `public/report-preview.html` demonstrates the proposed report with fixed example data. Its two summary values are separate; the compact `Psat: ... psig @ ... cc` annotation is in the graph. All measurements, including gray excluded points, remain visible.
 
-Print opens the browser dialog. Save as PDF directly downloads `public/report-preview.pdf`, a pre-generated single-page A4 PDF with vector logo, vector graph and text. Neither action exports the live app's current user measurements yet; this is a layout preview.
+Print opens the browser dialog. Save as PDF directly downloads `public/report-preview.pdf`, a pre-generated single-page A4 PDF with vector logo, vector graph and text. These static preview actions use fixed example data. The main application uses `public/report.js` to snapshot the current measurements, assignments, coefficients and metadata. Print opens an A4 HTML document; Save as PDF generates a vector A4 document using the locally vendored jsPDF 4.2.1 bundle. Reports evaluate the existing fits without refitting and show all measurements, independently of viewport zoom.
 
 To regenerate the sample PDF after editing the preview data or layout:
 

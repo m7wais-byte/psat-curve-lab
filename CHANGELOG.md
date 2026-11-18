@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — Simpler interface
+## Unreleased — A4 case reports
+
+- Integrated the approved vector VAPS A4 layout with current edited measurements and fits.
+- Added separate Print and direct Save as PDF actions.
+- Preserved excluded points, both R² values, separate summary fields and the combined graph annotation.
+- Kept numerical fitting unchanged.
+
+## Simpler interface
 
 - Changed to a softer teal, orange and neutral palette.
 - Removed header export and processing notices; moved JSON download into the fit-details panel.

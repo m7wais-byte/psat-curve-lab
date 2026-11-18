@@ -117,6 +117,11 @@ function harness() {
   );
   context.PV = window.PV;
   vm.runInContext(
+    fs.readFileSync(path.join(__dirname, '../public/report.js'), 'utf8'),
+    context,
+  );
+  context.PVReport = window.PVReport;
+  vm.runInContext(
     fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8'),
     context,
   );

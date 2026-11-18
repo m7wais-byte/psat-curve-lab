@@ -1558,3 +1558,18 @@ footer {
     display: none !important;
   }
 }
+
+.chartactions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+#savePdf {
+  color: #0f766e;
+  background: #eef8f2;
+  border-color: #bcdcc9;
+}
+#savePdf:disabled {
+  color: #98a79f;
+  background: #f4f6f3;
+  border-color: #e1e7e1;
+}
