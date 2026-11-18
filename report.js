@@ -1,6 +1,6 @@
 (function (root) {
   const REPORT_CSS =
-    '\n      body {\n        margin: 0;\n        padding: 20px;\n        background: #f1f5f2;\n        font:\n          13px/1.5 Arial,\n          Helvetica,\n          sans-serif;\n        color: #29443a;\n      }\n      .preview-toolbar {\n        max-width: 680px;\n        margin: 0 auto 16px;\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 16px;\n      }\n      .preview-toolbar h1 {\n        font-size: 16px;\n        font-weight: 500;\n        margin: 0;\n      }\n      .preview-toolbar p {\n        font-size: 12px;\n        color: #687e70;\n        margin: 4px 0 0;\n      }\n      .preview-toolbar button,\n      .preview-toolbar a {\n        background: #0f766e;\n        color: white;\n        border: 0;\n        border-radius: 6px;\n        padding: 10px 14px;\n        font:\n          13px Arial,\n          sans-serif;\n        cursor: pointer;\n        white-space: nowrap;\n      }\n      .preview-toolbar button:focus-visible,\n      .preview-toolbar a:focus-visible {\n        outline: 3px solid #8dbca4;\n        outline-offset: 3px;\n      }\n      .preview-actions {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n      }\n      .preview-toolbar a {\n        display: inline-block;\n        text-decoration: none;\n        background: white;\n        color: #0f766e;\n        box-shadow: inset 0 0 0 1px #a7cbbb;\n      }\n      @media (max-width: 480px) {\n        body {\n          padding: 12px;\n        }\n        .preview-toolbar {\n          align-items: flex-start;\n        }\n        .preview-toolbar button,\n        .preview-toolbar a {\n          font-size: 11px;\n          padding: 9px 10px;\n        }\n      }\n      @media print {\n        body {\n          padding: 0;\n          margin: 0;\n          background: white;\n        }\n        .preview-toolbar {\n          display: none !important;\n        }\n      }\n    \n\n        #case-a4-report {\n          --paper: #fff;\n          --ink: #223b35;\n          --quiet: #66796f;\n          --rule: #d8e3dc;\n          --high: #0f766e;\n          --low: #c97725;\n          max-width: 680px;\n          margin: 0 auto;\n          font:\n            13px/1.5 Arial,\n            Helvetica,\n            sans-serif;\n          color: var(--ink);\n        }\n        #case-a4-report * {\n          box-sizing: border-box;\n        }\n        #case-a4-report .paper {\n          background: var(--paper);\n          border: 1px solid var(--rule);\n          padding: 30px 34px 23px;\n          aspect-ratio: 210/297;\n          display: flex;\n          flex-direction: column;\n          gap: 14px;\n        }\n        #case-a4-report .report-header {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 20px;\n          padding-bottom: 16px;\n          border-bottom: 2px solid var(--high);\n        }\n        #case-a4-report .logo {\n          width: 128px;\n          min-width: 128px;\n          height: 76px;\n          display: flex;\n          align-items: center;\n          border: 0;\n        }\n        #case-a4-report .logo svg {\n          display: block;\n          width: 128px;\n          height: 76px;\n        }\n\n        #case-a4-report .heading {\n          text-align: right;\n        }\n        #case-a4-report h1 {\n          margin: 0;\n          font-size: 20px;\n          line-height: 1.25;\n          font-weight: 500;\n          letter-spacing: -0.35px;\n        }\n        #case-a4-report .subtitle {\n          margin-top: 5px;\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .draft {\n          display: inline-block;\n          margin-top: 7px;\n          font-size: 11px;\n          color: #927039;\n        }\n        #case-a4-report .details {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          column-gap: 25px;\n          row-gap: 7px;\n        }\n        #case-a4-report .detail {\n          display: flex;\n          gap: 10px;\n          justify-content: space-between;\n          border-bottom: 1px solid #edf1ed;\n          padding-bottom: 5px;\n          font-size: 12px;\n        }\n        #case-a4-report .label {\n          color: var(--quiet);\n        }\n        #case-a4-report .value {\n          text-align: right;\n          font-weight: 500;\n        }\n        #case-a4-report .results {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 23px;\n          padding: 13px 0 14px;\n          border-top: 1px solid var(--rule);\n          border-bottom: 1px solid var(--rule);\n        }\n        #case-a4-report .result-label {\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .result-number {\n          font-size: 30px;\n          font-weight: 500;\n          letter-spacing: -0.8px;\n          margin-top: 4px;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .result-number span {\n          font-size: 13px;\n          letter-spacing: 0;\n          margin-left: 5px;\n          color: var(--quiet);\n        }\n        #case-a4-report .plot-heading {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 10px;\n          font-size: 12px;\n          padding-top: 1px;\n        }\n        #case-a4-report .plot-heading strong {\n          font-weight: 500;\n        }\n        #case-a4-report .plot-heading span {\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        #case-a4-report .plot {\n          width: 100%;\n        }\n        #case-a4-report .plot svg {\n          display: block;\n          width: 100%;\n          height: auto;\n          overflow: visible;\n          font-family: Arial, Helvetica, sans-serif;\n        }\n        #case-a4-report .legend {\n          display: flex;\n          justify-content: center;\n          gap: 18px;\n          flex-wrap: wrap;\n          font-size: 11px;\n          color: var(--quiet);\n          margin-top: 1px;\n        }\n        #case-a4-report .legend span {\n          display: flex;\n          align-items: center;\n          gap: 6px;\n        }\n        #case-a4-report .swatch {\n          display: inline-block;\n          width: 20px;\n          height: 0;\n          border-top: 2px solid var(--high);\n        }\n        #case-a4-report .swatch.low {\n          border-color: var(--low);\n        }\n        #case-a4-report .swatch.extension {\n          border-color: #7e8d84;\n          border-top-style: dashed;\n        }\n\n        #case-a4-report .swatch.excluded {\n          width: 7px;\n          height: 7px;\n          border: 1.3px solid #8b9790;\n          border-radius: 50%;\n          background: white;\n        }\n        #case-a4-report .fit-summary {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 22px;\n          border-top: 1px solid var(--rule);\n          padding-top: 13px;\n        }\n        #case-a4-report .fit-label {\n          display: flex;\n          align-items: center;\n          gap: 7px;\n          font-size: 12px;\n        }\n        #case-a4-report .fit-label i {\n          width: 7px;\n          height: 7px;\n          background: var(--high);\n          border-radius: 50%;\n        }\n        #case-a4-report .fit-label .low {\n          background: var(--low);\n        }\n        #case-a4-report .r2 {\n          margin-top: 5px;\n          font-size: 20px;\n          font-weight: 500;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .report-footer {\n          margin-top: auto;\n          padding-top: 12px;\n          border-top: 1px solid var(--rule);\n          display: flex;\n          gap: 12px;\n          justify-content: space-between;\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        @media (max-width: 480px) {\n          #case-a4-report .paper {\n            padding: 19px 15px;\n            gap: 13px;\n            aspect-ratio: auto;\n          }\n          #case-a4-report .report-header {\n            gap: 12px;\n          }\n          #case-a4-report .logo {\n            width: 96px;\n            min-width: 96px;\n            height: 60px;\n          }\n          #case-a4-report .logo svg {\n            width: 96px;\n            height: 60px;\n          }\n          #case-a4-report h1 {\n            font-size: 17px;\n          }\n          #case-a4-report .details {\n            gap: 7px 15px;\n          }\n          #case-a4-report .detail {\n            flex-direction: column;\n            gap: 2px;\n            font-size: 11px;\n          }\n          #case-a4-report .value {\n            text-align: left;\n          }\n          #case-a4-report .result-number {\n            font-size: 24px;\n          }\n          #case-a4-report .result-number span {\n            font-size: 11px;\n          }\n          #case-a4-report .plot-heading {\n            align-items: flex-start;\n          }\n          #case-a4-report .plot-heading span {\n            max-width: 100px;\n            text-align: right;\n          }\n          #case-a4-report .legend {\n            gap: 10px;\n          }\n          #case-a4-report .r2 {\n            font-size: 18px;\n          }\n          #case-a4-report .report-footer {\n            flex-wrap: wrap;\n          }\n        }\n        @media print {\n          @page {\n            size: A4 portrait;\n            margin: 0;\n          }\n          #case-a4-report {\n            max-width: none;\n            width: 210mm;\n          }\n          #case-a4-report .paper {\n            width: 210mm;\n            min-height: 297mm;\n            padding: 12mm;\n            border: 0;\n          }\n        }\n      \n#case-a4-report .report-warning, #case-a4-report #reportError {font-size:12px;line-height:1.7;color:#94602e;background:#fff7ec;padding:10px 12px;border-radius:4px;}\n';
+    '\n      body {\n        margin: 0;\n        padding: 20px;\n        background: #f1f5f2;\n        font:\n          13px/1.5 Arial,\n          Helvetica,\n          sans-serif;\n        color: #29443a;\n      }\n      .preview-toolbar {\n        max-width: 680px;\n        margin: 0 auto 16px;\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 16px;\n      }\n      .preview-toolbar h1 {\n        font-size: 16px;\n        font-weight: 500;\n        margin: 0;\n      }\n      .preview-toolbar p {\n        font-size: 12px;\n        color: #687e70;\n        margin: 4px 0 0;\n      }\n      .preview-toolbar button,\n      .preview-toolbar a {\n        background: #0f766e;\n        color: white;\n        border: 0;\n        border-radius: 6px;\n        padding: 10px 14px;\n        font:\n          13px Arial,\n          sans-serif;\n        cursor: pointer;\n        white-space: nowrap;\n      }\n      .preview-toolbar button:focus-visible,\n      .preview-toolbar a:focus-visible {\n        outline: 3px solid #8dbca4;\n        outline-offset: 3px;\n      }\n      .preview-actions {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n      }\n      .preview-toolbar a {\n        display: inline-block;\n        text-decoration: none;\n        background: white;\n        color: #0f766e;\n        box-shadow: inset 0 0 0 1px #a7cbbb;\n      }\n      @media (max-width: 480px) {\n        body {\n          padding: 12px;\n        }\n        .preview-toolbar {\n          align-items: flex-start;\n        }\n        .preview-toolbar button,\n        .preview-toolbar a {\n          font-size: 11px;\n          padding: 9px 10px;\n        }\n      }\n      @media print {\n        body {\n          padding: 0;\n          margin: 0;\n          background: white;\n        }\n        .preview-toolbar {\n          display: none !important;\n        }\n      }\n    \n\n        #case-a4-report {\n          --paper: #fff;\n          --ink: #223b35;\n          --quiet: #66796f;\n          --rule: #d8e3dc;\n          --high: #0f766e;\n          --low: #c05a13;\n          max-width: 680px;\n          margin: 0 auto;\n          font:\n            13px/1.5 Arial,\n            Helvetica,\n            sans-serif;\n          color: var(--ink);\n        }\n        #case-a4-report * {\n          box-sizing: border-box;\n        }\n        #case-a4-report .paper {\n          background: var(--paper);\n          border: 1px solid var(--rule);\n          padding: 23px 34px 20px;\n          aspect-ratio: 210/297;\n          display: flex;\n          flex-direction: column;\n          gap: 9px;\n        }\n        #case-a4-report .report-header {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 20px;\n          padding-bottom: 16px;\n          border-bottom: 2px solid var(--high);\n        }\n        #case-a4-report .logo {\n          width: 128px;\n          min-width: 128px;\n          height: 76px;\n          display: flex;\n          align-items: center;\n          border: 0;\n        }\n        #case-a4-report .logo svg {\n          display: block;\n          width: 128px;\n          height: 76px;\n        }\n\n        #case-a4-report .heading {\n          text-align: right;\n        }\n        #case-a4-report h1 {\n          margin: 0;\n          font-size: 20px;\n          line-height: 1.25;\n          font-weight: 500;\n          letter-spacing: -0.35px;\n        }\n        #case-a4-report .subtitle {\n          margin-top: 5px;\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .draft {\n          display: inline-block;\n          margin-top: 7px;\n          font-size: 11px;\n          color: #927039;\n        }\n        #case-a4-report .details {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          column-gap: 25px;\n          row-gap: 7px;\n        }\n        #case-a4-report .detail {\n          display: flex;\n          gap: 10px;\n          justify-content: space-between;\n          border-bottom: 1px solid #edf1ed;\n          padding-bottom: 5px;\n          font-size: 12px;\n        }\n        #case-a4-report .label {\n          color: var(--quiet);\n        }\n        #case-a4-report .value {\n          text-align: right;\n          font-weight: 500;\n        }\n        #case-a4-report .results {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 23px;\n          padding: 13px 0 14px;\n          border-top: 1px solid var(--rule);\n          border-bottom: 1px solid var(--rule);\n        }\n        #case-a4-report .result-label {\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .result-number {\n          font-size: 30px;\n          font-weight: 500;\n          letter-spacing: -0.8px;\n          margin-top: 4px;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .result-number span {\n          font-size: 13px;\n          letter-spacing: 0;\n          margin-left: 5px;\n          color: var(--quiet);\n        }\n        #case-a4-report .plot-heading {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 10px;\n          font-size: 12px;\n          padding-top: 1px;\n        }\n        #case-a4-report .plot-heading strong {\n          font-weight: 500;\n        }\n        #case-a4-report .plot-heading span {\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        #case-a4-report .plot {\n          width: 100%;\n        }\n        #case-a4-report .plot svg {\n          display: block;\n          width: 100%;\n          height: auto;\n          overflow: visible;\n          font-family: Arial, Helvetica, sans-serif;\n        }\n        #case-a4-report .legend {\n          display: flex;\n          justify-content: center;\n          gap: 18px;\n          flex-wrap: wrap;\n          font-size: 11px;\n          color: var(--quiet);\n          margin-top: 1px;\n        }\n        #case-a4-report .legend span {\n          display: flex;\n          align-items: center;\n          gap: 6px;\n        }\n        #case-a4-report .swatch {\n          display: inline-block;\n          width: 20px;\n          height: 0;\n          border-top: 2px solid var(--high);\n        }\n        #case-a4-report .swatch.low {\n          border-color: var(--low);\n        }\n        #case-a4-report .swatch.extension {\n          border-color: #7e8d84;\n          border-top-style: dashed;\n        }\n\n        #case-a4-report .swatch.excluded {\n          width: 7px;\n          height: 7px;\n          border: 1.3px solid #8b9790;\n          border-radius: 50%;\n          background: white;\n        }\n        #case-a4-report .fit-summary {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 22px;\n          border-top: 1px solid var(--rule);\n          padding-top: 13px;\n        }\n        #case-a4-report .fit-label {\n          display: flex;\n          align-items: center;\n          gap: 7px;\n          font-size: 12px;\n        }\n        #case-a4-report .fit-label i {\n          width: 7px;\n          height: 7px;\n          background: var(--high);\n          border-radius: 50%;\n        }\n        #case-a4-report .fit-label .low {\n          background: var(--low);\n        }\n        #case-a4-report .r2 {\n          margin-top: 5px;\n          font-size: 20px;\n          font-weight: 500;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .report-footer {\n          margin-top: auto;\n          padding-top: 12px;\n          border-top: 1px solid var(--rule);\n          display: flex;\n          gap: 12px;\n          justify-content: space-between;\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        @media (max-width: 480px) {\n          #case-a4-report .paper {\n            padding: 19px 15px;\n            gap: 13px;\n            aspect-ratio: auto;\n          }\n          #case-a4-report .report-header {\n            gap: 12px;\n          }\n          #case-a4-report .logo {\n            width: 96px;\n            min-width: 96px;\n            height: 60px;\n          }\n          #case-a4-report .logo svg {\n            width: 96px;\n            height: 60px;\n          }\n          #case-a4-report h1 {\n            font-size: 17px;\n          }\n          #case-a4-report .details {\n            gap: 7px 15px;\n          }\n          #case-a4-report .detail {\n            flex-direction: column;\n            gap: 2px;\n            font-size: 11px;\n          }\n          #case-a4-report .value {\n            text-align: left;\n          }\n          #case-a4-report .result-number {\n            font-size: 24px;\n          }\n          #case-a4-report .result-number span {\n            font-size: 11px;\n          }\n          #case-a4-report .plot-heading {\n            align-items: flex-start;\n          }\n          #case-a4-report .plot-heading span {\n            max-width: 100px;\n            text-align: right;\n          }\n          #case-a4-report .legend {\n            gap: 10px;\n          }\n          #case-a4-report .r2 {\n            font-size: 18px;\n          }\n          #case-a4-report .report-footer {\n            flex-wrap: wrap;\n          }\n        }\n        @media print {\n          @page {\n            size: A4 portrait;\n            margin: 0;\n          }\n          #case-a4-report {\n            max-width: none;\n            width: 210mm;\n          }\n          #case-a4-report .paper {\n            width: 210mm;\n            min-height: 297mm;\n            padding: 12mm;\n            border: 0;\n          }\n        }\n      \n#case-a4-report .report-warning, #case-a4-report #reportError {font-size:12px;line-height:1.7;color:#94602e;background:#fff7ec;padding:10px 12px;border-radius:4px;}\n';
   const LOGO_SVG =
     '<svg\n              xmlns="http://www.w3.org/2000/svg"\n              viewBox="0 0 200 118"\n              role="img"\n              aria-label="VAPS logo, recreated vector draft"\n            >\n              <path\n                d="M7 8C33 5 47 12 54 35L69 85L111 30L61 109L39 50C31 25 25 12 7 8Z"\n                fill="#2d7db8"\n              />\n              <path d="M62 104L112 28" fill="none" stroke="#2d7db8" stroke-width="1.6" />\n              <path d="M66 108L116 30" fill="none" stroke="#25ad68" stroke-width="2.1" />\n              <g transform="translate(31 49)">\n                <circle r="16" fill="#fff" />\n                <g fill="#2d7db8">\n                  <rect x="-1.8" y="-16.1" width="3.6" height="5.5" rx=".5" />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(30)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(60)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(90)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(120)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(150)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(180)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(210)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(240)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(270)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(300)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(330)"\n                  />\n                </g>\n                <circle r="12.2" fill="#fff" stroke="#2d7db8" stroke-width="2.1" />\n                <circle r="8.7" fill="#28bf74" />\n              </g>\n              <text\n                x="94"\n                y="85"\n                font-family="Arial,Helvetica,sans-serif"\n                font-size="38"\n                font-weight="700"\n                letter-spacing=".1"\n                fill="#2d7db8"\n              >\n                APS\n              </text>\n            </svg>';
   const COLOR = {
@@ -8,7 +8,7 @@
     quiet: '#66796f',
     rule: '#d8e3dc',
     high: '#0f766e',
-    low: '#c97725',
+    low: '#c05a13',
     excluded: '#8b9790',
   };
   const esc = (value) =>
@@ -155,6 +155,91 @@
       ? v.toExponential(Math.min(12, Math.max(3, d)))
       : v.toLocaleString('en-US', { maximumFractionDigits: d });
   }
+  function detailBounds(m) {
+    validate(m);
+    const c = m.intersection,
+      full = bounds(m),
+      span = full.vmax - full.vmin;
+    const extent = Math.max(m.low.max - c.v, span * 0.12);
+    const vmin = Math.max(0, c.v - extent * 0.14),
+      vmax = Math.max(c.v + extent * 0.2, m.low.max) + extent * 0.04;
+    const values = [
+      c.p,
+      ...m.points.filter((p) => p.v >= vmin && p.v <= vmax).map((p) => p.p),
+    ];
+    for (const [f, a, b] of [
+      [m.high, Math.max(vmin, m.high.min), c.v],
+      [m.low, c.v, Math.min(vmax, m.low.max)],
+    ])
+      for (let i = 0; i <= 40; i++) values.push(predict(m, f, a + ((b - a) * i) / 40));
+    let pmin = Math.min(...values),
+      pmax = Math.max(...values),
+      ps = pmax - pmin || Math.max(Math.abs(c.p) * 0.02, 1);
+    return { vmin, vmax, pmin: Math.max(0, pmin - ps * 0.14), pmax: pmax + ps * 0.16 };
+  }
+  function detailScene(m, w = 608, h = 150) {
+    const B = detailBounds(m),
+      l = 56,
+      r = 12,
+      t = 28,
+      b = 30;
+    const x = (v) => l + ((v - B.vmin) / (B.vmax - B.vmin)) * (w - l - r),
+      y = (p) => h - b - ((p - B.pmin) / (B.pmax - B.pmin)) * (h - t - b);
+    const curves = [];
+    for (const [f, color] of [
+      [m.high, COLOR.high],
+      [m.low, COLOR.low],
+    ]) {
+      for (const [a, b, dashed] of [
+        [f.min, f.max, false],
+        [Math.min(m.intersection.v, f.max), Math.max(m.intersection.v, f.min), true],
+      ]) {
+        if (dashed && m.intersection.v >= f.min && m.intersection.v <= f.max) continue;
+        const lo = Math.max(B.vmin, a),
+          hi = Math.min(B.vmax, b);
+        if (hi <= lo) continue;
+        curves.push({
+          color,
+          dashed,
+          points: Array.from({ length: 81 }, (_, i) => {
+            const v = lo + ((hi - lo) * i) / 80;
+            return [x(v), y(predict(m, f, v))];
+          }),
+        });
+      }
+    }
+    return { B, l, r, t, b, w, h, x, y, curves };
+  }
+  function detailSvg(m, w = 608, h = 150) {
+    const S = detailScene(m, w, h),
+      { B, l, r, t, b, x, y, curves } = S;
+    let s = `<svg data-fit-detail="true" width="${w}" height="${h}" style="width:${w}px;height:${h}px" viewBox="0 0 ${w} ${h}" role="img" aria-label="Intersection detail, zoomed pressure and volume axes; same fitted curves"><defs><clipPath id="detail-area"><rect x="${l}" y="${t}" width="${w - l - r}" height="${h - t - b}"/></clipPath></defs><rect width="${w}" height="${h}" fill="white"/><text x="${l}" y="14" font-size="11" fill="${COLOR.ink}" font-weight="bold">Intersection detail · zoomed axes</text>`;
+    for (let i = 0; i <= 4; i++) {
+      const xx = l + ((w - l - r) * i) / 4,
+        v = B.vmin + ((B.vmax - B.vmin) * i) / 4;
+      s += `<path d="M${xx} ${t}V${h - b}" stroke="#e5ece8"/><text x="${xx}" y="${h - b + 14}" text-anchor="middle" font-size="9" fill="#52685b">${tick(v, (B.vmax - B.vmin) / 4)}</text>`;
+    }
+    for (let i = 0; i <= 2; i++) {
+      const p = B.pmin + ((B.pmax - B.pmin) * i) / 2,
+        yy = y(p);
+      s += `<path d="M${l} ${yy}H${w - r}" stroke="#e5ece8"/><text x="${l - 7}" y="${yy + 3}" text-anchor="end" font-size="9" fill="#52685b">${tick(p, (B.pmax - B.pmin) / 2)}</text>`;
+    }
+    s += `<rect x="${l}" y="${t}" width="${w - l - r}" height="${h - t - b}" fill="none" stroke="#9db3a4"/><g clip-path="url(#detail-area)">`;
+    for (const f of curves)
+      s += `<path d="${f.points.map(([x, y], i) => (i ? 'L' : 'M') + x + ',' + y).join('')}" fill="none" stroke="${f.color}" stroke-width="2.8"${f.dashed ? ' stroke-dasharray="5 4"' : ''}/>`;
+    for (const p of m.points)
+      if (p.v >= B.vmin && p.v <= B.vmax) {
+        const color =
+          p.group === 'high'
+            ? COLOR.high
+            : p.group === 'low'
+              ? COLOR.low
+              : COLOR.excluded;
+        s += `<circle data-detail-point="${p.id}" cx="${x(p.v)}" cy="${y(p.p)}" r="2.7" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="1.2"/>`;
+      }
+    s += `<circle cx="${x(m.intersection.v)}" cy="${y(m.intersection.p)}" r="4" fill="white" stroke="${COLOR.ink}" stroke-width="1.7"/></g><text x="${(l + w - r) / 2}" y="${h - 2}" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Volume (${esc(m.volumeUnit)})</text><text transform="translate(11 ${(t + h - b) / 2}) rotate(-90)" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Pressure (${esc(unit(m, true))})</text></svg>`;
+    return s;
+  }
   function svg(m, width = 608) {
     validate(m);
     const w = Math.max(240, Math.round(width)),
@@ -163,10 +248,12 @@
       t = 16,
       b = 46,
       cols = w >= 480 ? 8 : 4,
-      rows = w >= 480 ? 4 : 5;
+      rows = w >= 480 ? 3 : 4;
     const cell = (w - l - r) / cols,
       ph = cell * rows,
-      h = t + ph + b,
+      mainHeight = t + ph + b,
+      detailHeight = w >= 480 ? 130 : 180,
+      h = mainHeight + detailHeight + 10,
       B = bounds(m),
       C = m.intersection;
     const x = (v) => l + ((v - B.vmin) / (B.vmax - B.vmin)) * (w - l - r),
@@ -176,12 +263,12 @@
       for (let i = 0; i <= cols * 5; i++) {
         if (i % 5 && m.grid !== 'paper') continue;
         const xx = l + (i * cell) / 5;
-        s += `<line x1="${xx}" y1="${t}" x2="${xx}" y2="${t + ph}" stroke="${i % 5 ? '#eef3ef' : '#cedbd3'}" stroke-width="${i % 5 ? 0.45 : 0.8}"/>`;
+        s += `<line x1="${xx}" y1="${t}" x2="${xx}" y2="${t + ph}" stroke="${i % 5 ? '#f1f5f3' : '#dbe4df'}" stroke-width="${i % 5 ? 0.45 : 0.8}"/>`;
       }
       for (let i = 0; i <= rows * 5; i++) {
         if (i % 5 && m.grid !== 'paper') continue;
         const yy = t + (i * cell) / 5;
-        s += `<line x1="${l}" y1="${yy}" x2="${w - r}" y2="${yy}" stroke="${i % 5 ? '#eef3ef' : '#cedbd3'}" stroke-width="${i % 5 ? 0.45 : 0.8}"/>`;
+        s += `<line x1="${l}" y1="${yy}" x2="${w - r}" y2="${yy}" stroke="${i % 5 ? '#f1f5f3' : '#dbe4df'}" stroke-width="${i % 5 ? 0.45 : 0.8}"/>`;
       }
     }
     s += `<rect x="${l}" y="${t}" width="${w - l - r}" height="${ph}" fill="none" stroke="#9db3a4" stroke-width=".8"/>`;
@@ -199,7 +286,7 @@
         const v = a + ((b - a) * i) / 100;
         d += (i ? 'L' : 'M') + x(v) + ',' + y(predict(m, f, v));
       }
-      return `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.9"${dash ? ' stroke-dasharray="5 4"' : ''}/>`;
+      return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3"${dash ? ' stroke-dasharray="5 4"' : ''}/>`;
     }
     s +=
       `<g clip-path="url(#final-report-area)">` +
@@ -211,7 +298,7 @@
     m.points.forEach((p) => {
       const color =
         p.group === 'high' ? COLOR.high : p.group === 'low' ? COLOR.low : COLOR.excluded;
-      s += `<circle data-report-point="${p.id}" data-group="${p.group}" cx="${x(p.v)}" cy="${y(p.p)}" r="3.2" fill="white" stroke="${color}" stroke-width="1.3"/>`;
+      s += `<circle data-report-point="${p.id}" data-group="${p.group}" cx="${x(p.v)}" cy="${y(p.p)}" r="2.8" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="1.1"/>`;
     });
     s += `<circle cx="${x(C.v)}" cy="${y(C.p)}" r="4.7" fill="white" stroke="${COLOR.ink}" stroke-width="1.6"/></g>`;
     const ax = w - r - 7,
@@ -219,7 +306,7 @@
     s += `<text data-report-annotation="psat" x="${ax}" y="${ay}" text-anchor="end" font-size="11" fill="${COLOR.ink}" stroke="white" stroke-width="4" paint-order="stroke">${w >= 360 ? esc(label(m)) : `<tspan x="${ax}">Psat: ${fmt(C.p, 2)} ${esc(unit(m, true))}</tspan><tspan x="${ax}" dy="15">@ ${fmt(C.v, 3)} ${esc(m.volumeUnit)}</tspan>`}</text>`;
     return (
       s +
-      `<text x="${l + (w - l - r) / 2}" y="${h - 6}" text-anchor="middle" font-size="12" fill="#344f3d">Volume (${esc(m.volumeUnit)})</text><text transform="translate(13 ${t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#344f3d">Pressure (${esc(unit(m, true))})</text></svg>`
+      `<text x="${l + (w - l - r) / 2}" y="${mainHeight - 6}" text-anchor="middle" font-size="12" fill="#344f3d">Volume (${esc(m.volumeUnit)})</text><text transform="translate(13 ${t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#344f3d">Pressure (${esc(unit(m, true))})</text>${detailSvg(m, w, detailHeight).replace('<svg ', `<svg x="0" y="${mainHeight + 10}" `)}</svg>`
     );
   }
   function html(m, base = '') {
@@ -231,7 +318,7 @@
       .replace(/</g, '\\u003c')
       .replace(/\u2028/g, '\\u2028')
       .replace(/\u2029/g, '\\u2029');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=1"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=3"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -409,10 +496,10 @@
       warningHeight = lines.length * 11 + 10;
     }
     const top = 309 + offset + warningHeight,
-      cell = Math.min((W - 2 * M - 48) / 8, (H - 170 - top) / 4),
+      cell = Math.min((W - 2 * M - 48) / 8, (H - 319 - top) / 3),
       left = M + 45,
       right = left + cell * 8,
-      bottom = top + cell * 4,
+      bottom = top + cell * 3,
       B = bounds(m),
       C = m.intersection;
     if (cell < 30)
@@ -439,18 +526,18 @@
           top,
           left + (i * cell) / 5,
           bottom,
-          i % 5 ? '#eef3ef' : '#cedbd3',
+          i % 5 ? '#f1f5f3' : '#dbe4df',
           i % 5 ? 0.3 : 0.55,
         );
       }
-      for (let i = 0; i <= 20; i++) {
+      for (let i = 0; i <= 15; i++) {
         if (i % 5 && m.grid !== 'paper') continue;
         line(
           left,
           top + (i * cell) / 5,
           right,
           top + (i * cell) / 5,
-          i % 5 ? '#eef3ef' : '#cedbd3',
+          i % 5 ? '#f1f5f3' : '#dbe4df',
           i % 5 ? 0.3 : 0.55,
         );
       }
@@ -467,11 +554,11 @@
         '#546e5c',
         'center',
       );
-    for (let i = 0; i <= 4; i++)
+    for (let i = 0; i <= 3; i++)
       text(
         left - 8,
         bottom - i * cell + 3,
-        tick(B.pmin + ((B.pmax - B.pmin) * i) / 4, (B.pmax - B.pmin) / 4),
+        tick(B.pmin + ((B.pmax - B.pmin) * i) / 3, (B.pmax - B.pmin) / 3),
         8,
         '#546e5c',
         'right',
@@ -496,7 +583,7 @@
     doc.discardPath();
     function curve(f, a, b, color, dashed) {
       doc.setDrawColor(color);
-      doc.setLineWidth(1.35);
+      doc.setLineWidth(2.2);
       doc.setLineDashPattern(dashed ? [4, 3] : [], 0);
       const path = [];
       for (let i = 0; i <= 100; i++) {
@@ -518,16 +605,106 @@
       doc.setDrawColor(
         p.group === 'high' ? COLOR.high : p.group === 'low' ? COLOR.low : COLOR.excluded,
       );
-      doc.setFillColor('#ffffff');
+      doc.setFillColor(
+        p.group === 'none' ? '#ffffff' : p.group === 'high' ? COLOR.high : COLOR.low,
+      );
       doc.setLineWidth(0.9);
-      doc.circle(x(p.v), y(p.p), 2.5, 'FD');
+      doc.circle(x(p.v), y(p.p), 2.1, 'FD');
     });
+    doc.setFillColor('#ffffff');
     doc.setDrawColor(COLOR.ink);
     doc.setLineWidth(1.2);
     doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     doc.restoreGraphicsState();
     text(right - 4, Math.max(top + 14, y(C.p) - 16), label(m), 9, COLOR.ink, 'right');
-    const ly = bottom + 51;
+    const D = detailScene(m, W - 2 * M, 112),
+      ox = M,
+      oy = bottom + 43;
+    text(
+      ox + D.l,
+      oy + 14,
+      'Intersection detail - zoomed axes',
+      9,
+      COLOR.ink,
+      'left',
+      true,
+    );
+    for (let i = 0; i <= 4; i++) {
+      const xx = D.l + ((D.w - D.l - D.r) * i) / 4,
+        v = D.B.vmin + ((D.B.vmax - D.B.vmin) * i) / 4;
+      line(ox + xx, oy + D.t, ox + xx, oy + D.h - D.b, '#e5ece8', 0.4);
+      text(
+        ox + xx,
+        oy + D.h - D.b + 12,
+        tick(v, (D.B.vmax - D.B.vmin) / 4),
+        7,
+        COLOR.quiet,
+        'center',
+      );
+    }
+    for (let i = 0; i <= 2; i++) {
+      const p = D.B.pmin + ((D.B.pmax - D.B.pmin) * i) / 2,
+        yy = D.y(p);
+      line(ox + D.l, oy + yy, ox + D.w - D.r, oy + yy, '#e5ece8', 0.4);
+      text(
+        ox + D.l - 6,
+        oy + yy + 2,
+        tick(p, (D.B.pmax - D.B.pmin) / 2),
+        7,
+        COLOR.quiet,
+        'right',
+      );
+    }
+    doc.setDrawColor('#9db3a4');
+    doc.setLineWidth(0.5);
+    doc.rect(ox + D.l, oy + D.t, D.w - D.l - D.r, D.h - D.t - D.b);
+    doc.saveGraphicsState();
+    doc.rect(ox + D.l, oy + D.t, D.w - D.l - D.r, D.h - D.t - D.b);
+    doc.clip();
+    doc.discardPath();
+    for (const f of D.curves) {
+      doc.setDrawColor(f.color);
+      doc.setLineWidth(1.8);
+      doc.setLineDashPattern(f.dashed ? [4, 3] : [], 0);
+      doc
+        .path(f.points.map(([x, y], i) => ({ op: i ? 'l' : 'm', c: [ox + x, oy + y] })))
+        .stroke();
+    }
+    doc.setLineDashPattern([], 0);
+    for (const p of m.points)
+      if (p.v >= D.B.vmin && p.v <= D.B.vmax) {
+        const color =
+          p.group === 'high'
+            ? COLOR.high
+            : p.group === 'low'
+              ? COLOR.low
+              : COLOR.excluded;
+        doc.setDrawColor(color);
+        doc.setFillColor(p.group === 'none' ? '#ffffff' : color);
+        doc.setLineWidth(0.8);
+        doc.circle(ox + D.x(p.v), oy + D.y(p.p), 2, 'FD');
+      }
+    doc.setDrawColor(COLOR.ink);
+    doc.setFillColor('#ffffff');
+    doc.setLineWidth(1);
+    doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
+    doc.restoreGraphicsState();
+    text(
+      ox + (D.l + D.w - D.r) / 2,
+      oy + D.h - 1,
+      'Volume (' + m.volumeUnit + ')',
+      7,
+      COLOR.ink,
+      'center',
+    );
+    doc.setFontSize(7);
+    doc.setTextColor(COLOR.ink);
+    doc.text('Pressure (' + unit(m, true) + ')', ox + 12, oy + (D.t + D.h - D.b) / 2, {
+      angle: 90,
+      align: 'center',
+    });
+    const detailShift = 120;
+    const ly = bottom + 51 + detailShift;
     for (const [xx, name, color, dashed] of [
       [M + 18, 'High-pressure fit', COLOR.high, false],
       [M + 146, 'Low-pressure fit', COLOR.low, false],
@@ -542,16 +719,27 @@
     doc.setFillColor('#ffffff');
     doc.circle(W - M - 92, ly - 2, 2.5, 'FD');
     text(W - M - 84, ly + 1, 'Excluded points', 8, COLOR.quiet);
-    line(M, bottom + 70, W - M, bottom + 70);
-    text(M, bottom + 91, 'High-pressure fit', 10);
-    text(mid, bottom + 91, 'Low-pressure fit', 10);
-    text(M, bottom + 116, 'R² = ' + rSquared(m.high), 17);
-    text(mid, bottom + 116, 'R² = ' + rSquared(m.low), 17);
+    line(M, bottom + 70 + detailShift, W - M, bottom + 70 + detailShift);
+    text(M, bottom + 91 + detailShift, 'High-pressure fit', 10);
+    text(mid, bottom + 91 + detailShift, 'Low-pressure fit', 10);
+    text(M, bottom + 116 + detailShift, 'R² = ' + rSquared(m.high), 17);
+    text(mid, bottom + 116 + detailShift, 'R² = ' + rSquared(m.low), 17);
     line(M, H - 63, W - M, H - 63);
     text(M, H - 48, 'Excluded points shown; not used in either fit', 8, COLOR.quiet);
     text(W - M, H - 48, 'A4 portrait - Page 1 of 1', 8, COLOR.quiet, 'right');
     return doc;
   }
-  root.PVReport = { buildModel, svg, html, open, createPdf, save, label, filename };
+  root.PVReport = {
+    buildModel,
+    svg,
+    html,
+    open,
+    createPdf,
+    save,
+    label,
+    filename,
+    detailSvg,
+    detailBounds,
+  };
   if (typeof module !== 'undefined') module.exports = root.PVReport;
 })(typeof window !== 'undefined' ? window : globalThis);
