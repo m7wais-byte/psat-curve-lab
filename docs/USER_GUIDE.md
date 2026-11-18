@@ -15,7 +15,7 @@ Paste or upload exactly two columns, in this order:
 1. Pressure.
 2. Volume.
 
-Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header should be `Pressure,Volume`. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
+Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header line with words and no numbers, such as `Pressure,Volume` or `P (psig), V (cc)`, is skipped. Columns are always pressure first, volume second. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
 
 Use Plot graph to read the current input, draw the points and propose fitting branches. Changing the text clears the previous result until it is replotted. A replot resets point assignments to the automatic proposal.
 

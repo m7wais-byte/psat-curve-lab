@@ -382,3 +382,35 @@ test('Y-function check rejects unsuitable selections', () => {
   assert.throws(() => PV.yFunction(points, null), /Fit both branches/);
   assert.throws(() => PV.yFunction(points, r, -1), /Atmospheric/);
 });
+test('parse accepts common headers and plain decimal numbers only', () => {
+  for (const header of [
+    'Pressure,Volume',
+    'P (psig), V (cc)',
+    'P\tV',
+    'Pressure (bar a); Volume (mL)',
+  ])
+    assert.deepEqual(PV.parse(`${header}\n1000,30\n900,31.5`).errors, [], header);
+  assert.equal(PV.parse('P,V\n1000,30\n900,31.5').points.length, 2);
+  // A header is only accepted before the first measurement.
+  assert.deepEqual(PV.parse('1000,30\nP,V\n900,31').errors, [
+    'Line 2: use two numbers, pressure then volume.',
+  ]);
+  // A mistyped data line is reported, not skipped as a header.
+  assert.deepEqual(PV.parse('1OOO,30\n900,31').errors, [
+    'Line 1: use two numbers, pressure then volume.',
+  ]);
+  for (const bad of ['0x10,5', 'Infinity,5', '1000,1e', '1_000,5', '1000,']) {
+    assert.equal(PV.parse(bad).errors.length, 1, bad);
+    assert.equal(PV.parse(bad).points.length, 0, bad);
+  }
+  const ok = PV.parse('1.5e3,+30\n-0,.5\n12.,3');
+  assert.deepEqual(ok.errors, []);
+  assert.deepEqual(
+    ok.points.map((p) => [p.p, p.v]),
+    [
+      [1500, 30],
+      [-0, 0.5],
+      [12, 3],
+    ],
+  );
+});

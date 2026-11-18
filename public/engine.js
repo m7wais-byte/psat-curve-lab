@@ -17,15 +17,24 @@
     }
     return A.map((r) => r[n]);
   }
+  // Plain decimal numbers only: rejects hex (0x10), Infinity and other forms Number() accepts.
+  const DECIMAL = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
   function parse(text) {
     const points = [],
       errors = [];
     // Split the raw text so reported line numbers match what the user pasted.
     text.split(/\r?\n/).forEach((line, i) => {
       if (!line.trim()) return;
-      if (points.length === 0 && /pressure/i.test(line) && /volume/i.test(line)) return;
       const cells = line.trim().split(/[,;\t ]+/);
-      if (cells.length !== 2 || cells.some((s) => !Number.isFinite(Number(s)))) {
+      // Before the first measurement, a line with words and no numbers is a header,
+      // e.g. "Pressure,Volume", "P (psig), V (cc)" or "P\tV".
+      if (
+        points.length === 0 &&
+        /[a-z]/i.test(line) &&
+        !cells.some((s) => DECIMAL.test(s))
+      )
+        return;
+      if (cells.length !== 2 || cells.some((s) => !DECIMAL.test(s))) {
         errors.push(`Line ${i + 1}: use two numbers, pressure then volume.`);
         return;
       }

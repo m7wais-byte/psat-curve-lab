@@ -62,7 +62,7 @@ Pressure,Volume
 1852,34.200
 ```
 
-These three rows illustrate the format only; a quadratic analysis needs at least four selected points per branch. Comma, semicolon, tab or whitespace separators are accepted. Use a decimal point, no thousands separators, and exactly two columns. The optional header must identify pressure and volume in that order. The UI allows up to 500 points and imported files no larger than 1 MB.
+These three rows illustrate the format only; a quadratic analysis needs at least four selected points per branch. Comma, semicolon, tab or whitespace separators are accepted. Use a decimal point, no thousands separators, and exactly two columns. An optional header line before the data, with words and no numbers (for example `Pressure,Volume` or `P (psig), V (cc)`), is skipped; columns are always read as pressure then volume. Numbers must be plain decimals (`1500`, `1.5e3`); hexadecimal and similar forms are rejected. The UI allows up to 500 points and imported files no larger than 1 MB.
 
 **Units label the supplied numbers; changing a unit does not convert them.** 1 cc = 1 mL = 1 cm³. Temperature is metadata in this graphical fitting version, not an input to an equation-of-state calculation.
 
