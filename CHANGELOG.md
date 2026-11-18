@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Report preview from live code
+
+- The A4 report preview (HTML and PDF) is now generated from the live report code with `npm run preview`, so it includes the intersection detail panel and can no longer drift from real reports. A test fails if the committed preview is stale.
+- Replaced the separate Python/ReportLab preview generator; ReportLab is no longer needed.
+- Fixed the narrow report graph label, which still read "Psat" with two decimals instead of Pb/Pd with unit-appropriate digits.
+
 ## Unreleased — Review fixes, per-branch shapes and Y-function check
 
 Numerical method:
