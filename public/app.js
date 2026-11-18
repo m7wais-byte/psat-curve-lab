@@ -286,13 +286,13 @@ function chart() {
       : '');
   const x = (v) => l + ((v - vmin) / (vmax - vmin)) * (W - l - rt),
     y = (p) => H - b - ((p - pmin) / (pmax - pmin)) * (H - t - b);
-  let h = `<svg id="pvplot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pressure on vertical axis, volume on horizontal axis; independent branch fits and their intersection"><desc>Graphical pressure-volume analysis. Changing axis limits changes only the view, not the fitted result.</desc><defs><clipPath id="area"><rect x="${l}" y="${t}" width="${W - l - rt}" height="${H - t - b}"/></clipPath></defs>`;
+  let h = `<svg id="pvplot" viewBox="0 0 ${W} ${c ? H + 230 : H}" role="img" aria-label="Pressure on vertical axis, volume on horizontal axis; independent branch fits and their intersection"><desc>Graphical pressure-volume analysis. Changing axis limits changes only the view, not the fitted result.</desc><defs><clipPath id="area"><rect x="${l}" y="${t}" width="${W - l - rt}" height="${H - t - b}"/></clipPath></defs>`;
   const grid = $('grid').value || 'paper';
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="white"/>`;
   if (r && $('shade').checked) {
     for (const [name, f, color] of [
       ['high', r.high, '#0f766e'],
-      ['low', r.low, '#c97725'],
+      ['low', r.low, '#c05a13'],
     ])
       h += `<rect clip-path="url(#area)" data-region="${name}" x="${x(f.min)}" y="${t}" width="${Math.max(0, x(f.max) - x(f.min))}" height="500" fill="${color}" opacity=".055"><title>Selected ${name}-pressure fitting range</title></rect>`;
     h += `<rect clip-path="url(#area)" data-region="gap" x="${x(r.gap[0])}" y="${t}" width="${Math.max(0, x(r.gap[1]) - x(r.gap[0]))}" height="500" fill="#758499" opacity=".065"><title>Interval between selected fitting ranges</title></rect>`;
@@ -302,13 +302,13 @@ function chart() {
     let xx = l + i * 20,
       major = i % 5 === 0;
     if (grid === 'none' || (!major && grid !== 'paper')) continue;
-    h += `<path d="M${xx} ${t}V${H - b}" stroke="${major ? '#ccd9d2' : '#edf2ee'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
+    h += `<path d="M${xx} ${t}V${H - b}" stroke="${major ? '#dbe4df' : '#f1f5f3'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   for (let i = 0; i <= 25; i++) {
     let yy = t + i * 20,
       major = i % 5 === 0;
     if (grid === 'none' || (!major && grid !== 'paper')) continue;
-    h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#ccd9d2' : '#edf2ee'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
+    h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#dbe4df' : '#f1f5f3'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="none" stroke="#8191a4" stroke-width="1"/><path d="M${l} ${t}V${H - b}H${W - rt}" fill="none" stroke="#34475c" stroke-width="1.8"/>`;
   for (let i = 0; i <= 9; i++) {
@@ -326,13 +326,13 @@ function chart() {
         p = f.predict(v);
       d += (i ? 'L' : 'M') + x(v) + ',' + y(p);
     }
-    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3.2" stroke-dasharray="${dashed ? '7 5' : ''}" clip-path="url(#area)"/>`;
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="4.5" stroke-dasharray="${dashed ? '7 5' : ''}" clip-path="url(#area)"/>`;
   }
   h += `<g clip-path="url(#area)">`;
   if (r) {
     for (let [f, color] of [
       [r.high, '#0f766e'],
-      [r.low, '#c97725'],
+      [r.low, '#c05a13'],
     ]) {
       h += path(f, f.min, f.max, color, false);
       let target = c ? c.v : (r.gap[0] + r.gap[1]) / 2;
@@ -345,11 +345,11 @@ function chart() {
   }
   points.filter(inside).forEach((p) => {
     let color =
-      p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c97725' : '#82918c';
+      p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c05a13' : '#82918c';
     h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
   });
   h += `</g>`;
-  h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text></svg>`;
+  h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text>${c ? PVReport.detailSvg(currentReport(), W - l - rt + 50, 210).replace('<svg ', `<svg x="${l - 50}" y="${H + 10}" `) : ''}</svg>`;
   $('chart').innerHTML = h;
   $('chart')
     .querySelectorAll('[data-id]')
@@ -534,7 +534,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v12',
+      application: 'Psat Curve Lab v13',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',

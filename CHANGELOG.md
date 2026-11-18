@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — Deep fit
+## Unreleased — Clearer fitted curves
+
+- Strengthened curve strokes and orange contrast, reduced grid emphasis, and used filled fitted-point markers in reports.
+- Added a separate intersection/low-pressure detail panel with labelled zoomed axes on screen, SVG export and A4 HTML/PDF reports.
+- Kept every measurement in the overview and numerical fitting unchanged.
+
+## Deep fit
 
 - Replaced the local adjusted-R² heuristic with exhaustive permitted-selection search for up to 20 nonzero readings.
 - Added bounded multi-start beam search for larger cases, with clear search-scope disclosure.
