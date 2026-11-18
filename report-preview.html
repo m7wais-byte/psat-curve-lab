@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>VAPS · A4 report preview</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #f1f5f2;
+        font:
+          13px/1.5 Arial,
+          Helvetica,
+          sans-serif;
+        color: #29443a;
+      }
+      .preview-toolbar {
+        max-width: 680px;
+        margin: 0 auto 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .preview-toolbar h1 {
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .preview-toolbar p {
+        font-size: 12px;
+        color: #687e70;
+        margin: 4px 0 0;
+      }
+      .preview-toolbar button {
+        background: #0f766e;
+        color: white;
+        border: 0;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font:
+          13px Arial,
+          sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .preview-toolbar button:focus-visible {
+        outline: 3px solid #8dbca4;
+        outline-offset: 3px;
+      }
+      @media (max-width: 480px) {
+        body {
+          padding: 12px;
+        }
+        .preview-toolbar {
+          align-items: flex-start;
+        }
+        .preview-toolbar button {
+          font-size: 11px;
+          padding: 9px 10px;
+        }
+      }
+      @media print {
+        body {
+          padding: 0;
+          margin: 0;
+          background: white;
+        }
+        .preview-toolbar {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="preview-toolbar">
+      <div>
+        <h1>A4 report preview</h1>
+        <p>Example values · Recreated VAPS vector logo</p>
+      </div>
+      <button type="button" onclick="window.print()">Print / Save as PDF</button>
+    </header>
+    <div
+      id="vaps-a4-vector-report"
+      aria-label="A4 final report preview with recreated VAPS vector logo and illustrative data"
+    >
+      <style>
+        #vaps-a4-vector-report {
+          --paper: #fff;
+          --ink: #223b35;
+          --quiet: #66796f;
+          --rule: #d8e3dc;
+          --high: #0f766e;
+          --low: #c97725;
+          max-width: 680px;
+          margin: 0 auto;
+          font:
+            13px/1.5 Arial,
+            Helvetica,
+            sans-serif;
+          color: var(--ink);
+        }
+        #vaps-a4-vector-report * {
+          box-sizing: border-box;
+        }
+        #vaps-a4-vector-report .paper {
+          background: var(--paper);
+          border: 1px solid var(--rule);
+          padding: 30px 34px 23px;
+          aspect-ratio: 210/297;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        #vaps-a4-vector-report .report-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid var(--high);
+        }
+        #vaps-a4-vector-report .logo {
+          width: 128px;
+          min-width: 128px;
+          height: 76px;
+          display: flex;
+          align-items: center;
+          border: 0;
+        }
+        #vaps-a4-vector-report .logo svg {
+          display: block;
+          width: 128px;
+          height: 76px;
+        }
+
+        #vaps-a4-vector-report .heading {
+          text-align: right;
+        }
+        #vaps-a4-vector-report h1 {
+          margin: 0;
+          font-size: 20px;
+          line-height: 1.25;
+          font-weight: 500;
+          letter-spacing: -0.35px;
+        }
+        #vaps-a4-vector-report .subtitle {
+          margin-top: 5px;
+          font-size: 12px;
+          color: var(--quiet);
+        }
+        #vaps-a4-vector-report .draft {
+          display: inline-block;
+          margin-top: 7px;
+          font-size: 11px;
+          color: #927039;
+        }
+        #vaps-a4-vector-report .details {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          column-gap: 25px;
+          row-gap: 7px;
+        }
+        #vaps-a4-vector-report .detail {
+          display: flex;
+          gap: 10px;
+          justify-content: space-between;
+          border-bottom: 1px solid #edf1ed;
+          padding-bottom: 5px;
+          font-size: 12px;
+        }
+        #vaps-a4-vector-report .label {
+          color: var(--quiet);
+        }
+        #vaps-a4-vector-report .value {
+          text-align: right;
+          font-weight: 500;
+        }
+        #vaps-a4-vector-report .results {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 23px;
+          padding: 13px 0 14px;
+          border-top: 1px solid var(--rule);
+          border-bottom: 1px solid var(--rule);
+        }
+        #vaps-a4-vector-report .result-label {
+          font-size: 12px;
+          color: var(--quiet);
+        }
+        #vaps-a4-vector-report .result-number {
+          font-size: 30px;
+          font-weight: 500;
+          letter-spacing: -0.8px;
+          margin-top: 4px;
+          font-variant-numeric: tabular-nums;
+        }
+        #vaps-a4-vector-report .result-number span {
+          font-size: 13px;
+          letter-spacing: 0;
+          margin-left: 5px;
+          color: var(--quiet);
+        }
+        #vaps-a4-vector-report .plot-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          font-size: 12px;
+          padding-top: 1px;
+        }
+        #vaps-a4-vector-report .plot-heading strong {
+          font-weight: 500;
+        }
+        #vaps-a4-vector-report .plot-heading span {
+          color: var(--quiet);
+          font-size: 11px;
+        }
+        #vaps-a4-vector-report .plot {
+          width: 100%;
+        }
+        #vaps-a4-vector-report .plot svg {
+          display: block;
+          width: 100%;
+          height: auto;
+          overflow: visible;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+        #vaps-a4-vector-report .legend {
+          display: flex;
+          justify-content: center;
+          gap: 18px;
+          flex-wrap: wrap;
+          font-size: 11px;
+          color: var(--quiet);
+          margin-top: 1px;
+        }
+        #vaps-a4-vector-report .legend span {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        #vaps-a4-vector-report .swatch {
+          display: inline-block;
+          width: 20px;
+          height: 0;
+          border-top: 2px solid var(--high);
+        }
+        #vaps-a4-vector-report .swatch.low {
+          border-color: var(--low);
+        }
+        #vaps-a4-vector-report .swatch.extension {
+          border-color: #7e8d84;
+          border-top-style: dashed;
+        }
+        #vaps-a4-vector-report .fit-summary {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 22px;
+          border-top: 1px solid var(--rule);
+          padding-top: 13px;
+        }
+        #vaps-a4-vector-report .fit-label {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 12px;
+        }
+        #vaps-a4-vector-report .fit-label i {
+          width: 7px;
+          height: 7px;
+          background: var(--high);
+          border-radius: 50%;
+        }
+        #vaps-a4-vector-report .fit-label .low {
+          background: var(--low);
+        }
+        #vaps-a4-vector-report .r2 {
+          margin-top: 5px;
+          font-size: 20px;
+          font-weight: 500;
+          font-variant-numeric: tabular-nums;
+        }
+        #vaps-a4-vector-report .report-footer {
+          margin-top: auto;
+          padding-top: 12px;
+          border-top: 1px solid var(--rule);
+          display: flex;
+          gap: 12px;
+          justify-content: space-between;
+          color: var(--quiet);
+          font-size: 11px;
+        }
+        @media (max-width: 480px) {
+          #vaps-a4-vector-report .paper {
+            padding: 19px 15px;
+            gap: 13px;
+            aspect-ratio: auto;
+          }
+          #vaps-a4-vector-report .report-header {
+            gap: 12px;
+          }
+          #vaps-a4-vector-report .logo {
+            width: 96px;
+            min-width: 96px;
+            height: 60px;
+          }
+          #vaps-a4-vector-report .logo svg {
+            width: 96px;
+            height: 60px;
+          }
+          #vaps-a4-vector-report h1 {
+            font-size: 17px;
+          }
+          #vaps-a4-vector-report .details {
+            gap: 7px 15px;
+          }
+          #vaps-a4-vector-report .detail {
+            flex-direction: column;
+            gap: 2px;
+            font-size: 11px;
+          }
+          #vaps-a4-vector-report .value {
+            text-align: left;
+          }
+          #vaps-a4-vector-report .result-number {
+            font-size: 24px;
+          }
+          #vaps-a4-vector-report .result-number span {
+            font-size: 11px;
+          }
+          #vaps-a4-vector-report .plot-heading {
+            align-items: flex-start;
+          }
+          #vaps-a4-vector-report .plot-heading span {
+            max-width: 100px;
+            text-align: right;
+          }
+          #vaps-a4-vector-report .legend {
+            gap: 10px;
+          }
+          #vaps-a4-vector-report .r2 {
+            font-size: 18px;
+          }
+          #vaps-a4-vector-report .report-footer {
+            flex-wrap: wrap;
+          }
+        }
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+          #vaps-a4-vector-report {
+            max-width: none;
+            width: 210mm;
+          }
+          #vaps-a4-vector-report .paper {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 12mm;
+            border: 0;
+          }
+        }
+      </style>
+      <article class="paper">
+        <div class="report-header">
+          <div class="logo">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 200 118"
+              role="img"
+              aria-label="VAPS logo, recreated vector draft"
+            >
+              <path
+                d="M7 8C33 5 47 12 54 35L69 85L111 30L61 109L39 50C31 25 25 12 7 8Z"
+                fill="#2d7db8"
+              />
+              <path d="M62 104L112 28" fill="none" stroke="#2d7db8" stroke-width="1.6" />
+              <path d="M66 108L116 30" fill="none" stroke="#25ad68" stroke-width="2.1" />
+              <g transform="translate(31 49)">
+                <circle r="16" fill="#fff" />
+                <g fill="#2d7db8">
+                  <rect x="-1.8" y="-16.1" width="3.6" height="5.5" rx=".5" />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(30)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(60)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(90)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(120)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(150)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(180)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(210)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(240)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(270)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(300)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(330)"
+                  />
+                </g>
+                <circle r="12.2" fill="#fff" stroke="#2d7db8" stroke-width="2.1" />
+                <circle r="8.7" fill="#28bf74" />
+              </g>
+              <text
+                x="94"
+                y="85"
+                font-family="Arial,Helvetica,sans-serif"
+                font-size="38"
+                font-weight="700"
+                letter-spacing=".1"
+                fill="#2d7db8"
+              >
+                APS
+              </text>
+            </svg>
+          </div>
+          <div class="heading">
+            <h1>Saturation pressure report</h1>
+            <div class="subtitle">Final pressure–volume plot</div>
+            <div class="draft">PREVIEW · EXAMPLE VALUES</div>
+          </div>
+        </div>
+        <div class="details">
+          <div class="detail">
+            <span class="label">Sample / case</span
+            ><span class="value">Example sample 01</span>
+          </div>
+          <div class="detail">
+            <span class="label">Date</span><span class="value">18 Nov 2026</span>
+          </div>
+          <div class="detail">
+            <span class="label">Test type</span><span class="value">Bubble point</span>
+          </div>
+          <div class="detail">
+            <span class="label">Temperature</span><span class="value">Not recorded</span>
+          </div>
+          <div class="detail">
+            <span class="label">Pressure unit</span><span class="value">psi · gauge</span>
+          </div>
+          <div class="detail">
+            <span class="label">Volume unit</span><span class="value">cc</span>
+          </div>
+        </div>
+        <div class="results">
+          <div>
+            <div class="result-label">Estimated saturation pressure · Psat</div>
+            <div class="result-number" data-result="pressure">
+              1,006.90<span>psi g</span>
+            </div>
+          </div>
+          <div>
+            <div class="result-label">Volume at saturation · Vsat</div>
+            <div class="result-number" data-result="volume">34.9975<span>cc</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="plot-heading">
+            <strong>Pressure–volume graph</strong><span>18 points used · 3 excluded</span>
+          </div>
+          <div class="plot" data-report-plot></div>
+          <div class="legend">
+            <span><i class="swatch"></i>High-pressure fit</span
+            ><span><i class="swatch low"></i>Low-pressure fit</span
+            ><span><i class="swatch extension"></i>Extended trend</span>
+          </div>
+        </div>
+        <div class="fit-summary">
+          <div>
+            <div class="fit-label"><i></i>High-pressure fit</div>
+            <div class="r2" data-r2="high">R² = 0.999991</div>
+          </div>
+          <div>
+            <div class="fit-label"><i class="low"></i>Low-pressure fit</div>
+            <div class="r2" data-r2="low">R² = 0.998976</div>
+          </div>
+        </div>
+        <div class="report-footer">
+          <span>Excluded points omitted from final graph</span
+          ><span>A4 portrait · Page 1 of 1</span>
+        </div>
+      </article>
+      <script>
+        (() => {
+          const root = document.getElementById('vaps-a4-vector-report');
+          const data = {
+            points: [
+              { id: 0, v: 33, p: 4400, group: 'high' },
+              { id: 1, v: 33.2, p: 4009.9666592418043, group: 'high' },
+              { id: 2, v: 33.4, p: 3622.977835591895, group: 'high' },
+              { id: 3, v: 33.6, p: 3250.2967412706867, group: 'high' },
+              { id: 4, v: 33.8, p: 2897.9764534045594, group: 'high' },
+              { id: 5, v: 34, p: 2553.1939484504937, group: 'high' },
+              { id: 6, v: 34.2, p: 2213.200501249621, group: 'high' },
+              { id: 7, v: 34.4, p: 1891.5274515510541, group: 'high' },
+              { id: 8, v: 34.6, p: 1587.4366472594238, group: 'high' },
+              { id: 9, v: 34.8, p: 1287.5869622925268, group: 'none' },
+              { id: 10, v: 35, p: 996.1544100324818, group: 'none' },
+              { id: 11, v: 35.2, p: 962.0040038967427, group: 'none' },
+              { id: 12, v: 35.4, p: 930.3991716005709, group: 'low' },
+              { id: 13, v: 35.6, p: 890.9654536183034, group: 'low' },
+              { id: 14, v: 35.8, p: 853.712806217025, group: 'low' },
+              { id: 15, v: 36, p: 826.4362334160887, group: 'low' },
+              { id: 16, v: 36.2, p: 797.1170922466025, group: 'low' },
+              { id: 17, v: 36.4, p: 761.0574506401031, group: 'low' },
+              { id: 18, v: 36.6, p: 731.4865569286735, group: 'low' },
+              { id: 19, v: 36.8, p: 709.6933115582652, group: 'low' },
+              { id: 20, v: 37, p: 682.1163307444801, group: 'low' },
+            ],
+            psat: 1006.8991884029518,
+            vsat: 34.997518462831366,
+            origin: 33,
+            scale: 4,
+            high: {
+              coef: [4401.509435348546, -8019.164894310756, 2446.0551561607867],
+              r2: 0.9999912104868158,
+              min: 33,
+              max: 34.6,
+            },
+            low: {
+              coef: [1491.2690788758382, -1130.7210186941718, 321.95499690111757],
+              r2: 0.9989762254717046,
+              min: 35.4,
+              max: 37,
+            },
+            used: 18,
+            excluded: 3,
+          };
+          const plot = root.querySelector('[data-report-plot]');
+          const fmt = (v, d) =>
+            v.toLocaleString(undefined, {
+              minimumFractionDigits: d,
+              maximumFractionDigits: d,
+            });
+          root.querySelector('[data-result="pressure"]').innerHTML =
+            fmt(data.psat, 2) + '<span>psi g</span>';
+          root.querySelector('[data-result="volume"]').innerHTML =
+            fmt(data.vsat, 4) + '<span>cc</span>';
+          root.querySelector('[data-r2="high"]').textContent =
+            'R² = ' + data.high.r2.toFixed(6);
+          root.querySelector('[data-r2="low"]').textContent =
+            'R² = ' + data.low.r2.toFixed(6);
+          const predict = (f, v) => {
+            const z = (v - data.origin) / data.scale;
+            return f.coef.reduce((s, c, i) => s + c * z ** i, 0);
+          };
+          function draw() {
+            const w = Math.max(
+              240,
+              Math.round(plot.getBoundingClientRect().width || 600),
+            );
+            const l = 57,
+              r = 12,
+              t = 16,
+              b = 46,
+              cols = w >= 480 ? 8 : 4;
+            const cell = (w - l - r) / cols,
+              rows = w >= 480 ? 4 : 5,
+              ph = cell * rows,
+              h = t + ph + b;
+            const x0 = 32.8,
+              x1 = 37.2,
+              y0 = 0,
+              y1 = 4800;
+            const x = (v) => l + ((v - x0) / (x1 - x0)) * (w - l - r),
+              y = (p) => t + ph - ((p - y0) / (y1 - y0)) * ph;
+            let s =
+              '<svg viewBox="0 0 ' +
+              w +
+              ' ' +
+              h +
+              '" role="img" aria-label="Illustrative pressure-volume graph with independently curved high- and low-pressure fits, omitted excluded points, and a marked saturation intersection"><defs><clipPath id="report-plot-clip"><rect x="' +
+              l +
+              '" y="' +
+              t +
+              '" width="' +
+              (w - l - r) +
+              '" height="' +
+              ph +
+              '"/></clipPath></defs>';
+            for (let i = 0; i <= cols * 5; i++) {
+              const xx = l + (i * cell) / 5;
+              s +=
+                '<line x1="' +
+                xx +
+                '" y1="' +
+                t +
+                '" x2="' +
+                xx +
+                '" y2="' +
+                (t + ph) +
+                '" stroke="' +
+                (i % 5 === 0 ? '#cedbd3' : '#eef3ef') +
+                '" stroke-width="' +
+                (i % 5 === 0 ? '.8' : '.45') +
+                '"/>';
+            }
+            for (let i = 0; i <= rows * 5; i++) {
+              const yy = t + (i * cell) / 5;
+              s +=
+                '<line x1="' +
+                l +
+                '" y1="' +
+                yy +
+                '" x2="' +
+                (w - r) +
+                '" y2="' +
+                yy +
+                '" stroke="' +
+                (i % 5 === 0 ? '#cedbd3' : '#eef3ef') +
+                '" stroke-width="' +
+                (i % 5 === 0 ? '.8' : '.45') +
+                '"/>';
+            }
+            s +=
+              '<rect x="' +
+              l +
+              '" y="' +
+              t +
+              '" width="' +
+              (w - l - r) +
+              '" height="' +
+              ph +
+              '" fill="none" stroke="#9db3a4" stroke-width=".8"/>';
+            for (let i = 0; i <= cols; i++) {
+              const v = x0 + ((x1 - x0) * i) / cols;
+              s +=
+                '<text x="' +
+                x(v) +
+                '" y="' +
+                (t + ph + 19) +
+                '" text-anchor="middle" font-size="11" fill="#546e5c">' +
+                v.toFixed(2) +
+                '</text>';
+            }
+            for (let i = 0; i <= rows; i++) {
+              const p = y0 + ((y1 - y0) * i) / rows;
+              s +=
+                '<text x="' +
+                (l - 9) +
+                '" y="' +
+                (y(p) + 4) +
+                '" text-anchor="end" font-size="11" fill="#546e5c">' +
+                fmt(p, 0) +
+                '</text>';
+            }
+            const line = (f, a, b, color, dash) => {
+              let d = '';
+              for (let i = 0; i <= 80; i++) {
+                const v = a + ((b - a) * i) / 80;
+                d +=
+                  (i ? 'L' : 'M') + x(v).toFixed(2) + ',' + y(predict(f, v)).toFixed(2);
+              }
+              return (
+                '<path d="' +
+                d +
+                '" fill="none" stroke="' +
+                color +
+                '" stroke-width="1.9"' +
+                (dash ? ' stroke-dasharray="5 4"' : '') +
+                '/>'
+              );
+            };
+            s +=
+              '<g clip-path="url(#report-plot-clip)">' +
+              line(data.high, data.high.min, data.high.max, '#0f766e', false) +
+              line(data.high, data.high.max, data.vsat, '#0f766e', true) +
+              line(data.low, data.low.min, data.low.max, '#c97725', false) +
+              line(data.low, data.vsat, data.low.min, '#c97725', true);
+            s +=
+              '<path d="M' +
+              l +
+              ',' +
+              y(data.psat) +
+              'H' +
+              x(data.vsat) +
+              'V' +
+              (t + ph) +
+              '" fill="none" stroke="#6b8272" stroke-width=".9" stroke-dasharray="3 4"/>';
+            data.points
+              .filter((p) => p.group !== 'none')
+              .forEach((p) => {
+                s +=
+                  '<circle cx="' +
+                  x(p.v) +
+                  '" cy="' +
+                  y(p.p) +
+                  '" r="3.2" fill="white" stroke="' +
+                  (p.group === 'high' ? '#0f766e' : '#c97725') +
+                  '" stroke-width="1.3"/>';
+              });
+            s +=
+              '<circle cx="' +
+              x(data.vsat) +
+              '" cy="' +
+              y(data.psat) +
+              '" r="4.7" fill="white" stroke="#223b35" stroke-width="1.6"/></g>';
+            const ax = Math.min(w - 115, x(data.vsat) + 12),
+              ay = y(data.psat) - 21;
+            s +=
+              '<text x="' +
+              ax +
+              '" y="' +
+              ay +
+              '" font-size="11" fill="#223b35" stroke="white" stroke-width="4" paint-order="stroke">Psat ' +
+              fmt(data.psat, 2) +
+              ' psi g</text><text x="' +
+              ax +
+              '" y="' +
+              (ay + 15) +
+              '" font-size="11" fill="#546e5c" stroke="white" stroke-width="4" paint-order="stroke">V ' +
+              fmt(data.vsat, 4) +
+              ' cc</text>';
+            s +=
+              '<text x="' +
+              (l + (w - l - r) / 2) +
+              '" y="' +
+              (h - 6) +
+              '" text-anchor="middle" font-size="12" fill="#344f3d">Volume (cc)</text><text transform="translate(13 ' +
+              (t + ph / 2) +
+              ') rotate(-90)" text-anchor="middle" font-size="12" fill="#344f3d">Pressure (psi, gauge)</text></svg>';
+            plot.innerHTML = s;
+          }
+          draw();
+          if (globalThis.ResizeObserver) {
+            const observer = new ResizeObserver(draw);
+            observer.observe(plot);
+          }
+        })();
+      </script>
+    </div>
+  </body>
+</html>
