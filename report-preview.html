@@ -179,8 +179,8 @@
         }
         #vaps-a4-vector-report .results {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 23px;
+          grid-template-columns: 1fr;
+          gap: 10px;
           padding: 13px 0 14px;
           border-top: 1px solid var(--rule);
           border-bottom: 1px solid var(--rule);
@@ -190,9 +190,9 @@
           color: var(--quiet);
         }
         #vaps-a4-vector-report .result-number {
-          font-size: 30px;
+          font-size: 24px;
           font-weight: 500;
-          letter-spacing: -0.8px;
+          letter-spacing: -0.4px;
           margin-top: 4px;
           font-variant-numeric: tabular-nums;
         }
@@ -253,6 +253,14 @@
         #vaps-a4-vector-report .swatch.extension {
           border-color: #7e8d84;
           border-top-style: dashed;
+        }
+
+        #vaps-a4-vector-report .swatch.excluded {
+          width: 7px;
+          height: 7px;
+          border: 1.3px solid #8b9790;
+          border-radius: 50%;
+          background: white;
         }
         #vaps-a4-vector-report .fit-summary {
           display: grid;
@@ -517,14 +525,10 @@
         </div>
         <div class="results">
           <div>
-            <div class="result-label">Estimated saturation pressure · Psat</div>
-            <div class="result-number" data-result="pressure">
-              1,006.90<span>psi g</span>
+            <div class="result-label">Estimated saturation pressure</div>
+            <div class="result-number" data-result="summary">
+              Psat: 1,006.90 psi g at 34.9975 cc
             </div>
-          </div>
-          <div>
-            <div class="result-label">Volume at saturation · Vsat</div>
-            <div class="result-number" data-result="volume">34.9975<span>cc</span></div>
           </div>
         </div>
         <div>
@@ -535,7 +539,8 @@
           <div class="legend">
             <span><i class="swatch"></i>High-pressure fit</span
             ><span><i class="swatch low"></i>Low-pressure fit</span
-            ><span><i class="swatch extension"></i>Extended trend</span>
+            ><span><i class="swatch extension"></i>Extended trend</span
+            ><span><i class="swatch excluded"></i>Excluded points</span>
           </div>
         </div>
         <div class="fit-summary">
@@ -549,7 +554,7 @@
           </div>
         </div>
         <div class="report-footer">
-          <span>Excluded points omitted from final graph</span
+          <span>Excluded points shown; not used in either fit</span
           ><span>A4 portrait · Page 1 of 1</span>
         </div>
       </article>
@@ -605,10 +610,8 @@
               minimumFractionDigits: d,
               maximumFractionDigits: d,
             });
-          root.querySelector('[data-result="pressure"]').innerHTML =
-            fmt(data.psat, 2) + '<span>psi g</span>';
-          root.querySelector('[data-result="volume"]').innerHTML =
-            fmt(data.vsat, 4) + '<span>cc</span>';
+          root.querySelector('[data-result="summary"]').textContent =
+            'Psat: ' + fmt(data.psat, 2) + ' psi g at ' + fmt(data.vsat, 4) + ' cc';
           root.querySelector('[data-r2="high"]').textContent =
             'R² = ' + data.high.r2.toFixed(6);
           root.querySelector('[data-r2="low"]').textContent =
@@ -642,7 +645,7 @@
               w +
               ' ' +
               h +
-              '" role="img" aria-label="Illustrative pressure-volume graph with independently curved high- and low-pressure fits, omitted excluded points, and a marked saturation intersection"><defs><clipPath id="report-plot-clip"><rect x="' +
+              '" role="img" aria-label="Illustrative pressure-volume graph with independently curved high- and low-pressure fits, visible excluded points not used in either fit, and a marked saturation intersection"><defs><clipPath id="report-plot-clip"><rect x="' +
               l +
               '" y="' +
               t +
@@ -750,18 +753,24 @@
               'V' +
               (t + ph) +
               '" fill="none" stroke="#6b8272" stroke-width=".9" stroke-dasharray="3 4"/>';
-            data.points
-              .filter((p) => p.group !== 'none')
-              .forEach((p) => {
-                s +=
-                  '<circle cx="' +
-                  x(p.v) +
-                  '" cy="' +
-                  y(p.p) +
-                  '" r="3.2" fill="white" stroke="' +
-                  (p.group === 'high' ? '#0f766e' : '#c97725') +
-                  '" stroke-width="1.3"/>';
-              });
+            data.points.forEach((p) => {
+              s +=
+                '<circle data-point="' +
+                p.id +
+                '" data-group="' +
+                p.group +
+                '" cx="' +
+                x(p.v) +
+                '" cy="' +
+                y(p.p) +
+                '" r="3.2" fill="white" stroke="' +
+                (p.group === 'high'
+                  ? '#0f766e'
+                  : p.group === 'low'
+                    ? '#c97725'
+                    : '#8b9790') +
+                '" stroke-width="1.3"/>';
+            });
             s +=
               '<circle cx="' +
               x(data.vsat) +
@@ -781,7 +790,7 @@
               ax +
               '" y="' +
               (ay + 15) +
-              '" font-size="11" fill="#546e5c" stroke="white" stroke-width="4" paint-order="stroke">V ' +
+              '" font-size="11" fill="#546e5c" stroke="white" stroke-width="4" paint-order="stroke">at ' +
               fmt(data.vsat, 4) +
               ' cc</text>';
             s +=
