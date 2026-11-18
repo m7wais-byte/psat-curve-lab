@@ -102,9 +102,7 @@
   }
   function unit(m, compact = false) {
     const suffix = m.pressureBasis === 'Gauge' ? 'g' : 'a';
-    return m.pressureUnit === 'psi' && compact
-      ? 'psi' + suffix
-      : m.pressureUnit + ' ' + suffix;
+    return m.pressureUnit === 'psi' ? 'psi' + suffix : m.pressureUnit + ' ' + suffix;
   }
   function phaseName(m) {
     return m.phase === 'bubble'
