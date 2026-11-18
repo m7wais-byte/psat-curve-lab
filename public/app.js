@@ -400,6 +400,12 @@ function chart() {
           : p.group + ' branch';
     // Deep fit exclusions get a cross so they read differently from manual "neither" points.
     h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}${auto ? ', left out by Deep fit' : ''}"><circle cx="${cx}" cy="${cy}" r="11" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${state}</title></circle>${auto ? `<path data-auto-excluded="${p.id}" d="M${cx - 3} ${cy - 3}l6 6m0 -6l-6 6" stroke="${color}" stroke-width="1.6" pointer-events="none"/>` : ''}</g>`;
+    if ($('pointNumbers').checked && points.length <= 32) {
+      let labelY = cy + (p.id % 2 ? 17 : -12);
+      if (labelY > H - b - 5) labelY = cy - 12;
+      if (labelY < t + 10) labelY = cy + 17;
+      h += `<text data-point-number="${p.id + 1}" x="${Math.max(l + 9, Math.min(W - rt - 9, cx))}" y="${labelY}" text-anchor="middle" font-size="11" font-weight="bold" fill="#223b35" stroke="white" stroke-width="4" paint-order="stroke" pointer-events="none">${p.id + 1}</text>`;
+    }
   });
   h += `</g>`;
   h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text>${c ? PVReport.detailSvg(currentReport(), W - l - rt + 50, 210).replace('<svg ', `<svg x="${l - 50}" y="${H + 10}" `) : ''}</svg>`;
@@ -548,6 +554,7 @@ function currentReport() {
     boundary: $('boundary').value,
     syntheticDemo: demo,
     grid: $('grid').value,
+    showPointNumbers: $('pointNumbers').checked,
     yCheck: yResult && {
       pb: yResult.best.pb,
       vb: yResult.best.vb,
@@ -575,6 +582,7 @@ $('savePdf').onclick = () => {
 };
 $('grid').onchange = () => chart();
 $('shade').onchange = () => chart();
+$('pointNumbers').onchange = () => chart();
 $('saveSvg').onclick = () => {
   if (!points.length) {
     err('Plot a dataset before saving the graph.');
@@ -605,7 +613,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v17',
+      application: 'Psat Curve Lab v18',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -620,6 +628,7 @@ $('export').onclick = () => {
       phaseLabels:
         'Expected from operator-selected test context, not confirmed by the fit',
       graphView: {
+        showPointNumbers: $('pointNumbers').checked,
         mode: viewBounds ? 'custom' : 'auto',
         bounds: viewBounds || autoBounds,
       },
