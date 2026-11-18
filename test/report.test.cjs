@@ -115,3 +115,24 @@ test('print listener is attached after opening the report document', () => {
   assert(printed);
   assert.match(written, /CURRENT-CASE/);
 });
+
+test('overview and magnified detail preserve measurements, coefficients and result values', () => {
+  const { h, model } = fixture();
+  const before = JSON.stringify(model),
+    B = R.detailBounds(model);
+  assert(B.vmin < model.intersection.v && B.vmax > model.intersection.v);
+  assert(B.pmin < model.intersection.p && B.pmax > model.intersection.p);
+  const svg = R.svg(model);
+  assert.match(svg, /Intersection detail/);
+  assert.match(svg, /zoomed pressure and volume axes/);
+  assert.equal((svg.match(/data-report-point=/g) || []).length, model.points.length);
+  assert.match(svg, /data-detail-point=/);
+  assert(!/NaN|Infinity/.test(svg));
+  assert.equal(JSON.stringify(model), before);
+  assert.match(h.get('chart').innerHTML, /data-fit-detail="true"/);
+  assert.match(h.get('chart').innerHTML, /zoomed axes/);
+  const pdf = R.createPdf(model, jsPDF);
+  assert.equal(pdf.getNumberOfPages(), 1);
+  assert.match(pdf.output(), /Intersection detail - zoomed axes/);
+  assert(!pdf.output().includes('/Subtype /Image'));
+});
