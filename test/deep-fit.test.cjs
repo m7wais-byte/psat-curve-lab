@@ -180,3 +180,40 @@ test('the shipped worker loads the same engine and returns plain results and err
   assert.equal(messages.at(-1).type, 'error');
   assert.equal(messages.at(-1).requestId, 8);
 });
+test('unit and temperature changes keep a running deep fit; trend-shape changes still cancel it', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  const running = workers[0];
+  h.get('punit').value = 'bar:Gauge';
+  h.get('punit').onchange();
+  h.get('temp').value = '90';
+  h.get('temp').onchange();
+  assert(!running.terminated);
+  assert(!h.get('cancelFit').hidden);
+  running.complete();
+  assert(h.run('points.filter((p) => p.group !== "none").length') > 0);
+  assert.match(h.get('psat').innerHTML, /bar \(gauge\)/);
+  h.get('vunit').value = 'mL';
+  h.get('vunit').onchange();
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert(data.automaticSelection, 'label changes keep the search record');
+  assert.equal(data.volumeUnit, 'mL');
+  h.get('suggest').onclick();
+  const cancelled = workers.at(-1);
+  h.get('model').value = '1';
+  h.get('model').onchange();
+  assert(cancelled.terminated);
+});
+test('intersection leader lines are drawn unfilled', () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.demo();
+  workers[0].complete();
+  const leader = h
+    .get('chart')
+    .innerHTML.match(/<path d="M\d+(\.\d+)? [^"]*H[^"]*V[^"]*"[^>]*>/);
+  assert(leader, 'leader path present');
+  assert.match(leader[0], /fill="none"/);
+});

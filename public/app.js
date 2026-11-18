@@ -340,7 +340,7 @@ function chart() {
       if (target < f.min) h += path(f, target, f.min, color, true);
     }
     if (c && inside(c)) {
-      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
+      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" fill="none" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
     }
   }
   points.filter(inside).forEach((p) => {
@@ -468,8 +468,10 @@ $('demo').onclick = () => {
   load();
   setupPhase();
 };
-['model', 'temp', 'tunit', 'punit', 'vunit'].forEach(
-  (id) => ($(id).onchange = () => fitNow()),
+$('model').onchange = () => fitNow();
+// Units and temperature only relabel values: keep a running Deep fit and its search record.
+['temp', 'tunit', 'punit', 'vunit'].forEach(
+  (id) => ($(id).onchange = () => (fitWorker ? render() : fitNow(false))),
 );
 function currentReport() {
   return PVReport.buildModel({
