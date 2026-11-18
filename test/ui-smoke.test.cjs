@@ -160,3 +160,16 @@ test('combined pressure selection preserves fits and exports the correct unit an
     assert.equal(data.pressureBasis, basis);
   }
 });
+
+test('plot automatically selects both fits and Auto fit restores points with Undo available', () => {
+  const h = harness();
+  h.demo();
+  const original = h.run('JSON.stringify(points.map(p=>p.group))');
+  h.run('setGroup(0,"none")');
+  const manual = h.run('JSON.stringify(points.map(p=>p.group))');
+  assert.notEqual(manual, original);
+  h.get('suggest').onclick();
+  assert.equal(h.run('JSON.stringify(points.map(p=>p.group))'), original);
+  h.get('undo').onclick();
+  assert.equal(h.run('JSON.stringify(points.map(p=>p.group))'), manual);
+});

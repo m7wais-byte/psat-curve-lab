@@ -471,7 +471,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v10',
+      application: 'Psat Curve Lab v11',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',

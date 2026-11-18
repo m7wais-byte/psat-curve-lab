@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — Header and pressure units
+## Unreleased — Automatic fit selection
+
+- Added individual point exclusion/restoration search within automatic branch selection.
+- Balanced adjusted R² for both branches with point and volume coverage.
+- Retained visible excluded readings, manual editing, Undo and intersection safeguards.
+- Automatic suggestions require 10 points for curved or 8 for straight trends.
+
+## Header and pressure units
 
 - Added the vector VAPS logo to the main header.
 - Combined pressure unit and basis into one selector, including psig and psia.
