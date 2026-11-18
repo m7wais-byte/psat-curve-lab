@@ -1597,3 +1597,19 @@ footer {
     display: none;
   }
 }
+
+.deep-fit-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fit-search-status {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #52685b;
+  margin: 0 0 14px;
+  max-width: 72ch;
+}
+.fit-search-status:empty {
+  display: none;
+}
