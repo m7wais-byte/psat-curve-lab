@@ -333,3 +333,52 @@ test('deep fit applies per-branch minimums and returns mixed-shape fits', () => 
     /Need at least 9 nonzero-pressure points/,
   );
 });
+// Synthetic bubble-point CCE in gauge pressure whose true Y-function is exactly linear:
+// V/Vb − 1 = (Pb − P) / (P_abs · Y), Y = 2.2 + 0.0006 P_abs, Pb = 2500 psia, Vb = 50.
+function yCase(atmosphere = 14.696) {
+  return Array.from({ length: 16 }, (_, id) => {
+    const P = 4000 - 200 * id,
+      v =
+        P >= 2500
+          ? 50 * (1 - 1.2e-5 * (P - 2500))
+          : 50 * (1 + (2500 - P) / (P * (2.2 + 0.0006 * P)));
+    return { id, p: P - atmosphere, v, group: P >= 2500 ? 'high' : 'low' };
+  });
+}
+test('Y-function check recovers the true bubble point and Vb on exact data', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 }),
+    y = PV.yFunction(points, r, 14.696);
+  assert(Math.abs(y.best.pb - (2500 - 14.696)) < 0.05, `Pb ${y.best.pb}`);
+  assert(Math.abs(y.best.vb - 50) < 1e-3, `Vb ${y.best.vb}`);
+  assert(y.best.relativeRmse < 1e-6);
+  assert(Math.abs(y.best.slope * 1e4 - 6) < 1e-3, 'Y slope matches the synthetic 0.0006');
+  assert.deepEqual(y.bracket, [2400 - 14.696, 2600 - 14.696]);
+  assert.equal(y.atEdge, false);
+  assert.equal(y.best.rows.length, points.filter((p) => p.group === 'low').length);
+  // The graphical estimate is evaluated with the same Y measure for comparison.
+  assert(y.graphical === null || y.graphical.relativeRmse >= y.best.relativeRmse);
+});
+test('Y-function uses absolute pressure: ignoring the gauge offset biases Pb', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 });
+  const wrong = PV.yFunction(points, r, 0);
+  assert(
+    wrong.best.relativeRmse > 1e-6,
+    'gauge treated as absolute is no longer exactly linear',
+  );
+  const absolute = yCase(0),
+    ra = PV.analyze(absolute, { high: 1, low: 2 });
+  assert(Math.abs(PV.yFunction(absolute, ra, 0).best.pb - 2500) < 0.05);
+});
+test('Y-function check rejects unsuitable selections', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 });
+  const fewLow = points.map((p) => (p.id > 10 ? { ...p, group: 'none' } : p));
+  assert.throws(
+    () => PV.yFunction(fewLow, PV.analyze(fewLow, { high: 1, low: 1 }), 14.696),
+    /at least 4 low-pressure points/,
+  );
+  assert.throws(() => PV.yFunction(points, null), /Fit both branches/);
+  assert.throws(() => PV.yFunction(points, r, -1), /Atmospheric/);
+});

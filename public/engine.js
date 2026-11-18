@@ -404,9 +404,102 @@
       },
     };
   }
+  // Bubble-point Y-function check: Y = (Pb − P) / (P_abs · (V/Vb − 1)) over the low-pressure
+  // (two-phase) points. Y should be linear in pressure when Pb is right, so the Pb that makes
+  // Y most linear is an independent cross-check of the graphical intersection.
+  function yFunction(points, r, atmosphere = 0) {
+    if (!r?.high || !r?.low)
+      throw Error('Fit both branches before the Y-function check.');
+    if (!Number.isFinite(atmosphere) || atmosphere < 0)
+      throw Error('Atmospheric pressure must be finite and nonnegative.');
+    const low = points.filter((p) => p.group === 'low'),
+      high = points.filter((p) => p.group === 'high');
+    if (low.length < 4)
+      throw Error('The Y-function check needs at least 4 low-pressure points.');
+    const lower = Math.max(...low.map((p) => p.p)),
+      upper = Math.min(...high.map((p) => p.p));
+    if (!(upper > lower))
+      throw Error(
+        'For the Y-function check, every high-pressure point must be above every low-pressure point.',
+      );
+    if (low.some((p) => p.p + atmosphere <= 0))
+      throw Error('The Y-function check needs positive absolute pressures.');
+    // Vb: volume on the high-pressure (liquid) trend at Pb, between its first point and the
+    // first low-pressure volume, where analyze() has checked the trend is decreasing.
+    function volumeAt(pb) {
+      let a = r.high.min,
+        b = r.low.min;
+      if (r.high.predict(a) < pb || r.high.predict(b) > pb) return null;
+      for (let i = 0; i < 200 && b - a > 1e-14 * Math.max(1, Math.abs(b)); i++) {
+        const m = (a + b) / 2;
+        if (r.high.predict(m) > pb) a = m;
+        else b = m;
+      }
+      return (a + b) / 2;
+    }
+    function evaluate(pb) {
+      const vb = volumeAt(pb);
+      if (vb === null) return null;
+      const rows = low.map((p) => ({
+        id: p.id,
+        p: p.p,
+        y: (pb - p.p) / ((p.p + atmosphere) * (p.v / vb - 1)),
+      }));
+      if (rows.some((q) => !(q.y > 0) || !Number.isFinite(q.y))) return null;
+      const n = rows.length,
+        mp = rows.reduce((s, q) => s + q.p, 0) / n,
+        my = rows.reduce((s, q) => s + q.y, 0) / n;
+      let sxx = 0,
+        sxy = 0;
+      rows.forEach((q) => {
+        sxx += (q.p - mp) ** 2;
+        sxy += (q.p - mp) * (q.y - my);
+      });
+      if (!(sxx > 0)) return null;
+      const slope = sxy / sxx,
+        intercept = my - slope * mp,
+        rss = rows.reduce((s, q) => s + (intercept + slope * q.p - q.y) ** 2, 0);
+      // Scale-free linearity: RMSE of the straight Y line as a fraction of mean Y.
+      return { pb, vb, rows, intercept, slope, relativeRmse: Math.sqrt(rss / n) / my };
+    }
+    const steps = 400;
+    let best = null,
+      bestIndex = -1;
+    for (let i = 1; i <= steps; i++) {
+      const c = evaluate(lower + ((upper - lower) * i) / steps);
+      if (c && (!best || c.relativeRmse < best.relativeRmse)) {
+        best = c;
+        bestIndex = i;
+      }
+    }
+    if (!best)
+      throw Error(
+        'No valid Y-function values: check that the low-pressure branch is the two-phase region.',
+      );
+    // Golden-section refinement between the neighbouring grid points.
+    let a = lower + ((upper - lower) * (bestIndex - 1)) / steps,
+      b = lower + ((upper - lower) * Math.min(steps, bestIndex + 1)) / steps;
+    const g = (Math.sqrt(5) - 1) / 2,
+      score = (pb) => evaluate(pb)?.relativeRmse ?? Infinity;
+    for (let i = 0; i < 80; i++) {
+      const c = b - g * (b - a),
+        d = a + g * (b - a);
+      if (score(c) < score(d)) b = d;
+      else a = c;
+    }
+    const refined = evaluate((a + b) / 2);
+    if (refined && refined.relativeRmse <= best.relativeRmse) best = refined;
+    return {
+      best,
+      graphical: r.intersection ? evaluate(r.intersection.p) : null,
+      bracket: [lower, upper],
+      atEdge: bestIndex <= 1 || bestIndex >= steps,
+      atmosphere,
+    };
+  }
   function autoAssign(points, degree = 2) {
     return deepFit(points, degree).points;
   }
-  root.PV = { parse, fit, analyze, autoAssign, deepFit };
+  root.PV = { parse, fit, analyze, autoAssign, deepFit, yFunction };
   if (typeof module !== 'undefined') module.exports = root.PV;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,6 +1,6 @@
 # Fitting method and equations
 
-This document describes the current implementation, not a proposed universal thermodynamic method. The numerical source is `public/engine.js` and exports `parse`, `fit`, `analyze`, `autoAssign` and `deepFit` through `PV` in the browser or CommonJS in Node.
+This document describes the current implementation, not a proposed universal thermodynamic method. The numerical source is `public/engine.js` and exports `parse`, `fit`, `analyze`, `autoAssign`, `deepFit` and `yFunction` through `PV` in the browser or CommonJS in Node.
 
 ## Physical context
 
@@ -139,11 +139,31 @@ R²   = 1 − RSS / Σ(P_i − mean(P))²
 
 RMSE is in pressure units and uses `n_branch`, not residual degrees of freedom. R² is reported as undefined when the total sum of squares is at most `1e−20`. It is not a confidence percentage, and a high value can coexist with a sensitive or biased intersection.
 
+## Bubble-point Y-function check
+
+`yFunction(points, result, atmosphere)` is an independent cross-check for bubble-point cases. It does not change the selections, fits or the graphical result. For each selected low-pressure (two-phase) point and a trial bubble pressure `Pb`:
+
+```text
+Y = (Pb − P) / (P_abs · (V / Vb − 1))
+P_abs = P + atmosphere
+```
+
+`Pb − P` is the same in gauge or absolute pressure; the denominator needs absolute pressure. `atmosphere` is 0 for absolute input. For gauge input the application adds one standard atmosphere (14.696 psi, 1.01325 bar, 101.325 kPa or 0.101325 MPa); this is an assumption, not the laboratory's measured barometric pressure. `Vb` is the volume on the fitted high-pressure (single-phase liquid) trend where it equals `Pb`, found by bisection between the first high-pressure volume and the first low-pressure volume. `Y` is dimensionless, so pressure and volume units cancel.
+
+For a correct `Pb`, `Y` is expected to be close to a straight line in pressure; a wrong `Pb` bends `Y`, most strongly for the points nearest `Pb`. Linearity is measured as the RMSE of an unweighted least-squares line `Y = a + b·P` divided by the mean `Y` (scale-free).
+
+- Trial `Pb` is limited to the physical bracket between the highest selected low-pressure reading and the lowest selected high-pressure reading. This keeps the same points in every trial.
+- 400 equal steps across the bracket are evaluated, then golden-section refinement runs for 80 iterations between the neighbouring steps. A trial is skipped if `Vb` cannot be bracketed on the high-pressure trend or any `Y` is not positive and finite.
+- The result reports the most linear `Pb`, its `Vb`, line coefficients and `Y` values, the same measure at the graphical intersection, the bracket, and whether the minimum lies at a bracket edge (unresolved).
+- At least 4 low-pressure points are required, and every high-pressure reading must lie above every low-pressure reading.
+
+Points just below `Pb` have small `V/Vb − 1`, so their `Y` values are sensitive to volume error. The check assumes the low-pressure branch is the two-phase region of a bubble-point expansion; it is not applied to dew points. Like the graphical method, it is not validated against laboratory references. A difference between the two estimates is a reason to review the selection and data, not proof that either is correct.
+
 ## What is not implemented
 
 - Calibrated confidence intervals, uncertainty propagation or intersection sensitivity analysis.
 - Automatic model selection between line, quadratic and spline models.
-- Peng–Robinson, extended-Y, compressibility-based phase detection or other thermodynamic analysis.
+- Peng–Robinson, compressibility-based phase detection or other thermodynamic analysis. The Y-function above is a check only; it does not smooth or replace the measured two-phase volumes.
 - Instrument calibration, pressure-basis conversion, unit conversion or temperature correction.
 - General curve shapes with increasing equilibrium P(V), overlapping fitting regions, or multiple resolved intersections.
 
