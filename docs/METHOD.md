@@ -6,6 +6,8 @@ This document describes the current implementation, not a proposed universal the
 
 The intended input is an equilibrated, constant-temperature P–V expansion/compression segment with unchanged overall composition. A bubble boundary separates a liquid from a liquid–gas region; a dew boundary separates a gas from a gas–liquid region. An upper retrograde dew point can be reached by reducing pressure. A lower dew boundary has a different phase arrangement.
 
+Dew points of gas condensates usually show only a weak break in the P–V data, because the liquid that first appears occupies very little volume. In laboratory practice the dew point is normally confirmed by visual observation in a windowed (visual) PVT cell. A graphical Pd from this tool should therefore be treated as supporting evidence, not as a standalone determination. Bubble points of oils usually show a clearer break.
+
 The user supplies the intended phase interpretation. The tool does not solve phase equilibrium, calculate a phase envelope, infer composition, confirm fluid phases, or correct measurements for temperature. Recording an increasing pressure path does not reverse the axes or change the fitted equations.
 
 References for physical interpretation:

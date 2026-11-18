@@ -48,6 +48,8 @@ The current model requires separate ranges: all teal volumes must be smaller tha
 - Graph paper, major-square and no-grid backgrounds are available. Grid and shading changes do not affect the numerical fit.
 - No fit points do not disappear and do not influence either curve.
 
+**Dew points:** gas-condensate P–V data usually show only a weak break, so a nearly parallel warning is common. Dew points are normally confirmed by visual observation in a windowed PVT cell; use the graphical Pd as supporting evidence alongside that observation, not on its own.
+
 A missing, multiple, reversing or distant crossing needs selection/model review. An intersection may be shown with a warning for extrapolation or nearly parallel trends. Do not treat the presence of a number as acceptance of the test.
 
 Exact coefficients and branch quality measures are in the collapsible equations panel. The adjacent method panel explains the equations. R² and RMSE describe the selected fits; neither establishes saturation-pressure accuracy.

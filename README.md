@@ -78,7 +78,7 @@ P_low(z)  = a_low  + b_low·z  + c_low·z²
 
 The coefficients minimize the sum of squared pressure residuals for that branch. The crossing solves `P_high(z) = P_low(z)`. The program checks the location and direction of the fitted trends and flags ambiguous or sensitive crossings.
 
-**A high R² does not establish an accurate saturation pressure.** Deep fit is optimal only within its documented constraints in exhaustive mode; larger searches are bounded, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Validate against representative laboratory cases before relying on estimates.
+**A high R² does not establish an accurate saturation pressure.** Deep fit is optimal only within its documented constraints in exhaustive mode; larger searches are bounded, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Dew points usually show only a weak P–V break and are normally confirmed visually in a windowed cell; treat a graphical Pd as supporting evidence. Validate against representative laboratory cases before relying on estimates.
 
 ## Repository guide
 
