@@ -1,6 +1,6 @@
 # Fitting method and equations
 
-This document describes the current implementation, not a proposed universal thermodynamic method. The numerical source is `public/engine.js` and exports `parse`, `fit`, `analyze` and `autoAssign` through `PV` in the browser or CommonJS in Node.
+This document describes the current implementation, not a proposed universal thermodynamic method. The numerical source is `public/engine.js` and exports `parse`, `fit`, `analyze`, `autoAssign` and `deepFit` through `PV` in the browser or CommonJS in Node.
 
 ## Physical context
 
@@ -97,19 +97,36 @@ A crossing outside the gap is reported with an extrapolation warning. Nearly par
 
 These thresholds are implementation choices; they have not been calibrated as laboratory acceptance criteria. A flagged intersection can still appear in the results. No confidence probability is assigned.
 
-## Automatic branch suggestion
+## Deep automatic selection
 
-The automatic selection runs on data entry and when **Auto fit** is pressed. It is a bounded deterministic heuristic, not an exhaustive search or a guarantee of the globally highest R².
+`deepFit(points, degree, progress)` returns assignments and an auditable search summary. `autoAssign` is a compatibility wrapper returning only those assignments. Selection runs on Plot graph and **Deep fit**. It changes membership, not the regression equations above.
 
-1. Leave exactly zero-pressure readings unassigned for review; zero gauge pressure can be real.
-2. Sort nonzero readings by volume, then ID for ties. Require at least `2 × (degree + 3)` readings (10 curved or 8 straight), with at least `degree + 3` selected in each branch.
-3. Try outer high/low ranges with a consecutive bend gap up to `min(8, floor(0.25 × n))` readings.
-4. Refine each range independently for up to eight passes. Try removing each of the three largest absolute residuals, and individually restoring previously excluded points in that range. Accept only strict score improvements greater than `1e−12`. Keep at least 80% of that range's original point count (rounded up), at least 80% of its volume span, and the minimum branch count.
-5. Define branch loss `L = max(0, 1 − R²) × (count − 1)/(count − degree − 1)`. This is adjusted unexplained variance. For an undefined R² on a constant-pressure branch, use zero loss; the displayed R² remains undefined. Range refinement minimizes `L + 0.01 × excluded_in_range/original_range_count`.
-6. Reject pairs excluding more than 25% of nonzero readings overall. Require separate volume ranges, nonnegative fitted pressures, decreasing trends and a single nearby root. Root allowance is the smaller of 4% of the full nonzero-data span and 8% of the selected span. The displayed analysis safeguards must also accept the crossing.
-7. Minimize `score = (L_high + L_low)/2 + 0.5 × max(L_high, L_low) + 0.01 × excluded/n`. Both branches matter, including the shallower branch. This discourages perfect-looking fits obtained by discarding most measurements. It is not a calibrated confidence score.
+### Permitted selections and objective
 
-Excluded readings stay visible and keep their original values. Manual selections are not silently optimized; Auto fit deliberately replaces them and can be undone. If no candidate is supported, the tool requests manual review. R² is assessed on the selected points, so it can increase through selection without improving true Psat accuracy. Validate against independent laboratory references. Performance depends on data size; the search is bounded to 500 imported points.
+- Exactly zero-pressure readings remain unassigned for review; zero gauge pressure can be real. Sort nonzero readings by volume and then numeric point ID.
+- Keep at least `degree + 3` points in each branch: five for quadratic or four for linear. At most `floor(0.25 × n)` nonzero readings may be excluded overall. The minimum input is therefore 10 curved or 8 straight readings. The previous heuristic's per-region 80% count/span rules no longer apply.
+- Every retained high-region volume precedes every retained low-region volume. Exclusions may be anywhere, including region interiors and endpoints.
+- Use the same `analyze` safeguards as the displayed fit: distinct-volume requirements, supported unique crossing (preferring roots in the gap), nonnegative/decreasing fitted branches and the 8% selected-span root allowance. Candidates rejected by the displayed analysis cannot win the search. A warning, such as extrapolation or nearly parallel trends, remains visible if present.
+- Both branch R² values must be defined. A constant-pressure branch has undefined R² and cannot win an R² optimization; it remains available for manual analysis.
+- Maximize `min(R²_high, R²_low)` first, then `(R²_high + R²_low)/2`, then retained count. Differences no larger than `1e−12` are numerical ties. A final lexicographic group-key comparison makes tied results deterministic. This prioritizes the weaker branch rather than letting a strong high-pressure trend mask a poor low-pressure trend. There is no adjusted-R² or exclusion penalty; the count limits are hard constraints.
+
+### Exhaustive mode: up to 20 nonzero readings
+
+Enumerate every exclusion subset within the allowed count, then every ordered split of its retained readings meeting the branch minimums. This compares every permitted assignment. `complete: true` means the numerical optimum within these model, count, ordering and crossing constraints, to the stated tie tolerance. It does not mean a universal physical optimum or that every conceivable curve was considered.
+
+### Bounded mode: 21–500 nonzero readings
+
+Use deterministic multiple starts and beam refinement; a global maximum is not guaranteed:
+
+1. Seed every split with gap sizes in `{0,1,2,4,8,16,32,64,floor(0.25 × n)}` that fit the count constraints.
+2. Keep a beam of the best 16 numerically fitted candidates, including unresolved crossings so intermediate steps can reach a supported one. Only candidates accepted by `analyze` can become the returned result.
+3. Explore single-point exclusions, restorations and changes of branch. For at most 80 readings, try each point. Above 80, inspect each branch's 12 largest absolute residuals, first/last two points, and 12 excluded readings closest to that branch's curve. Reject invalid count/order assignments.
+4. Retain the best 16 beam states for up to 24 rounds. Stop if the beam is unchanged, 30,000 unique count-valid candidates have been examined, or the best lower-branch R² reaches `1 − 1e−12`.
+5. Attempt compatible point restorations from the best result while the evaluation budget remains, up to the exclusion limit in passes. This recovers good readings omitted by wide bend-gap seeds.
+
+The summary records mode, exhaustive completion, candidates examined/accepted, budget, minimum branch count, exclusion cap, zero/nonzero counts and winning scores. Progress is emitted every 256 examined candidates. A dedicated Web Worker runs the search in supported browsers; Stop terminates it. Manual edits, context changes and new data invalidate in-flight results. Browsers without workers use a synchronous compatibility path. No candidate results in a manual-review message without replacing an existing selection. Successful manual requests are undoable. JSON exports include search metadata until the selection/context is edited.
+
+R² is evaluated on selected points: excluding measurements can increase it without improving true Psat accuracy. Exclusions are fitting choices, not proof of instrument errors or phase identity. Laboratory validation and independent phase observations remain necessary.
 
 ## Fit measures
 

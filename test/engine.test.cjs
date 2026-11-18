@@ -232,5 +232,5 @@ test('automatic fitting rejects insufficient evidence and does not force paralle
     p: 2000 - 100 * (1 + id / 10),
     group: 'none',
   }));
-  assert.throws(() => PV.autoAssign(parallel, 1), /No reliable/);
+  assert.throws(() => PV.autoAssign(parallel, 1), /No supported deep fit/);
 });

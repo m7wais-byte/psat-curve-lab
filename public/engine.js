@@ -180,136 +180,217 @@
       degree,
     };
   }
-  function autoAssign(points, degree = 2) {
-    let sorted = points.filter((p) => p.p !== 0).sort((a, b) => a.v - b.v || a.id - b.id),
+  function deepFit(points, degree = 2, progress = () => {}) {
+    if (![1, 2].includes(degree)) throw Error('Choose straight or quadratic trends.');
+    if (
+      !Array.isArray(points) ||
+      points.length > 500 ||
+      points.some(
+        (p) => !Number.isFinite(p.p) || p.p < 0 || !Number.isFinite(p.v) || p.v <= 0,
+      ) ||
+      new Set(points.map((p) => p.id)).size !== points.length
+    )
+      throw Error('Use at most 500 finite measurements with unique point IDs.');
+    const sorted = points
+        .filter((p) => p.p !== 0)
+        .sort((a, b) => a.v - b.v || a.id - b.id),
       n = sorted.length,
-      m = degree + 3;
-    if (n < 2 * m)
+      minimum = degree + 3,
+      maxExcluded = Math.floor(0.25 * n);
+    if (n < 2 * minimum)
       throw Error(
-        `Need at least ${2 * m} nonzero-pressure points for automatic branch suggestions. Zero readings remain unassigned for review.`,
+        `Need at least ${2 * minimum} nonzero-pressure points for deep fitting. Zero readings remain unassigned for review.`,
       );
-    let min = sorted[0].v,
-      scale = sorted[n - 1].v - min;
-    if (!scale) throw Error('Volumes must span a range.');
-    let pspan = Math.max(...sorted.map((p) => p.p)) - Math.min(...sorted.map((p) => p.p));
-    if (!pspan) throw Error('Pressures must span a range.');
-    // Penalized adjusted R² balances branch quality with retained evidence.
-    const loss = (f) =>
-      f.r2 === null
-        ? 0
-        : (Math.max(0, 1 - f.r2) * (f.count - 1)) / (f.count - degree - 1);
-    function refine(pool) {
-      const span = pool.at(-1).v - pool[0].v;
-      let selected = pool,
-        fitted = fit(selected, degree, min, scale);
-      const objective = (f) => loss(f) + (0.01 * (pool.length - f.count)) / pool.length;
-      let value = objective(fitted);
-      // Bounded deterministic search: try the three largest residuals, then re-add.
-      for (let pass = 0; pass < 8; pass++) {
-        let best = null;
-        const included = new Set(selected.map((p) => p.id));
-        const removals =
-          selected.length > Math.max(m, Math.ceil(0.8 * pool.length))
-            ? [...selected]
-                .sort(
-                  (a, b) =>
-                    Math.abs(fitted.predict(b.v) - b.p) -
-                      Math.abs(fitted.predict(a.v) - a.p) ||
-                    a.v - b.v ||
-                    a.id - b.id,
-                )
-                .slice(0, 3)
-            : [];
-        const trials = [
-          ...removals.map((p) => selected.filter((q) => q.id !== p.id)),
-          ...pool
-            .filter((p) => !included.has(p.id))
-            .map((p) => [...selected, p].sort((a, b) => a.v - b.v || a.id - b.id)),
-        ];
-        for (const trial of trials) {
-          if (trial.at(-1).v - trial[0].v < 0.8 * span) continue;
-          try {
-            const f = fit(trial, degree, min, scale),
-              score = objective(f);
-            if (score < value - 1e-12 && (!best || score < best.score))
-              best = { selected: trial, fitted: f, score };
-          } catch {}
+    const exhaustive = n <= 20,
+      budget = 30000,
+      beamWidth = 16;
+    let examined = 0,
+      valid = 0,
+      best = null;
+    const seen = new Set();
+    function better(a, b) {
+      if (!b) return true;
+      if (Math.abs(a.minimumR2 - b.minimumR2) > 1e-12) return a.minimumR2 > b.minimumR2;
+      if (Math.abs(a.meanR2 - b.meanR2) > 1e-12) return a.meanR2 > b.meanR2;
+      if (a.used !== b.used) return a.used > b.used;
+      return a.key < b.key;
+    }
+    function assignment(groups) {
+      const byId = new Map(
+        sorted.map((p, i) => [
+          p.id,
+          groups[i] === 1 ? 'high' : groups[i] === 2 ? 'low' : 'none',
+        ]),
+      );
+      return points.map((p) => ({ ...p, group: byId.get(p.id) || 'none' }));
+    }
+    function evaluate(groups) {
+      if (!exhaustive && examined >= budget) return null;
+      const key = groups.join('');
+      if (!exhaustive && seen.has(key)) return null;
+      if (!exhaustive) seen.add(key);
+      const high = groups.filter((g) => g === 1).length,
+        low = groups.filter((g) => g === 2).length;
+      if (high < minimum || low < minimum || n - high - low > maxExcluded) return null;
+      examined++;
+      if (examined % 256 === 0)
+        progress({ examined, valid, mode: exhaustive ? 'exhaustive' : 'bounded' });
+      try {
+        const r = analyze(assignment(groups), degree);
+        if (!Number.isFinite(r.high.r2) || !Number.isFinite(r.low.r2)) return null;
+        const c = {
+          groups,
+          key,
+          minimumR2: Math.min(r.high.r2, r.low.r2),
+          meanR2: (r.high.r2 + r.low.r2) / 2,
+          used: high + low,
+          result: r,
+        };
+        if (r.intersection) {
+          valid++;
+          if (better(c, best)) best = c;
         }
-        if (!best) break;
-        selected = best.selected;
-        fitted = best.fitted;
-        value = best.score;
+        return c;
+      } catch {
+        return null;
       }
-      return { selected, fitted };
     }
-    const leftCache = new Map(),
-      rightCache = new Map();
-    function branch(cache, key, pool) {
-      if (!cache.has(key)) cache.set(key, refine(pool));
-      return cache.get(key);
-    }
-    let best = null,
-      maxGap = Math.min(8, Math.floor(n * 0.25));
-    for (let i = m; i <= n - m; i++) {
-      for (let skip = 0; skip <= maxGap && i + skip <= n - m; skip++) {
-        let left = sorted.slice(0, i),
-          right = sorted.slice(i + skip);
-        try {
-          const A = branch(leftCache, i, left),
-            B = branch(rightCache, i + skip, right);
-          left = A.selected;
-          right = B.selected;
-          let a = A.fitted,
-            b = B.fitted;
-          const excluded = n - left.length - right.length;
-          if (excluded > Math.floor(0.25 * n)) continue;
-          if (a.max >= b.min) continue;
-          let rs = roots(a, b, min, scale).filter(
-            (v) =>
-              v >= Math.max(a.max - scale * 0.04, a.max - (b.max - a.min) * 0.08) &&
-              v <= Math.min(b.min + scale * 0.04, b.min + (b.max - a.min) * 0.08) &&
-              a.predict(v) >= 0 &&
-              a.slope(v) < 0 &&
-              b.slope(v) <= 0,
+    if (exhaustive) {
+      // Every exclusion subset and every split of its retained points, once.
+      const excluded = new Set();
+      function visit(start) {
+        const kept = sorted.map((_, i) => i).filter((i) => !excluded.has(i));
+        for (let k = minimum; k <= kept.length - minimum; k++) {
+          const groups = Array(n).fill(0);
+          kept.forEach((i, j) => (groups[i] = j < k ? 1 : 2));
+          evaluate(groups);
+        }
+        if (excluded.size === maxExcluded) return;
+        for (let i = start; i < n; i++) {
+          excluded.add(i);
+          visit(i + 1);
+          excluded.delete(i);
+        }
+      }
+      visit(0);
+    } else {
+      let beam = [];
+      function keep(c, pool) {
+        if (!c) return;
+        pool.push(c);
+        pool.sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0));
+        if (pool.length > beamWidth) pool.length = beamWidth;
+      }
+      const gaps = [
+        ...new Set(
+          [0, 1, 2, 4, 8, 16, 32, 64, maxExcluded].filter((g) => g <= maxExcluded),
+        ),
+      ].sort((a, b) => a - b);
+      for (let split = minimum; split <= n - minimum; split++)
+        for (const gap of gaps) {
+          if (split + gap > n - minimum) continue;
+          keep(
+            evaluate(sorted.map((_, i) => (i < split ? 1 : i < split + gap ? 0 : 2))),
+            beam,
           );
-          if (rs.length !== 1) continue;
-          if (
-            a.slope(a.min) > 0 ||
-            a.slope(a.max) > 0 ||
-            b.slope(b.min) > 0 ||
-            b.slope(b.max) > 0 ||
-            a.predict(a.min) < 0 ||
-            a.predict(a.max) < 0 ||
-            b.predict(b.min) < 0 ||
-            b.predict(b.max) < 0
-          )
-            continue;
-          // Both regions matter equally, including the shallower low-pressure trend.
-          let score =
-            (loss(a) + loss(b)) / 2 +
-            0.5 * Math.max(loss(a), loss(b)) +
-            (0.01 * excluded) / n;
-          if (!best || score < best.score) best = { score, left, right };
-        } catch {}
+        }
+      for (let pass = 0; pass < 24 && beam.length && examined < budget; pass++) {
+        if (best && best.minimumR2 >= 1 - 1e-12) break;
+        const next = [...beam];
+        for (const state of beam) {
+          const { groups, result: r } = state;
+          let edits = [];
+          if (n <= 80) edits = sorted.map((_, i) => i);
+          else {
+            // Explore residual outliers, boundary points and promising restorations.
+            for (const [g, f] of [
+              [1, r.high],
+              [2, r.low],
+            ]) {
+              const indices = groups
+                .map((value, i) => (value === g ? i : -1))
+                .filter((i) => i >= 0);
+              edits.push(
+                ...[...indices]
+                  .sort(
+                    (a, b) =>
+                      Math.abs(f.predict(sorted[b].v) - sorted[b].p) -
+                        Math.abs(f.predict(sorted[a].v) - sorted[a].p) || a - b,
+                  )
+                  .slice(0, 12),
+                ...indices.slice(0, 2),
+                ...indices.slice(-2),
+              );
+              edits.push(
+                ...groups
+                  .map((value, i) => (value === 0 ? i : -1))
+                  .filter((i) => i >= 0)
+                  .sort(
+                    (a, b) =>
+                      Math.abs(f.predict(sorted[a].v) - sorted[a].p) -
+                        Math.abs(f.predict(sorted[b].v) - sorted[b].p) || a - b,
+                  )
+                  .slice(0, 12),
+              );
+            }
+          }
+          for (const i of new Set(edits))
+            for (const g of [0, 1, 2]) {
+              if (groups[i] === g) continue;
+              const trial = [...groups];
+              trial[i] = g;
+              keep(evaluate(trial), next);
+            }
+          if (examined >= budget) break;
+        }
+        next.sort((a, b) => (better(a, b) ? -1 : better(b, a) ? 1 : 0));
+        if (next.map((c) => c.key).join('|') === beam.map((c) => c.key).join('|')) break;
+        beam = next;
+      }
+    }
+    // Recover compatible points from wide bend-gap seeds before returning.
+    if (!exhaustive && best) {
+      for (let pass = 0; pass < maxExcluded && examined < budget; pass++) {
+        const previous = best.key,
+          groups = [...best.groups];
+        for (let i = 0; i < n; i++)
+          if (groups[i] === 0)
+            for (const g of [1, 2]) {
+              const trial = [...best.groups];
+              trial[i] = g;
+              evaluate(trial);
+            }
+        if (best.key === previous) break;
       }
     }
     if (!best)
       throw Error(
-        'No reliable automatic branch suggestion. Assign the two regions manually in the table.',
+        'No supported deep fit found within the search limits. Review the two regions manually.',
       );
-    // Apply the same intersection safeguards used for the displayed result.
-    let h = new Set(best.left.map((p) => p.id)),
-      l = new Set(best.right.map((p) => p.id));
-    const assigned = points.map((p) => ({
-      ...p,
-      group: h.has(p.id) ? 'high' : l.has(p.id) ? 'low' : 'none',
-    }));
-    if (!analyze(assigned, degree).intersection)
-      throw Error(
-        'Automatic fit has no supported intersection. Review the regions manually.',
-      );
-    return assigned;
+    return {
+      points: assignment(best.groups),
+      search: {
+        mode: exhaustive ? 'exhaustive' : 'bounded',
+        complete: exhaustive,
+        examined,
+        valid,
+        budget: exhaustive ? null : budget,
+        minimumPerBranch: minimum,
+        maxExcluded,
+        nonzeroPoints: n,
+        zeroReadings: points.length - n,
+        minimumR2: best.minimumR2,
+        meanR2: best.meanR2,
+        objective: 'Maximize the lower branch R²; then mean R²; then retained count',
+        description: exhaustive
+          ? 'All permitted selections compared'
+          : 'Bounded multi-start beam search; global optimum not guaranteed',
+      },
+    };
   }
-  root.PV = { parse, fit, analyze, autoAssign };
+  function autoAssign(points, degree = 2) {
+    return deepFit(points, degree).points;
+  }
+  root.PV = { parse, fit, analyze, autoAssign, deepFit };
   if (typeof module !== 'undefined') module.exports = root.PV;
 })(typeof window !== 'undefined' ? window : globalThis);
