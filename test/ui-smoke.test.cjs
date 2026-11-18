@@ -173,3 +173,38 @@ test('plot automatically selects both fits and Auto fit restores points with Und
   h.get('undo').onclick();
   assert.equal(h.run('JSON.stringify(points.map(p=>p.group))'), manual);
 });
+test('Y-function check shows for bubble points only, explains its assumption and is exported', async () => {
+  const h = harness();
+  h.demo();
+  const panel = h.get('yCheck');
+  assert(!panel.hidden);
+  assert.match(h.get('ySummary').textContent, /^· Pb [\d,.]+ psig$/);
+  assert.match(h.get('yResult').innerHTML, /Most linear Y at Pb/);
+  assert.match(h.get('yResult').innerHTML, /Graphical Pb 1,000 psig/);
+  assert.match(h.get('yNote').textContent, /standard atmosphere \(14\.696 psi\)/);
+  assert((h.get('yChart').innerHTML.match(/data-y="best"/g) || []).length > 3);
+  const psat = h.get('psat').innerHTML;
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert.equal(data.yFunctionCheck.atmosphereAdded, 14.696);
+  assert(Number.isFinite(data.yFunctionCheck.mostLinearPb));
+  h.get('punit').value = 'psi:Absolute';
+  h.get('punit').onchange();
+  assert.match(h.get('yNote').textContent, /treated as absolute/);
+  assert.equal(
+    h.get('psat').innerHTML.replace('psia', 'psig'),
+    psat,
+    'the check never changes Pb',
+  );
+  // A straight low branch fits with 3 points, but the Y-function check needs 4.
+  h.get('shapeLow').value = '1';
+  h.run(
+    'points = points.map((p) => (p.group === "low" && p.v > 35.6 ? { ...p, group: "none" } : p)); fitNow();',
+  );
+  assert(!panel.hidden);
+  assert.match(h.get('ySummary').textContent, /not available/);
+  assert.match(h.get('yResult').textContent, /at least 4 low-pressure points/);
+  h.get('phase').value = 'dew';
+  h.get('phase').onchange();
+  assert(panel.hidden);
+});

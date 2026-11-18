@@ -52,6 +52,14 @@ A missing, multiple, reversing or distant crossing needs selection/model review.
 
 Exact coefficients and branch quality measures are in the collapsible equations panel. The adjacent method panel explains the equations. R² and RMSE describe the selected fits; neither establishes saturation-pressure accuracy.
 
+### Bubble points: Y-function check
+
+For bubble-point cases, **Y-function check** under Adjust fit gives an independent cross-check of Pb. It computes `Y = (Pb − P) / (P_abs · (V/Vb − 1))` for the low-pressure (two-phase) points, with Vb read from the high-pressure trend. It then finds the Pb, between the selected branches, that makes Y closest to a straight line in pressure. The panel shows that Pb, its difference from the graphical Pb, and a Y–P chart: filled points at the most-linear Pb, hollow points at the graphical Pb. A curved hollow set means the graphical Pb is probably off.
+
+- Y needs absolute pressure. For gauge units the app adds one standard atmosphere (14.696 psi, 1.01325 bar, 101.325 kPa or 0.101325 MPa). If your laboratory's barometric pressure differs much, enter absolute pressure instead.
+- Points just below Pb are the most sensitive to volume error. If the most-linear Pb sits at the edge of the allowed range, it is not resolved; review the selections.
+- The check never changes the graphical result. A large difference is a reason to review the data and selections, not proof that either value is correct. It is not shown for dew points.
+
 ## Adjust the graph scale
 
 Open **Graph scale** after plotting data:

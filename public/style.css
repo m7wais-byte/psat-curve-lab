@@ -867,6 +867,35 @@ svg text {
   background: #fafcf8;
   padding: 12px 14px;
 }
+.y-check {
+  margin-top: 12px;
+}
+.y-summary {
+  margin-left: 8px;
+  color: #52685b;
+  font-weight: 400;
+}
+.y-result {
+  margin: 12px 0 8px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #29443a;
+}
+.y-result .y-flag {
+  color: #a16c34;
+}
+.y-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 640px;
+  background: white;
+  border: 1px solid #e3ebe1;
+  border-radius: 6px;
+}
+.y-note {
+  margin-top: 8px;
+}
 .equations {
   display: grid;
   grid-template-columns: 1fr 1fr;

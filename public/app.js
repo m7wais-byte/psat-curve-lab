@@ -80,7 +80,7 @@ function runDeepFit(saveUndo = false) {
   }
   if (typeof Worker !== 'undefined') {
     try {
-      fitWorker = new Worker('fit-worker.js?v=13');
+      fitWorker = new Worker('fit-worker.js?v=14');
       fitWorker.onmessage = (event) => finish(event.data);
       fitWorker.onerror = () =>
         finish({
@@ -267,6 +267,7 @@ function render() {
   table();
   chart();
   equations();
+  yCheck();
   updateWorkspace();
 }
 // Major grid divisions on the 900 × 500 plot area (100 px squares).
@@ -603,6 +604,17 @@ $('export').onclick = () => {
         mode: viewBounds ? 'custom' : 'auto',
         bounds: viewBounds || autoBounds,
       },
+      yFunctionCheck: yResult && {
+        note: 'Cross-check only; does not change the graphical result.',
+        atmosphereAdded: yResult.atmosphere,
+        mostLinearPb: yResult.best.pb,
+        vbAtMostLinearPb: yResult.best.vb,
+        relativeRmse: yResult.best.relativeRmse,
+        line: { intercept: yResult.best.intercept, slope: yResult.best.slope },
+        graphicalRelativeRmse: yResult.graphical?.relativeRmse ?? null,
+        bracket: yResult.bracket,
+        atBracketEdge: yResult.atEdge,
+      },
       automaticSelection: searchInfo && {
         ...searchInfo,
         excludedPointIds: deepFitExcluded().map((p) => p.id),
@@ -649,6 +661,111 @@ function equations() {
   $('equations').innerHTML = html;
 }
 
+// Standard atmosphere per pressure unit: gauge readings need it for the Y-function's P_abs.
+const ATMOSPHERE = { psi: 14.696, bar: 1.01325, kPa: 101.325, MPa: 0.101325 };
+let yResult = null;
+// Bubble-point Y-function cross-check of the graphical Pb. Display only: it never changes
+// the selections, fits or the main result.
+function yCheck() {
+  yResult = null;
+  const panel = $('yCheck');
+  panel.hidden = $('phase').value !== 'bubble' || !result;
+  if (panel.hidden) return;
+  const { unit, basis } = pressureSelection(),
+    atmosphere = basis === 'Gauge' ? ATMOSPHERE[unit] : 0,
+    label = pressureLabel(),
+    digits = unit === 'MPa' ? 4 : 2;
+  $('yNote').textContent =
+    (basis === 'Gauge'
+      ? `Gauge readings are converted with one standard atmosphere (${num(atmosphere, 6)} ${unit}); this is an assumption, not your laboratory's barometric reading. `
+      : 'Readings are treated as absolute pressure. ') +
+    'Y = (Pb − P) / (P_abs · (V/Vb − 1)), with Vb read from the high-pressure trend. It should be close to a straight line in P when Pb is right. Points just below Pb are the most sensitive. This check does not change the graphical result.';
+  try {
+    yResult = PV.yFunction(points, result, atmosphere);
+  } catch (e) {
+    $('ySummary').textContent = '· not available';
+    $('yResult').textContent = e.message;
+    $('yChart').innerHTML = '';
+    return;
+  }
+  const y = yResult,
+    best = y.best,
+    graph = result.intersection;
+  const pct = (v) => num(100 * v, 2) + '%';
+  $('ySummary').textContent = `· Pb ${num(best.pb, digits)} ${label}`;
+  let text = `Most linear Y at Pb = ${num(best.pb, digits)} ${label} (Vb ${num(best.vb, 4)} ${$('vunit').value}; Y line scatter ${pct(best.relativeRmse)} of mean Y).`;
+  if (graph) {
+    const diff = best.pb - graph.p;
+    text += ` Graphical Pb ${num(graph.p, digits)} ${label}: difference ${diff >= 0 ? '+' : '−'}${num(Math.abs(diff), digits)} ${label} (${diff >= 0 ? '+' : '−'}${pct(Math.abs(diff) / graph.p)}).`;
+    text += y.graphical
+      ? ` At the graphical Pb, Y scatter is ${pct(y.graphical.relativeRmse)}.`
+      : ' The graphical Pb is outside the range between the selected branches, so Y cannot be evaluated there.';
+  }
+  $('yResult').innerHTML =
+    esc(text) +
+    (y.atEdge
+      ? ` <span class="y-flag">${esc(`The most linear Pb is at the edge of the allowed range (${num(y.bracket[0], digits)}–${num(y.bracket[1], digits)} ${label}), so it is not resolved. Review the branch selections.`)}</span>`
+      : '');
+  $('yChart').innerHTML = yChart(y, label);
+}
+function esc(value) {
+  return String(value).replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  );
+}
+function yChart(y, label) {
+  const W = 640,
+    H = 300,
+    l = 64,
+    r = 16,
+    t = 18,
+    b = 48,
+    sets = [y.best.rows, ...(y.graphical ? [y.graphical.rows] : [])].flat(),
+    ps = sets.map((q) => q.p),
+    ys = sets.map((q) => q.y),
+    pRange = Math.max(...ps) - Math.min(...ps) || 1,
+    yRange = Math.max(...ys) - Math.min(...ys) || Math.abs(ys[0]) || 1,
+    X = PVReport.niceAxis(
+      Math.max(0, Math.min(...ps) - pRange * 0.06),
+      Math.max(...ps) + pRange * 0.06,
+      6,
+    ),
+    Y = PVReport.niceAxis(
+      Math.max(0, Math.min(...ys) - yRange * 0.1),
+      Math.max(...ys) + yRange * 0.1,
+      4,
+    );
+  const x = (p) => l + ((p - X.min) / (X.max - X.min)) * (W - l - r),
+    yy = (v) => H - b - ((v - Y.min) / (Y.max - Y.min)) * (H - t - b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Y-function versus pressure for the low-pressure points"><defs><clipPath id="yArea"><rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}"/></clipPath></defs>`;
+  for (let i = 0; i <= 6; i++) {
+    const p = X.min + X.step * i;
+    s += `<path d="M${x(p)} ${t}V${H - b}" stroke="#e8efe6"/><text x="${x(p)}" y="${H - b + 18}" text-anchor="middle" font-size="11" fill="#546e5c">${axisTick(p, X.step)}</text>`;
+  }
+  for (let i = 0; i <= 4; i++) {
+    const v = Y.min + Y.step * i;
+    s += `<path d="M${l} ${yy(v)}H${W - r}" stroke="#e8efe6"/><text x="${l - 8}" y="${yy(v) + 4}" text-anchor="end" font-size="11" fill="#546e5c">${axisTick(v, Y.step)}</text>`;
+  }
+  s += `<rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}" fill="none" stroke="#9db3a4"/><g clip-path="url(#yArea)">`;
+  const line = (fit, color) =>
+    `<path d="M${x(X.min)} ${yy(fit.intercept + fit.slope * X.min)}L${x(X.max)} ${yy(fit.intercept + fit.slope * X.max)}" stroke="${color}" stroke-width="1.6" fill="none"/>`;
+  if (y.graphical) {
+    s += line(y.graphical, '#a9b5ae');
+    y.graphical.rows.forEach(
+      (q) =>
+        (s += `<circle data-y="graphical" cx="${x(q.p)}" cy="${yy(q.y)}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"><title>Point ${q.id + 1} · Y ${num(q.y, 4)} at graphical Pb</title></circle>`),
+    );
+  }
+  s += line(y.best, '#c97725');
+  y.best.rows.forEach(
+    (q) =>
+      (s += `<circle data-y="best" cx="${x(q.p)}" cy="${yy(q.y)}" r="4.2" fill="#c97725"><title>Point ${q.id + 1} · Y ${num(q.y, 4)} at most-linear Pb</title></circle>`),
+  );
+  s += `</g><text x="${(W + l - r) / 2}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#52685b">Pressure (${esc(label)})</text><text transform="translate(16 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#52685b">Y (dimensionless)</text>`;
+  s += `<g font-size="11" fill="#52685b"><circle cx="${l + 12}" cy="${t + 14}" r="4" fill="#c97725"/><text x="${l + 22}" y="${t + 18}">At most-linear Pb</text>${y.graphical ? `<circle cx="${l + 140}" cy="${t + 14}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"/><text x="${l + 150}" y="${t + 18}">At graphical Pb</text>` : ''}</g></svg>`;
+  return s;
+}
 function phaseSymbol() {
   return $('phase').value === 'bubble'
     ? 'Pb'
