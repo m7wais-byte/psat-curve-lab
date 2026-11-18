@@ -13,7 +13,8 @@
     "check": "node scripts/check.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "npm run format:check && npm run check && npm test"
+    "verify": "npm run format:check && npm run check && npm test",
+    "preview": "node scripts/generate-report-preview.cjs"
   },
   "devDependencies": {
     "prettier": "3.10.1"
