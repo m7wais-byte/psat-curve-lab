@@ -78,8 +78,7 @@ function harness() {
   };
   const defaults = {
     phase: '',
-    punit: 'psi',
-    basis: 'Gauge',
+    punit: 'psi:Gauge',
     vunit: 'cc',
     tunit: '°C',
     model: '2',

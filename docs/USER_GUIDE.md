@@ -94,3 +94,5 @@ The interface itself does not save cases to disk, localStorage, a database or th
 | Labels look wrong after a unit change | Remember that unit changes relabel rather than convert values       |
 
 For test-data-dependent issues, use an anonymized case with instrument units and the accepted reference result, where sharing is permitted.
+
+Pressure unit is one selector: choose psig for gauge pressure or psia for absolute pressure. Bar, MPa and kPa each also offer gauge and absolute choices. Enter measurements already in the selected unit/reference; changing the selector relabels values and does not convert them.

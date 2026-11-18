@@ -1,0 +1,120 @@
+<svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 200 118"
+              role="img"
+              aria-label="VAPS"
+            >
+              <path
+                d="M7 8C33 5 47 12 54 35L69 85L111 30L61 109L39 50C31 25 25 12 7 8Z"
+                fill="#2d7db8"
+              />
+              <path d="M62 104L112 28" fill="none" stroke="#2d7db8" stroke-width="1.6" />
+              <path d="M66 108L116 30" fill="none" stroke="#25ad68" stroke-width="2.1" />
+              <g transform="translate(31 49)">
+                <circle r="16" fill="#fff" />
+                <g fill="#2d7db8">
+                  <rect x="-1.8" y="-16.1" width="3.6" height="5.5" rx=".5" />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(30)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(60)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(90)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(120)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(150)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(180)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(210)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(240)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(270)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(300)"
+                  />
+                  <rect
+                    x="-1.8"
+                    y="-16.1"
+                    width="3.6"
+                    height="5.5"
+                    rx=".5"
+                    transform="rotate(330)"
+                  />
+                </g>
+                <circle r="12.2" fill="#fff" stroke="#2d7db8" stroke-width="2.1" />
+                <circle r="8.7" fill="#28bf74" />
+              </g>
+              <text
+                x="94"
+                y="85"
+                font-family="Arial,Helvetica,sans-serif"
+                font-size="38"
+                font-weight="700"
+                letter-spacing=".1"
+                fill="#2d7db8"
+              >
+                APS
+              </text>
+            </svg>

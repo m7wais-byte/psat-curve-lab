@@ -4,12 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=9" />
+    <link rel="stylesheet" href="style.css?v=10" />
   </head>
   <body>
     <header>
       <a class="brand" href="#"
-        >◈ <span>Psat<span class="muted"> / Curve Lab</span></span></a
+        ><img class="brand-logo" src="vaps-logo.svg" alt="VAPS" /><span
+          >Psat<span class="muted"> / Curve Lab</span></span
+        ></a
       ><a class="help-link" href="#aboutTool">Help</a
       ><button id="present" class="presentation-button" disabled aria-pressed="false">
         Present
@@ -44,15 +46,14 @@
             >Case name<input id="case" placeholder="e.g. Sample A / Test 01" /></label
           ><label
             >Pressure unit<select id="punit">
-              <option>psi</option>
-              <option>bar</option>
-              <option>MPa</option>
-              <option>kPa</option>
-            </select></label
-          ><label
-            >Pressure basis<select id="basis">
-              <option>Gauge</option>
-              <option>Absolute</option>
+              <option value="psi:Gauge">psig</option>
+              <option value="psi:Absolute">psia</option>
+              <option value="bar:Gauge">bar (gauge)</option>
+              <option value="bar:Absolute">bar (absolute)</option>
+              <option value="MPa:Gauge">MPa (gauge)</option>
+              <option value="MPa:Absolute">MPa (absolute)</option>
+              <option value="kPa:Gauge">kPa (gauge)</option>
+              <option value="kPa:Absolute">kPa (absolute)</option>
             </select></label
           ><label
             >Volume unit<select id="vunit">
@@ -518,9 +519,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=9"></script>
+    <script src="engine.js?v=10"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
-    <script src="report.js?v=1"></script>
-    <script src="app.js?v=9"></script>
+    <script src="report.js?v=2"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>

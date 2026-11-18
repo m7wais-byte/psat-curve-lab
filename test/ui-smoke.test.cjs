@@ -11,7 +11,7 @@ test('phase choice gates entry and the synthetic example produces the known resu
   assert(!h.get('data').disabled);
   assert.match(h.get('psat').innerHTML, /1,000/);
   assert.match(h.get('chart').innerHTML, /Volume \(cc\)/);
-  assert.match(h.get('chart').innerHTML, /Pressure \(psi, gauge\)/);
+  assert.match(h.get('chart').innerHTML, /Pressure \(psig\)/);
   assert(h.get('analysis').scrolled);
 });
 
@@ -69,7 +69,7 @@ test('all display backgrounds preserve Psat and group counts match data', () => 
     h.get('grid').onchange();
     assert.equal(h.get('psat').innerHTML, value);
   }
-  assert.match(h.get('axisReadout').textContent, /Y: Pressure \(psi\)/);
+  assert.match(h.get('axisReadout').textContent, /Y: Pressure \(psig\)/);
 });
 
 test('tool choice and point inspection use actual event handlers', () => {
@@ -127,12 +127,36 @@ test('case names remain text and analysis export records method and point groups
 test('input column labels follow selected units', () => {
   const h = harness();
   h.demo();
-  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (psi)');
+  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (psig)');
   assert.equal(h.get('inputVolumeLabel').textContent, 'Volume (cc)');
-  h.get('punit').value = 'bar';
+  h.get('punit').value = 'bar:Gauge';
   h.get('punit').onchange();
   h.get('vunit').value = 'mL';
   h.get('vunit').onchange();
-  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (bar)');
+  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (bar (gauge))');
   assert.equal(h.get('inputVolumeLabel').textContent, 'Volume (mL)');
+});
+
+test('combined pressure selection preserves fits and exports the correct unit and reference', async () => {
+  const h = harness();
+  h.demo();
+  const crossing = h.run('JSON.stringify(result.intersection)');
+  for (const [choice, unit, basis, label] of [
+    ['psi:Absolute', 'psi', 'Absolute', 'psia'],
+    ['psi:Gauge', 'psi', 'Gauge', 'psig'],
+    ['kPa:Absolute', 'kPa', 'Absolute', 'kPa (absolute)'],
+  ]) {
+    h.get('punit').value = choice;
+    h.get('punit').onchange();
+    assert.equal(h.run('JSON.stringify(result.intersection)'), crossing);
+    assert(h.get('psat').innerHTML.includes(label));
+    assert(h.get('inputPressureLabel').textContent.includes(label));
+    const report = h.run('currentReport()');
+    assert.equal(report.pressureUnit, unit);
+    assert.equal(report.pressureBasis, basis);
+    h.get('export').onclick();
+    const data = JSON.parse(await h.blobs.at(-1).text());
+    assert.equal(data.pressureUnit, unit);
+    assert.equal(data.pressureBasis, basis);
+  }
 });

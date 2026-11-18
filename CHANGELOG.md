@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — A4 case reports
+## Unreleased — Header and pressure units
+
+- Added the vector VAPS logo to the main header.
+- Combined pressure unit and basis into one selector, including psig and psia.
+- Kept unit/reference metadata in reports and JSON exports.
+
+## A4 case reports
 
 - Integrated the approved vector VAPS A4 layout with current edited measurements and fits.
 - Added separate Print and direct Save as PDF actions.
