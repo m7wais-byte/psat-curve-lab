@@ -28,4 +28,4 @@ This repository is being prepared for review. Unchecked items are outstanding, n
 - [ ] Approve a release description that accurately states validation limits.
 - [ ] Explicitly decide whether to change GitHub visibility or enable deployment.
 
-There is no automatic deployment or release workflow in this repository.
+Merges into `main` are published automatically to GitHub Pages by `.github/workflows/publish.yml` after the checks pass. There is no release workflow.

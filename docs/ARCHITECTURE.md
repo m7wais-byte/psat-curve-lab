@@ -58,7 +58,7 @@ The UI smoke harness executes the actual app in a small fake DOM. It establishes
 
 Serve the contents of `public/` with any suitable static host. No compilation is required. The folder names differ from the original hosted checkout: its tracked `dist/` became `public/` here to make the static source root explicit.
 
-The original `.openai/hosting.json`, Site ID, source credentials, repository metadata and deployment scripts are intentionally excluded. No workflow deploys this repository or creates a release. Publishing a public version is a separate decision after review.
+The original `.openai/hosting.json`, Site ID, source credentials, repository metadata and deployment scripts are intentionally excluded. `.github/workflows/publish.yml` deploys the site: on each push to `main` it runs `npm run verify` and, only if that passes, `scripts/publish-pages.sh` copies `public/` (plus `.nojekyll`) to the `gh-pages` branch that GitHub Pages serves. Nothing is published when the files are unchanged. No workflow creates a release.
 
 The existing privately hosted Site continues using its own checkout. This GitHub repository is a review snapshot, not an automatic synchronization bridge to that Site.
 

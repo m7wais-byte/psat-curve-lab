@@ -28,4 +28,4 @@ Use synthetic or permitted anonymized fixtures. Do not commit instrument exports
 
 ## Review and publishing
 
-Open a pull request with the problem, final behavior and verification results. No workflow deploys the application. Public release and licensing are separate review decisions.
+Open a pull request with the problem, final behavior and verification results. Merging into `main` publishes the site: `.github/workflows/publish.yml` runs the checks and then copies `public/` to the `gh-pages` branch served by GitHub Pages. It can also be run manually from the Actions tab. Public release and licensing are separate review decisions.

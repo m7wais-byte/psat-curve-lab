@@ -10,3 +10,4 @@
 - The fake-DOM UI tests are not browser visual tests. State the limit accurately.
 - Do not add laboratory records, credentials, .openai hosting identity, old archives or deployment scratch files.
 - Keep the repository private/review-stage; do not publish or deploy without user instruction.
+- Merging into main deploys: .github/workflows/publish.yml runs npm run verify, then publishes public/ to the gh-pages branch that GitHub Pages serves. Treat a merge to main as a release of the site.
