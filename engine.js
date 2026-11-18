@@ -181,9 +181,9 @@
     };
   }
   function autoAssign(points, degree = 2) {
-    let sorted = points.filter((p) => p.p !== 0).sort((a, b) => a.v - b.v),
+    let sorted = points.filter((p) => p.p !== 0).sort((a, b) => a.v - b.v || a.id - b.id),
       n = sorted.length,
-      m = degree + 2;
+      m = degree + 3;
     if (n < 2 * m)
       throw Error(
         `Need at least ${2 * m} nonzero-pressure points for automatic branch suggestions. Zero readings remain unassigned for review.`,
@@ -193,6 +193,61 @@
     if (!scale) throw Error('Volumes must span a range.');
     let pspan = Math.max(...sorted.map((p) => p.p)) - Math.min(...sorted.map((p) => p.p));
     if (!pspan) throw Error('Pressures must span a range.');
+    // Penalized adjusted R² balances branch quality with retained evidence.
+    const loss = (f) =>
+      f.r2 === null
+        ? 0
+        : (Math.max(0, 1 - f.r2) * (f.count - 1)) / (f.count - degree - 1);
+    function refine(pool) {
+      const span = pool.at(-1).v - pool[0].v;
+      let selected = pool,
+        fitted = fit(selected, degree, min, scale);
+      const objective = (f) => loss(f) + (0.01 * (pool.length - f.count)) / pool.length;
+      let value = objective(fitted);
+      // Bounded deterministic search: try the three largest residuals, then re-add.
+      for (let pass = 0; pass < 8; pass++) {
+        let best = null;
+        const included = new Set(selected.map((p) => p.id));
+        const removals =
+          selected.length > Math.max(m, Math.ceil(0.8 * pool.length))
+            ? [...selected]
+                .sort(
+                  (a, b) =>
+                    Math.abs(fitted.predict(b.v) - b.p) -
+                      Math.abs(fitted.predict(a.v) - a.p) ||
+                    a.v - b.v ||
+                    a.id - b.id,
+                )
+                .slice(0, 3)
+            : [];
+        const trials = [
+          ...removals.map((p) => selected.filter((q) => q.id !== p.id)),
+          ...pool
+            .filter((p) => !included.has(p.id))
+            .map((p) => [...selected, p].sort((a, b) => a.v - b.v || a.id - b.id)),
+        ];
+        for (const trial of trials) {
+          if (trial.at(-1).v - trial[0].v < 0.8 * span) continue;
+          try {
+            const f = fit(trial, degree, min, scale),
+              score = objective(f);
+            if (score < value - 1e-12 && (!best || score < best.score))
+              best = { selected: trial, fitted: f, score };
+          } catch {}
+        }
+        if (!best) break;
+        selected = best.selected;
+        fitted = best.fitted;
+        value = best.score;
+      }
+      return { selected, fitted };
+    }
+    const leftCache = new Map(),
+      rightCache = new Map();
+    function branch(cache, key, pool) {
+      if (!cache.has(key)) cache.set(key, refine(pool));
+      return cache.get(key);
+    }
     let best = null,
       maxGap = Math.min(8, Math.floor(n * 0.25));
     for (let i = m; i <= n - m; i++) {
@@ -200,13 +255,19 @@
         let left = sorted.slice(0, i),
           right = sorted.slice(i + skip);
         try {
-          let a = fit(left, degree, min, scale),
-            b = fit(right, degree, min, scale);
+          const A = branch(leftCache, i, left),
+            B = branch(rightCache, i + skip, right);
+          left = A.selected;
+          right = B.selected;
+          let a = A.fitted,
+            b = B.fitted;
+          const excluded = n - left.length - right.length;
+          if (excluded > Math.floor(0.25 * n)) continue;
           if (a.max >= b.min) continue;
           let rs = roots(a, b, min, scale).filter(
             (v) =>
-              v >= a.max - scale * 0.04 &&
-              v <= b.min + scale * 0.04 &&
+              v >= Math.max(a.max - scale * 0.04, a.max - (b.max - a.min) * 0.08) &&
+              v <= Math.min(b.min + scale * 0.04, b.min + (b.max - a.min) * 0.08) &&
               a.predict(v) >= 0 &&
               a.slope(v) < 0 &&
               b.slope(v) <= 0,
@@ -216,10 +277,18 @@
             a.slope(a.min) > 0 ||
             a.slope(a.max) > 0 ||
             b.slope(b.min) > 0 ||
-            b.slope(b.max) > 0
+            b.slope(b.max) > 0 ||
+            a.predict(a.min) < 0 ||
+            a.predict(a.max) < 0 ||
+            b.predict(b.min) < 0 ||
+            b.predict(b.max) < 0
           )
             continue;
-          let score = Math.sqrt((a.rss + b.rss) / (n - skip)) / pspan + 0.0025 * skip;
+          // Both regions matter equally, including the shallower low-pressure trend.
+          let score =
+            (loss(a) + loss(b)) / 2 +
+            0.5 * Math.max(loss(a), loss(b)) +
+            (0.01 * excluded) / n;
           if (!best || score < best.score) best = { score, left, right };
         } catch {}
       }
@@ -228,12 +297,18 @@
       throw Error(
         'No reliable automatic branch suggestion. Assign the two regions manually in the table.',
       );
+    // Apply the same intersection safeguards used for the displayed result.
     let h = new Set(best.left.map((p) => p.id)),
       l = new Set(best.right.map((p) => p.id));
-    return points.map((p) => ({
+    const assigned = points.map((p) => ({
       ...p,
       group: h.has(p.id) ? 'high' : l.has(p.id) ? 'low' : 'none',
     }));
+    if (!analyze(assigned, degree).intersection)
+      throw Error(
+        'Automatic fit has no supported intersection. Review the regions manually.',
+      );
+    return assigned;
   }
   root.PV = { parse, fit, analyze, autoAssign };
   if (typeof module !== 'undefined') module.exports = root.PV;
