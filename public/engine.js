@@ -20,24 +20,22 @@
   function parse(text) {
     const points = [],
       errors = [];
-    text
-      .trim()
-      .split(/\r?\n/)
-      .forEach((line, i) => {
-        if (!line.trim()) return;
-        if (points.length === 0 && /pressure/i.test(line) && /volume/i.test(line)) return;
-        const cells = line.trim().split(/[,;\t ]+/);
-        if (cells.length !== 2 || cells.some((s) => !Number.isFinite(Number(s)))) {
-          errors.push(`Line ${i + 1}: use two numbers, pressure then volume.`);
-          return;
-        }
-        const [p, v] = cells.map(Number);
-        if (v <= 0 || p < 0) {
-          errors.push(`Line ${i + 1}: volume must be positive and pressure nonnegative.`);
-          return;
-        }
-        points.push({ p, v, id: points.length, group: 'none' });
-      });
+    // Split the raw text so reported line numbers match what the user pasted.
+    text.split(/\r?\n/).forEach((line, i) => {
+      if (!line.trim()) return;
+      if (points.length === 0 && /pressure/i.test(line) && /volume/i.test(line)) return;
+      const cells = line.trim().split(/[,;\t ]+/);
+      if (cells.length !== 2 || cells.some((s) => !Number.isFinite(Number(s)))) {
+        errors.push(`Line ${i + 1}: use two numbers, pressure then volume.`);
+        return;
+      }
+      const [p, v] = cells.map(Number);
+      if (v <= 0 || p < 0) {
+        errors.push(`Line ${i + 1}: volume must be positive and pressure nonnegative.`);
+        return;
+      }
+      points.push({ p, v, id: points.length, group: 'none' });
+    });
     if (points.length > 500) errors.push('Use at most 500 points per case.');
     return { points, errors };
   }
@@ -154,9 +152,12 @@
         valid.length > 1
           ? 'Multiple nearby intersections: adjust the selected regions to resolve the result.'
           : 'The two trends do not intersect near the selected branch ends. Adjust the branch selections.';
+    // Both review conditions can apply together; report every one that does.
+    const reviews = [];
     if (intersection && !inGap(intersection.v))
-      warning =
-        'Intersection is outside the gap between the selected regions; check the extrapolation.';
+      reviews.push(
+        'Intersection is outside the gap between the selected regions; check the extrapolation.',
+      );
     if (
       intersection &&
       Math.abs(a.slope(intersection.v) - b.slope(intersection.v)) <
@@ -167,8 +168,10 @@
             1e-10,
           )
     )
-      warning =
-        'Nearly parallel trends: the intersection is sensitive to small measurement changes.';
+      reviews.push(
+        'Nearly parallel trends: the intersection is sensitive to small measurement changes.',
+      );
+    if (reviews.length) warning = reviews.join(' ');
     return {
       high: a,
       low: b,

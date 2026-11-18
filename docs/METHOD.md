@@ -95,7 +95,7 @@ A crossing outside the gap is reported with an extrapolation warning. Nearly par
 |slope_high − slope_low| < 0.05 × max(|slope_high|, |slope_low|, 1e−10)
 ```
 
-These thresholds are implementation choices; they have not been calibrated as laboratory acceptance criteria. A flagged intersection can still appear in the results. No confidence probability is assigned.
+When both conditions apply, both warnings are reported together. These thresholds are implementation choices; they have not been calibrated as laboratory acceptance criteria. A flagged intersection can still appear in the results. No confidence probability is assigned.
 
 ## Deep automatic selection
 

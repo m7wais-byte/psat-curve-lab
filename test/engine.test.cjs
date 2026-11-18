@@ -248,3 +248,24 @@ test('a crossing exactly at a selected end point is not reported as extrapolated
   assert(Math.abs(r.intersection.p - 1000) < 1e-6);
   assert.equal(r.warning, '');
 });
+test('an extrapolated, nearly parallel crossing reports both warnings', () => {
+  // Slopes −100 and −97 differ by 3%; the crossing at V = 5.5 lies beyond the gap [4, 5]
+  // but within the 8% span allowance.
+  const line = (slope, volumes, group, start) =>
+    volumes.map((v, i) => ({ id: start + i, v, p: 1000 + slope * (v - 5.5), group }));
+  const r = PV.analyze(
+    [...line(-100, [0, 1, 2, 3, 4], 'high', 0), ...line(-97, [5, 6, 7, 8, 9], 'low', 5)],
+    1,
+  );
+  assert(Math.abs(r.intersection.v - 5.5) < 1e-9);
+  assert.match(r.warning, /outside the gap/);
+  assert.match(r.warning, /Nearly parallel/);
+});
+test('parse errors report the line number as pasted, including leading blank lines', () => {
+  const { points, errors } = PV.parse('\n\n1000,30\nabc,1\r\n\r\n900,31,5');
+  assert.equal(points.length, 1);
+  assert.deepEqual(errors, [
+    'Line 4: use two numbers, pressure then volume.',
+    'Line 6: use two numbers, pressure then volume.',
+  ]);
+});
