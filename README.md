@@ -12,7 +12,7 @@ A focused, browser-local tool for drawing pressure–volume measurements, fittin
 - Plot **volume on X** and **pressure on Y**, with square major/minor gridlines.
 - Run Deep fit: exhaustive point selection for up to 20 nonzero readings, bounded background search for larger cases. Review and adjust both regions.
 - Assign points to the high-pressure fit, low-pressure fit, or neither fit.
-- Fit gently curved quadratic trends; straight trends remain an explicit option.
+- Fit gently curved quadratic trends; either branch can be set to a straight trend independently.
 - Review the graphical intersection, equations, RMSE, R² and warnings.
 - Zoom in/out, focus on the intersection, or set exact pressure/volume axis limits without changing the fitted result.
 - Keep the result strip visible while scrolling through the analysis.
@@ -62,7 +62,7 @@ Pressure,Volume
 1852,34.200
 ```
 
-These three rows illustrate the format only; a quadratic analysis needs at least four selected points per branch. Comma, semicolon, tab or whitespace separators are accepted. Use a decimal point, no thousands separators, and exactly two columns. The optional header must identify pressure and volume in that order. The UI allows up to 500 points and imported files no larger than 1 MB.
+These three rows illustrate the format only; a quadratic analysis needs at least four selected points per branch. Comma, semicolon, tab or whitespace separators are accepted. Use a decimal point, no thousands separators, and exactly two columns. An optional header line before the data, with words and no numbers (for example `Pressure,Volume` or `P (psig), V (cc)`), is skipped; columns are always read as pressure then volume. Numbers must be plain decimals (`1500`, `1.5e3`); hexadecimal and similar forms are rejected. The UI allows up to 500 points and imported files no larger than 1 MB.
 
 **Units label the supplied numbers; changing a unit does not convert them.** 1 cc = 1 mL = 1 cm³. Temperature is metadata in this graphical fitting version, not an input to an equation-of-state calculation.
 
@@ -78,7 +78,7 @@ P_low(z)  = a_low  + b_low·z  + c_low·z²
 
 The coefficients minimize the sum of squared pressure residuals for that branch. The crossing solves `P_high(z) = P_low(z)`. The program checks the location and direction of the fitted trends and flags ambiguous or sensitive crossings.
 
-**A high R² does not establish an accurate saturation pressure.** Deep fit is optimal only within its documented constraints in exhaustive mode; larger searches are bounded, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Validate against representative laboratory cases before relying on estimates.
+**A high R² does not establish an accurate saturation pressure.** Deep fit is optimal only within its documented constraints in exhaustive mode; larger searches are bounded, and selecting bubble/dew behavior changes the expected phase interpretation, not the numerical fit. Dew points usually show only a weak P–V break and are normally confirmed visually in a windowed cell; treat a graphical Pd as supporting evidence. Validate against representative laboratory cases before relying on estimates.
 
 ## Repository guide
 

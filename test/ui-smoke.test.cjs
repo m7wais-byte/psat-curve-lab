@@ -173,3 +173,71 @@ test('plot automatically selects both fits and Auto fit restores points with Und
   h.get('undo').onclick();
   assert.equal(h.run('JSON.stringify(points.map(p=>p.group))'), manual);
 });
+test('Y-function check shows for bubble points only, explains its assumption and is exported', async () => {
+  const h = harness();
+  h.demo();
+  const panel = h.get('yCheck');
+  assert(!panel.hidden);
+  assert.match(h.get('ySummary').textContent, /^· Pb [\d,.]+ psig$/);
+  assert.match(h.get('yResult').innerHTML, /Most linear Y at Pb/);
+  assert.match(h.get('yResult').innerHTML, /Graphical Pb 1,000 psig/);
+  assert.match(h.get('yNote').textContent, /standard atmosphere \(14\.696 psi\)/);
+  assert((h.get('yChart').innerHTML.match(/data-y="best"/g) || []).length > 3);
+  const psat = h.get('psat').innerHTML;
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert.equal(data.yFunctionCheck.atmosphereAdded, 14.696);
+  assert(Number.isFinite(data.yFunctionCheck.mostLinearPb));
+  h.get('punit').value = 'psi:Absolute';
+  h.get('punit').onchange();
+  assert.match(h.get('yNote').textContent, /treated as absolute/);
+  assert.equal(
+    h.get('psat').innerHTML.replace('psia', 'psig'),
+    psat,
+    'the check never changes Pb',
+  );
+  // A straight low branch fits with 3 points, but the Y-function check needs 4.
+  h.get('shapeLow').value = '1';
+  h.run(
+    'points = points.map((p) => (p.group === "low" && p.v > 35.6 ? { ...p, group: "none" } : p)); fitNow();',
+  );
+  assert(!panel.hidden);
+  assert.match(h.get('ySummary').textContent, /not available/);
+  assert.match(h.get('yResult').textContent, /at least 4 low-pressure points/);
+  h.get('phase').value = 'dew';
+  h.get('phase').onchange();
+  assert(panel.hidden);
+});
+test('small UI fixes: status colour, zoom kept after presentation, tidy limits, phone-width Y chart', () => {
+  const h = harness();
+  h.demo();
+  // Status colour resets with the result.
+  assert.equal(h.get('evidence').style.color, '#0f766e');
+  // Leaving presentation because the result went away keeps a custom zoom.
+  h.get('zoomIn').onclick();
+  const zoomed = h.run('JSON.stringify(viewBounds)');
+  h.get('present').onclick();
+  assert(h.run('presentation'));
+  h.run('points = points.map((p) => ({ ...p, group: "none" })); fitNow();');
+  assert(!h.run('presentation'));
+  assert.equal(h.run('JSON.stringify(viewBounds)'), zoomed);
+  assert.equal(h.get('evidence').style.color, '');
+  // Axis-limit boxes hide floating-point noise.
+  h.run('applyView({ vmin: 0.1 + 0.2, vmax: 40, pmin: 0, pmax: 1000.0000000000001 })');
+  assert.equal(h.get('vMin').value, '0.3');
+  assert.equal(h.get('pMax').value, '1000');
+  // The Y chart is drawn at the panel width when opened.
+  const phone = harness();
+  phone.demo();
+  assert(phone.run('!!yResult'));
+  Object.assign(phone.get('yChart'), { clientWidth: 320 });
+  phone.get('yCheck').open = true;
+  phone.get('yCheck').ontoggle();
+  const svg = phone.get('yChart').innerHTML;
+  assert.match(svg, /viewBox="0 0 320 260"/);
+  assert.equal(
+    (svg.match(/<path d="M[\d.]+ 18V212"/g) || []).length,
+    5,
+    'four x divisions',
+  );
+});

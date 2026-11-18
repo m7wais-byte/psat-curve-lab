@@ -313,6 +313,18 @@
           font-weight: 500;
           font-variant-numeric: tabular-nums;
         }
+        #vaps-a4-vector-report .y-check-report {
+          border-top: 1px solid var(--rule);
+          padding-top: 10px;
+          font-size: 11px;
+          line-height: 1.45;
+        }
+        #vaps-a4-vector-report .y-check-report p {
+          margin: 3px 0 0;
+        }
+        #vaps-a4-vector-report .y-check-report .quiet {
+          color: var(--quiet);
+        }
         #vaps-a4-vector-report .report-footer {
           margin-top: auto;
           padding-top: 12px;
@@ -545,12 +557,19 @@
           <div class="detail">
             <span class="label">Volume unit</span><span class="value">cc</span>
           </div>
+          <div class="detail">
+            <span class="label">Trend shape</span
+            ><span class="value">Quadratic curves</span>
+          </div>
+          <div class="detail">
+            <span class="label">Points used</span><span class="value">18 of 21</span>
+          </div>
         </div>
         <div class="results">
           <div>
-            <div class="result-label">Estimated saturation pressure · Psat</div>
+            <div class="result-label">Estimated bubble-point pressure · Pb</div>
             <div class="result-number" data-result="pressure">
-              1,006.90<span>psi g</span>
+              1,006.90<span>psig</span>
             </div>
           </div>
           <div>
@@ -579,6 +598,20 @@
             <div class="fit-label"><i class="low"></i>Low-pressure fit</div>
             <div class="r2" data-r2="low">R² = 0.998976</div>
           </div>
+        </div>
+        <div class="y-check-report">
+          <div class="fit-label">Y-function check · bubble point</div>
+          <p data-y-line="0">
+            Most-linear Pb 1,013.00 psig (Vb 34.9931 cc); difference from the graphical Pb
+            +6.10 psig (+0.61%).
+          </p>
+          <p data-y-line="1">
+            Y line scatter 1.52% at the most-linear Pb; 1.61% at the graphical Pb.
+          </p>
+          <p data-y-line="2" class="quiet">
+            Cross-check only; the reported Pb is the graphical intersection. Gauge
+            readings converted with one standard atmosphere (14.696 psi).
+          </p>
         </div>
         <div class="report-footer">
           <span>Excluded points shown; not used in either fit</span
@@ -630,6 +663,14 @@
             },
             used: 18,
             excluded: 3,
+            // PV.yFunction(points, PV.analyze(points, 2), 14.696) for this example.
+            yCheck: {
+              pb: 1012.9980038386698,
+              vb: 34.993145626443976,
+              relativeRmse: 0.015201384801456493,
+              graphicalRelativeRmse: 0.01611625701702528,
+              atmosphere: 14.696,
+            },
           };
           const plot = root.querySelector('[data-report-plot]');
           const fmt = (v, d) =>
@@ -638,13 +679,63 @@
               maximumFractionDigits: d,
             });
           root.querySelector('[data-result="pressure"]').innerHTML =
-            fmt(data.psat, 2) + '<span>psi g</span>';
+            fmt(data.psat, 2) + '<span>psig</span>';
           root.querySelector('[data-result="volume"]').innerHTML =
             fmt(data.vsat, 4) + '<span>cc</span>';
           root.querySelector('[data-r2="high"]').textContent =
             'R² = ' + data.high.r2.toFixed(6);
           root.querySelector('[data-r2="low"]').textContent =
             'R² = ' + data.low.r2.toFixed(6);
+          const yc = data.yCheck,
+            diff = yc.pb - data.psat,
+            sign = diff >= 0 ? '+' : '-',
+            pct = (v) => (100 * v).toFixed(2) + '%';
+          [
+            'Most-linear Pb ' +
+              fmt(yc.pb, 2) +
+              ' psig (Vb ' +
+              fmt(yc.vb, 4) +
+              ' cc); ' +
+              'difference from the graphical Pb ' +
+              sign +
+              fmt(Math.abs(diff), 2) +
+              ' psig (' +
+              sign +
+              pct(Math.abs(diff) / data.psat) +
+              ').',
+            'Y line scatter ' +
+              pct(yc.relativeRmse) +
+              ' at the most-linear Pb; ' +
+              pct(yc.graphicalRelativeRmse) +
+              ' at the graphical Pb.',
+            'Cross-check only; the reported Pb is the graphical intersection. ' +
+              'Gauge readings converted with one standard atmosphere (' +
+              yc.atmosphere +
+              ' psi).',
+          ].forEach(
+            (t, i) => (root.querySelector('[data-y-line="' + i + '"]').textContent = t),
+          );
+          // Same round-step axis rule as the live report (PVReport.niceAxis).
+          const STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8],
+            clean = (v) => Number(v.toPrecision(12));
+          function niceAxis(min, max, divisions) {
+            const e = Math.floor(Math.log10((max - min) / divisions)),
+              steps = [e - 1, e, e + 1, e + 2].flatMap((k) =>
+                STEPS.map((s) => clean(s * 10 ** k)),
+              );
+            for (const step of steps) {
+              if (step < ((max - min) / divisions) * (1 - 1e-9)) continue;
+              const lo = Math.max(0, clean(Math.floor(min / step + 1e-9) * step));
+              if (clean(lo + divisions * step) >= max - 1e-9 * step)
+                return { min: lo, max: clean(lo + divisions * step), step };
+            }
+          }
+          const vmax0 = Math.max(...data.points.map((p) => p.v)),
+            vmin0 = Math.min(...data.points.map((p) => p.v), data.vsat),
+            pmax0 = Math.max(...data.points.map((p) => p.p)),
+            pmin0 = Math.min(...data.points.map((p) => p.p), data.psat),
+            vPad = (vmax0 - vmin0) * 0.045,
+            pSpan = pmax0 - pmin0;
           const predict = (f, v) => {
             const z = (v - data.origin) / data.scale;
             return f.coef.reduce((s, c, i) => s + c * z ** i, 0);
@@ -663,10 +754,12 @@
               rows = w >= 480 ? 4 : 5,
               ph = cell * rows,
               h = t + ph + b;
-            const x0 = 32.8,
-              x1 = 37.2,
-              y0 = 0,
-              y1 = 4800;
+            const X = niceAxis(Math.max(0, vmin0 - vPad), vmax0 + vPad, cols),
+              Y = niceAxis(Math.max(0, pmin0 - pSpan * 0.07), pmax0 + pSpan * 0.1, rows),
+              x0 = X.min,
+              x1 = X.max,
+              y0 = Y.min,
+              y1 = Y.max;
             const x = (v) => l + ((v - x0) / (x1 - x0)) * (w - l - r),
               y = (p) => t + ph - ((p - y0) / (y1 - y0)) * ph;
             let s =
@@ -735,7 +828,7 @@
                 '" y="' +
                 (t + ph + 19) +
                 '" text-anchor="middle" font-size="11" fill="#546e5c">' +
-                v.toFixed(2) +
+                v.toLocaleString('en-US', { maximumFractionDigits: 2 }) +
                 '</text>';
             }
             for (let i = 0; i <= rows; i++) {
@@ -809,7 +902,7 @@
             const ax = w - r - 7,
               ay = y(data.psat) - 20;
             const label =
-              'Psat: ' + fmt(data.psat, 2) + ' psig @ ' + fmt(data.vsat, 3) + ' cc';
+              'Pb: ' + fmt(data.psat, 2) + ' psig @ ' + fmt(data.vsat, 3) + ' cc';
             s +=
               '<text data-annotation="psat" x="' +
               ax +
@@ -820,7 +913,7 @@
                 ? label
                 : '<tspan x="' +
                   ax +
-                  '">Psat: ' +
+                  '">Pb: ' +
                   fmt(data.psat, 2) +
                   ' psig</tspan><tspan x="' +
                   ax +

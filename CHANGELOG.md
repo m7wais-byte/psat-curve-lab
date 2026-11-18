@@ -1,6 +1,29 @@
 # Changelog
 
-## Unreleased — Clearer fitted curves
+## Unreleased — Review fixes, per-branch shapes and Y-function check
+
+Numerical method:
+
+- A crossing exactly at a selected end point is no longer misreported as extrapolated (gap tolerance `1e−9 × S`).
+- Extrapolated and nearly parallel warnings are reported together instead of one replacing the other.
+- Each branch can use its own trend shape (straight or quadratic); minimum counts and Deep fit limits follow each branch.
+- Added a bubble-point Y-function cross-check: the Pb that makes Y most linear, its Vb, and the same measure at the graphical Pb. It never changes the graphical result.
+- Data input: parse error line numbers match the pasted text; common headers such as `P (psig), V (cc)` are accepted; only plain decimal numbers are accepted (hexadecimal and `Infinity` are rejected).
+
+Interface and reports:
+
+- Fixed the black filled area under the intersection leader lines on the graph.
+- Unit and temperature changes no longer cancel a running Deep fit or drop its record.
+- Points left out by Deep fit are listed and marked (⊗) on the graph, legend and table, and exported.
+- Graph and report axes use round tick steps on square grids; zoom and focus keep round values.
+- Reports show Pb or Pd, trend shape, points used, unit-appropriate pressure digits and (bubble points) the Y-function check. The PDF pressure axis title is no longer clipped, and the printed report no longer spills onto a second page.
+- Small fixes: status colour reset, custom zoom kept when presentation ends, tidy axis-limit inputs, readable Y-function chart on phones.
+- Documentation notes that dew points are normally confirmed visually and that a graphical Pd is supporting evidence.
+- The A4 report preview files match the live reports.
+
+The method remains exploratory and is not validated against laboratory reference data.
+
+## Clearer fitted curves
 
 - Strengthened curve strokes and orange contrast, reduced grid emphasis, and used filled fitted-point markers in reports.
 - Added a separate intersection/low-pressure detail panel with labelled zoomed axes on screen, SVG export and A4 HTML/PDF reports.

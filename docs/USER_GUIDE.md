@@ -15,7 +15,7 @@ Paste or upload exactly two columns, in this order:
 1. Pressure.
 2. Volume.
 
-Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header should be `Pressure,Volume`. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
+Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header line with words and no numbers, such as `Pressure,Volume` or `P (psig), V (cc)`, is skipped. Columns are always pressure first, volume second. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
 
 Use Plot graph to read the current input, draw the points and propose fitting branches. Changing the text clears the previous result until it is replotted. A replot resets point assignments to the automatic proposal.
 
@@ -37,7 +37,7 @@ Undo restores the previous point-group assignment. Up to 25 assignment snapshots
 
 The range controls assign teal points at/below the high-range volume limit and orange points at/above the low-range volume limit. Intermediate points belong to neither fit. Zero-pressure readings are kept unassigned by automatic and range selection; they can be reviewed and assigned individually.
 
-The current model requires separate ranges: all teal volumes must be smaller than all orange volumes. Quadratic trends require four points per branch; straight trends require three.
+The current model requires separate ranges: all teal volumes must be smaller than all orange volumes. Each branch has its own trend shape (High fit · trend shape and Low fit · trend shape). A curved (quadratic) branch needs at least four points; a straight branch needs three. Both start as curved. For a bubble point, a straight high-pressure (single-phase liquid) trend with a curved low-pressure trend can be a useful check: the liquid trend then cannot bend near the break. Compare the two results; neither shape is validated as more accurate.
 
 ## Read the graph and result
 
@@ -48,9 +48,19 @@ The current model requires separate ranges: all teal volumes must be smaller tha
 - Graph paper, major-square and no-grid backgrounds are available. Grid and shading changes do not affect the numerical fit.
 - No fit points do not disappear and do not influence either curve.
 
+**Dew points:** gas-condensate P–V data usually show only a weak break, so a nearly parallel warning is common. Dew points are normally confirmed by visual observation in a windowed PVT cell; use the graphical Pd as supporting evidence alongside that observation, not on its own.
+
 A missing, multiple, reversing or distant crossing needs selection/model review. An intersection may be shown with a warning for extrapolation or nearly parallel trends. Do not treat the presence of a number as acceptance of the test.
 
 Exact coefficients and branch quality measures are in the collapsible equations panel. The adjacent method panel explains the equations. R² and RMSE describe the selected fits; neither establishes saturation-pressure accuracy.
+
+### Bubble points: Y-function check
+
+For bubble-point cases, **Y-function check** under Adjust fit gives an independent cross-check of Pb. It computes `Y = (Pb − P) / (P_abs · (V/Vb − 1))` for the low-pressure (two-phase) points, with Vb read from the high-pressure trend. It then finds the Pb, between the selected branches, that makes Y closest to a straight line in pressure. The panel shows that Pb, its difference from the graphical Pb, and a Y–P chart: filled points at the most-linear Pb, hollow points at the graphical Pb. A curved hollow set means the graphical Pb is probably off.
+
+- Y needs absolute pressure. For gauge units the app adds one standard atmosphere (14.696 psi, 1.01325 bar, 101.325 kPa or 0.101325 MPa). If your laboratory's barometric pressure differs much, enter absolute pressure instead.
+- Points just below Pb are the most sensitive to volume error. If the most-linear Pb sits at the edge of the allowed range, it is not resolved; review the selections.
+- The check never changes the graphical result. A large difference is a reason to review the data and selections, not proof that either value is correct. It is not shown for dew points.
 
 ## Adjust the graph scale
 
@@ -88,7 +98,7 @@ The interface itself does not save cases to disk, localStorage, a database or th
 | Automatic suggestion unavailable      | Assign the two branches manually                                    |
 | Ranges overlap                        | Move the branch limits apart or reassign conflicting points         |
 | No nearby intersection                | Review the point groups and curvature; do not force a result        |
-| Reversing fitted trend                | Adjust the selected range or try the straight model                 |
+| Reversing fitted trend                | Adjust the selected range or make that branch straight              |
 | Nearly parallel trends                | Treat the crossing as sensitive; review additional measurements     |
 | Unexpected zeros                      | Check whether these are true readings or missing-value placeholders |
 | Labels look wrong after a unit change | Remember that unit changes relabel rather than convert values       |
@@ -98,6 +108,8 @@ For test-data-dependent issues, use an anonymized case with instrument units and
 Pressure unit is one selector: choose psig for gauge pressure or psia for absolute pressure. Bar, MPa and kPa each also offer gauge and absolute choices. Enter measurements already in the selected unit/reference; changing the selector relabels values and does not convert them.
 
 Deep fit runs when you plot new measurements. For up to 20 nonzero readings, it compares every allowed selection and maximizes the weaker branch R², then average R², then retained points. It retains at least 75% overall and five points per quadratic branch (four for straight trends). Larger inputs use a bounded multi-start search. The status states which mode was used and how many selections were compared. The result is only optimal within the stated rules when the status says all permitted selections were compared.
+
+The status also lists the point numbers Deep fit left out. On the graph these points are hollow with a cross (⊗), and in the measurements table they are marked "left out by Deep fit". Check each one before accepting the result: an excluded point may be a bad reading, or it may be a valid reading near the break. Click a point with a fit tool to restore it. After any manual edit the selection is yours, so the Deep fit markers are removed. Zero-pressure readings are never assigned automatically and are not listed as left out. JSON export records the left-out point IDs (`excludedPointIds`, 0-based like the measurement IDs).
 
 Press Deep fit to recalculate after manual edits. Progress appears while it runs; Stop search retains the current selection. Editing points, changing the context or entering new data cancels any pending search, so old results cannot overwrite your work. Successful requests can be undone. All excluded points stay visible. Search scope is also recorded in JSON export. R² is not a measure of physical saturation-pressure accuracy.
 

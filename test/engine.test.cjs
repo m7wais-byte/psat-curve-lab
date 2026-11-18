@@ -234,3 +234,183 @@ test('automatic fitting rejects insufficient evidence and does not force paralle
   }));
   assert.throws(() => PV.autoAssign(parallel, 1), /No supported deep fit/);
 });
+test('a crossing exactly at a selected end point is not reported as extrapolated', () => {
+  // Same shape as the in-app Example: the break at V = 35 is itself a measurement.
+  const points = Array.from({ length: 21 }, (_, id) => {
+    const v = Number((33 + id * 0.2).toFixed(3)),
+      d = v - 35,
+      p = d < 0 ? 1000 - 1400 * d + 150 * d * d : 1000 - 190 * d + 15 * d * d;
+    return { id, v, p: Number(p.toFixed(3)), group: v <= 35 ? 'high' : 'low' };
+  });
+  const r = PV.analyze(points, 2);
+  assert(r.intersection);
+  assert(Math.abs(r.intersection.v - 35) < 1e-9);
+  assert(Math.abs(r.intersection.p - 1000) < 1e-6);
+  assert.equal(r.warning, '');
+});
+test('an extrapolated, nearly parallel crossing reports both warnings', () => {
+  // Slopes −100 and −97 differ by 3%; the crossing at V = 5.5 lies beyond the gap [4, 5]
+  // but within the 8% span allowance.
+  const line = (slope, volumes, group, start) =>
+    volumes.map((v, i) => ({ id: start + i, v, p: 1000 + slope * (v - 5.5), group }));
+  const r = PV.analyze(
+    [...line(-100, [0, 1, 2, 3, 4], 'high', 0), ...line(-97, [5, 6, 7, 8, 9], 'low', 5)],
+    1,
+  );
+  assert(Math.abs(r.intersection.v - 5.5) < 1e-9);
+  assert.match(r.warning, /outside the gap/);
+  assert.match(r.warning, /Nearly parallel/);
+});
+test('parse errors report the line number as pasted, including leading blank lines', () => {
+  const { points, errors } = PV.parse('\n\n1000,30\nabc,1\r\n\r\n900,31,5');
+  assert.equal(points.length, 1);
+  assert.deepEqual(errors, [
+    'Line 4: use two numbers, pressure then volume.',
+    'Line 6: use two numbers, pressure then volume.',
+  ]);
+});
+test('each branch can use its own trend shape', () => {
+  // Straight high branch, quadratic low branch, crossing exactly at V = 35, P = 1000.
+  const points = [
+    ...[33, 33.4, 33.8, 34.2, 34.6].map((v) => ({ v, p: 1000 - 1400 * (v - 35) })),
+    ...[35.4, 35.8, 36.2, 36.6, 37].map((v) => ({
+      v,
+      p: 1000 - 190 * (v - 35) + 15 * (v - 35) ** 2,
+    })),
+  ].map((p, id) => ({ ...p, id, group: p.v < 35 ? 'high' : 'low' }));
+  const r = PV.analyze(points, { high: 1, low: 2 });
+  assert.equal(r.high.coeff.length, 2);
+  assert.equal(r.low.coeff.length, 3);
+  assert.deepEqual(r.degrees, { high: 1, low: 2 });
+  assert.equal(r.degree, null);
+  assert(
+    Math.abs(r.intersection.v - 35) < 1e-9 && Math.abs(r.intersection.p - 1000) < 1e-6,
+  );
+  // A plain number still means the same shape for both branches.
+  const same = PV.analyze(points, 2);
+  assert.equal(same.degree, 2);
+  assert.deepEqual(same.degrees, { high: 2, low: 2 });
+  assert.throws(() => PV.analyze(points, { high: 3, low: 1 }), /straight or quadratic/);
+  // Per-branch minimum counts follow each branch's shape.
+  const few = points.map((p) => ({
+    ...p,
+    group: p.id < 3 ? 'high' : p.id < 7 ? 'low' : 'none',
+  }));
+  assert(PV.analyze(few, { high: 1, low: 2 }).high);
+  assert.throws(
+    () => PV.analyze(few, { high: 2, low: 2 }),
+    /curved branch needs at least 4/,
+  );
+});
+test('deep fit applies per-branch minimums and returns mixed-shape fits', () => {
+  const points = Array.from({ length: 12 }, (_, id) => {
+    const v = 33 + id * 0.4,
+      d = v - 35;
+    return {
+      id,
+      v,
+      p: d < 0 ? 1000 - 1400 * d : 1000 - 190 * d + 15 * d * d,
+      group: 'none',
+    };
+  });
+  const d = PV.deepFit(points, { high: 1, low: 2 });
+  assert.deepEqual(d.search.minimumPerBranch, { high: 4, low: 5 });
+  const high = d.points.filter((p) => p.group === 'high').length,
+    low = d.points.filter((p) => p.group === 'low').length;
+  assert(high >= 4 && low >= 5);
+  const r = PV.analyze(d.points, { high: 1, low: 2 });
+  assert(Math.abs(r.intersection.p - 1000) < 1e-6);
+  assert.equal(PV.deepFit(points, 2).search.minimumPerBranch, 5);
+  // 8 nonzero points: enough for straight/straight (4 + 4) but not straight/curved (4 + 5).
+  assert(
+    PV.deepFit(
+      points.slice(0, 8).map((p, i) => ({ ...p, id: i })),
+      1,
+    ),
+  );
+  assert.throws(
+    () => PV.deepFit(points.slice(0, 8), { high: 1, low: 2 }),
+    /Need at least 9 nonzero-pressure points/,
+  );
+});
+// Synthetic bubble-point CCE in gauge pressure whose true Y-function is exactly linear:
+// V/Vb − 1 = (Pb − P) / (P_abs · Y), Y = 2.2 + 0.0006 P_abs, Pb = 2500 psia, Vb = 50.
+function yCase(atmosphere = 14.696) {
+  return Array.from({ length: 16 }, (_, id) => {
+    const P = 4000 - 200 * id,
+      v =
+        P >= 2500
+          ? 50 * (1 - 1.2e-5 * (P - 2500))
+          : 50 * (1 + (2500 - P) / (P * (2.2 + 0.0006 * P)));
+    return { id, p: P - atmosphere, v, group: P >= 2500 ? 'high' : 'low' };
+  });
+}
+test('Y-function check recovers the true bubble point and Vb on exact data', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 }),
+    y = PV.yFunction(points, r, 14.696);
+  assert(Math.abs(y.best.pb - (2500 - 14.696)) < 0.05, `Pb ${y.best.pb}`);
+  assert(Math.abs(y.best.vb - 50) < 1e-3, `Vb ${y.best.vb}`);
+  assert(y.best.relativeRmse < 1e-6);
+  assert(Math.abs(y.best.slope * 1e4 - 6) < 1e-3, 'Y slope matches the synthetic 0.0006');
+  assert.deepEqual(y.bracket, [2400 - 14.696, 2600 - 14.696]);
+  assert.equal(y.atEdge, false);
+  assert.equal(y.best.rows.length, points.filter((p) => p.group === 'low').length);
+  // The graphical estimate is evaluated with the same Y measure for comparison.
+  assert(y.graphical === null || y.graphical.relativeRmse >= y.best.relativeRmse);
+});
+test('Y-function uses absolute pressure: ignoring the gauge offset biases Pb', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 });
+  const wrong = PV.yFunction(points, r, 0);
+  assert(
+    wrong.best.relativeRmse > 1e-6,
+    'gauge treated as absolute is no longer exactly linear',
+  );
+  const absolute = yCase(0),
+    ra = PV.analyze(absolute, { high: 1, low: 2 });
+  assert(Math.abs(PV.yFunction(absolute, ra, 0).best.pb - 2500) < 0.05);
+});
+test('Y-function check rejects unsuitable selections', () => {
+  const points = yCase(),
+    r = PV.analyze(points, { high: 1, low: 2 });
+  const fewLow = points.map((p) => (p.id > 10 ? { ...p, group: 'none' } : p));
+  assert.throws(
+    () => PV.yFunction(fewLow, PV.analyze(fewLow, { high: 1, low: 1 }), 14.696),
+    /at least 4 low-pressure points/,
+  );
+  assert.throws(() => PV.yFunction(points, null), /Fit both branches/);
+  assert.throws(() => PV.yFunction(points, r, -1), /Atmospheric/);
+});
+test('parse accepts common headers and plain decimal numbers only', () => {
+  for (const header of [
+    'Pressure,Volume',
+    'P (psig), V (cc)',
+    'P\tV',
+    'Pressure (bar a); Volume (mL)',
+  ])
+    assert.deepEqual(PV.parse(`${header}\n1000,30\n900,31.5`).errors, [], header);
+  assert.equal(PV.parse('P,V\n1000,30\n900,31.5').points.length, 2);
+  // A header is only accepted before the first measurement.
+  assert.deepEqual(PV.parse('1000,30\nP,V\n900,31').errors, [
+    'Line 2: use two numbers, pressure then volume.',
+  ]);
+  // A mistyped data line is reported, not skipped as a header.
+  assert.deepEqual(PV.parse('1OOO,30\n900,31').errors, [
+    'Line 1: use two numbers, pressure then volume.',
+  ]);
+  for (const bad of ['0x10,5', 'Infinity,5', '1000,1e', '1_000,5', '1000,']) {
+    assert.equal(PV.parse(bad).errors.length, 1, bad);
+    assert.equal(PV.parse(bad).points.length, 0, bad);
+  }
+  const ok = PV.parse('1.5e3,+30\n-0,.5\n12.,3');
+  assert.deepEqual(ok.errors, []);
+  assert.deepEqual(
+    ok.points.map((p) => [p.p, p.v]),
+    [
+      [1500, 30],
+      [-0, 0.5],
+      [12, 3],
+    ],
+  );
+});
