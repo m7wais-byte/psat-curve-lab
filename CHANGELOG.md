@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — Clear report measurements
+## Unreleased — Point number visibility
+
+- Added Show point numbers beside Show fit ranges.
+- Applied the setting to the main graph, detail panel, SVG, printed report and PDF; recorded it in analysis JSON.
+- Kept measured points, point-table IDs and numerical results unchanged.
+
+## Clear report measurements
 
 - Enlarged the PDF overview by compacting the report header and case details.
 - Drew larger, white-separated measurement markers above the fitted curves; excluded readings are hollow crossed circles.

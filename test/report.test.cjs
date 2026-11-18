@@ -304,3 +304,51 @@ test('report identifies every small-case measurement without changing fitting da
     'dense cases keep markers without crowded row labels',
   );
 });
+
+test('point number visibility propagates from the graph to print and PDF without altering the fit', () => {
+  const h = harness();
+  h.demo();
+  const before = h.run(
+    'JSON.stringify({points,coeff:[result.high.coeff,result.low.coeff],intersection:result.intersection,history})',
+  );
+  assert.match(h.get('chart').innerHTML, /data-point-number=/);
+  const on = h.run('currentReport()');
+  h.get('pointNumbers').checked = false;
+  h.get('pointNumbers').onchange();
+  assert(!h.get('chart').innerHTML.includes('data-point-number='));
+  const off = h.run('currentReport()');
+  assert.equal(off.showPointNumbers, false);
+  assert(!R.svg(off).includes('data-point-number='));
+  assert(!R.html(off).includes('Point numbers = input rows'));
+  function labelCount(model) {
+    let count = 0;
+    function Recorder(options) {
+      const doc = new jsPDF(options),
+        text = doc.text.bind(doc);
+      doc.text = (value, ...args) => {
+        if (
+          doc.getFontSize() === 7 &&
+          doc.getFont().fontStyle === 'bold' &&
+          /^\d+$/.test(String(value))
+        )
+          count++;
+        return text(value, ...args);
+      };
+      return doc;
+    }
+    R.createPdf(model, Recorder);
+    return count;
+  }
+  assert(labelCount(on) > 0);
+  assert.equal(labelCount(off), 0);
+  assert.equal(
+    h.run(
+      'JSON.stringify({points,coeff:[result.high.coeff,result.low.coeff],intersection:result.intersection,history})',
+    ),
+    before,
+  );
+  h.get('pointNumbers').checked = true;
+  h.get('pointNumbers').onchange();
+  assert.match(h.get('chart').innerHTML, /data-point-number=/);
+  assert(R.svg(h.run('currentReport()')).includes('data-point-number='));
+});

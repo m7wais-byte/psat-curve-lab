@@ -94,6 +94,7 @@ function harness(options = {}) {
   };
   for (const [id, value] of Object.entries(defaults)) get(id).value = value;
   get('shade').checked = true;
+  get('pointNumbers').checked = true;
   const events = {},
     blobs = [];
   const window = {
