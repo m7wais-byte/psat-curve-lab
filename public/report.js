@@ -399,7 +399,7 @@
     s += `<circle cx="${x(C.v)}" cy="${y(C.p)}" r="4.7" fill="white" stroke="${COLOR.ink}" stroke-width="1.6"/></g>`;
     const ax = w - r - 7,
       ay = Math.max(t + 14, Math.min(t + ph - 22, y(C.p) - 20));
-    s += `<text data-report-annotation="psat" x="${ax}" y="${ay}" text-anchor="end" font-size="11" fill="${COLOR.ink}" stroke="white" stroke-width="4" paint-order="stroke">${w >= 360 ? esc(label(m)) : `<tspan x="${ax}">Psat: ${fmt(C.p, 2)} ${esc(unit(m, true))}</tspan><tspan x="${ax}" dy="15">@ ${fmt(C.v, 3)} ${esc(m.volumeUnit)}</tspan>`}</text>`;
+    s += `<text data-report-annotation="psat" x="${ax}" y="${ay}" text-anchor="end" font-size="11" fill="${COLOR.ink}" stroke="white" stroke-width="4" paint-order="stroke">${w >= 360 ? esc(label(m)) : `<tspan x="${ax}">${symbol(m)}: ${fmt(C.p, pressureDigits(m))} ${esc(unit(m, true))}</tspan><tspan x="${ax}" dy="15">@ ${fmt(C.v, 3)} ${esc(m.volumeUnit)}</tspan>`}</text>`;
     return (
       s +
       `<text x="${l + (w - l - r) / 2}" y="${mainHeight - 6}" text-anchor="middle" font-size="12" fill="#344f3d">Volume (${esc(m.volumeUnit)})</text><text transform="translate(13 ${t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#344f3d">Pressure (${esc(unit(m, true))})</text>${detailSvg(m, w, detailHeight).replace('<svg ', `<svg x="0" y="${mainHeight + 10}" `)}</svg>`
@@ -422,7 +422,7 @@
             .map((t, i) => `<p${i === 2 ? ' class="quiet"' : ''}>${esc(t)}</p>`)
             .join('')}</div>`
         : ''
-    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=6"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=7"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');

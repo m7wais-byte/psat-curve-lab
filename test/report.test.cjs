@@ -222,3 +222,11 @@ test('overview and magnified detail preserve measurements, coefficients and resu
   assert.match(pdf.output(), /Intersection detail - zoomed axes/);
   assert(!pdf.output().includes('/Subtype /Image'));
 });
+
+test('narrow report graphs use the Pb/Pd label and unit digits too', () => {
+  const { model } = fixture();
+  assert.match(R.svg(model, 300), /<tspan x="[\d.]+">Pb: 1,000\.00 psig<\/tspan>/);
+  const dew = { ...model, phase: 'dew', pressureUnit: 'MPa' };
+  assert.match(R.svg(dew, 300), /<tspan x="[\d.]+">Pd: 1,000\.000 MPa g<\/tspan>/);
+  assert(!R.svg(model, 300).includes('Psat:'));
+});
