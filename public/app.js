@@ -241,6 +241,9 @@ function render() {
   equations();
   updateWorkspace();
 }
+// Major grid divisions on the 900 × 500 plot area (100 px squares).
+const X_DIV = 9,
+  Y_DIV = 5;
 function chart() {
   if (!points.length) {
     autoBounds = null;
@@ -269,10 +272,15 @@ function chart() {
     pmax = Math.max(...pressures),
     vs = vmax - vmin || 1,
     ps = pmax - pmin || 1;
-  vmin = Math.max(0, vmin - vs * 0.045);
-  vmax += vs * 0.045;
-  pmin = Math.max(0, pmin - ps * 0.07);
-  pmax += ps * 0.1;
+  // Snap the padded data range to round steps on the major grid lines.
+  const vAxis = PVReport.niceAxis(
+      Math.max(0, vmin - vs * 0.045),
+      vmax + vs * 0.045,
+      X_DIV,
+    ),
+    pAxis = PVReport.niceAxis(Math.max(0, pmin - ps * 0.07), pmax + ps * 0.1, Y_DIV);
+  ({ min: vmin, max: vmax } = vAxis);
+  ({ min: pmin, max: pmax } = pAxis);
   autoBounds = { vmin, vmax, pmin, pmax };
   if (viewBounds) ({ vmin, vmax, pmin, pmax } = viewBounds);
   updateScaleControls();
@@ -311,13 +319,13 @@ function chart() {
     h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#ccd9d2' : '#edf2ee'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="none" stroke="#8191a4" stroke-width="1"/><path d="M${l} ${t}V${H - b}H${W - rt}" fill="none" stroke="#34475c" stroke-width="1.8"/>`;
-  for (let i = 0; i <= 9; i++) {
-    let v = vmin + ((vmax - vmin) * i) / 9;
-    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${axisTick(v, (vmax - vmin) / 9)}</text>`;
+  for (let i = 0; i <= X_DIV; i++) {
+    let v = vmin + ((vmax - vmin) * i) / X_DIV;
+    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${axisTick(v, (vmax - vmin) / X_DIV)}</text>`;
   }
-  for (let i = 0; i <= 5; i++) {
-    let p = pmin + ((pmax - pmin) * i) / 5;
-    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${axisTick(p, (pmax - pmin) / 5)}</text>`;
+  for (let i = 0; i <= Y_DIV; i++) {
+    let p = pmin + ((pmax - pmin) * i) / Y_DIV;
+    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${axisTick(p, (pmax - pmin) / Y_DIV)}</text>`;
   }
   function path(f, start, end, color, dashed) {
     let d = '';
@@ -855,17 +863,37 @@ function applyView(bounds) {
   $('scaleError').textContent = '';
   chart();
 }
-function zoomView(factor, focus = null) {
+// Zoom moves one round step smaller ('in') or larger ('out'); focus uses a quarter of the
+// automatic range around the intersection. Every result keeps round tick values.
+function zoomView(direction, focus = null) {
   if (!autoBounds || !points.length) return;
-  const b = viewBounds || autoBounds,
-    base = focus ? autoBounds : b;
-  const vc = focus ? focus.v : b.vmin + (b.vmax - b.vmin) / 2;
-  const pc = focus ? focus.p : b.pmin + (b.pmax - b.pmin) / 2;
-  const vs = (base.vmax - base.vmin) * factor,
-    ps = (base.pmax - base.pmin) * factor;
-  const vmin = Math.max(0, vc - vs / 2),
-    pmin = Math.max(0, pc - ps / 2);
-  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+  const b = viewBounds || autoBounds;
+  const axis = (min, max, autoMin, autoMax, divisions, center) => {
+    const step = focus
+      ? PVReport.niceStep(((autoMax - autoMin) / divisions) * 0.25)
+      : PVReport.niceStep(
+          (max - min) / divisions,
+          direction === 'in' ? 'below' : 'above',
+        );
+    return PVReport.alignedAxis(center - (divisions * step) / 2, step, divisions);
+  };
+  const v = axis(
+      b.vmin,
+      b.vmax,
+      autoBounds.vmin,
+      autoBounds.vmax,
+      X_DIV,
+      focus ? focus.v : (b.vmin + b.vmax) / 2,
+    ),
+    p = axis(
+      b.pmin,
+      b.pmax,
+      autoBounds.pmin,
+      autoBounds.pmax,
+      Y_DIV,
+      focus ? focus.p : (b.pmin + b.pmax) / 2,
+    );
+  applyView({ vmin: v.min, vmax: v.max, pmin: p.min, pmax: p.max });
 }
 $('applyScale').onclick = () => {
   const ids = ['vMin', 'vMax', 'pMin', 'pMax'];
@@ -880,10 +908,10 @@ $('applyScale').onclick = () => {
     pmax: Number($('pMax').value),
   });
 };
-$('zoomIn').onclick = () => zoomView(1 / 1.4);
-$('zoomOut').onclick = () => zoomView(1.4);
+$('zoomIn').onclick = () => zoomView('in');
+$('zoomOut').onclick = () => zoomView('out');
 $('focusScale').onclick = () => {
-  if (result?.intersection) zoomView(0.25, result.intersection);
+  if (result?.intersection) zoomView('in', result.intersection);
 };
 $('autoScale').onclick = () => {
   viewBounds = null;

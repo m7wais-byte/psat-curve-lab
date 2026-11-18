@@ -21,7 +21,7 @@ test('report snapshots current selections without changing the fitted case', () 
     (markup.match(/data-group="none"/g) || []).length,
     model.points.filter((p) => p.group === 'none').length,
   );
-  assert.match(markup, /Psat: 1,000.00 psig @ 35.000 cc/);
+  assert.match(markup, /Pb: 1,000.00 psig @ 35.000 cc/);
 });
 test('report HTML keeps separate summaries, actual metadata and safe script payloads', () => {
   const { model } = fixture();
@@ -30,7 +30,9 @@ test('report HTML keeps separate summaries, actual metadata and safe script payl
   model.pressureUnit = 'bar';
   model.pressureBasis = 'Absolute';
   const html = R.html(model, 'https://example.com/');
-  assert.match(html, /Estimated saturation pressure/);
+  assert.match(html, /Estimated dew-point pressure · Pd/);
+  assert.match(html, /Quadratic curves/);
+  assert.match(html, /Points used/);
   assert.match(html, /Volume at saturation/);
   assert.match(html, /Dew point/);
   assert.match(html, /bar a/);
@@ -114,4 +116,47 @@ test('print listener is attached after opening the report document', () => {
   window.PVReport.open(model, { print: true });
   assert(printed);
   assert.match(written, /CURRENT-CASE/);
+});
+test('round axis helpers give 1/1.5/2/2.5/3/4/5/6/8 × 10^k steps that cover the data', () => {
+  const round = (step) =>
+    [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8].some((s) => {
+      const k = step / s / 10 ** Math.round(Math.log10(step / s));
+      return Math.abs(k - 1) < 1e-9;
+    });
+  for (const [min, max, div] of [
+    [32.82, 37.18, 9],
+    [420, 4772, 5],
+    [0, 0.0031, 8],
+    [101325, 101990, 4],
+  ]) {
+    const a = R.niceAxis(min, max, div);
+    assert(round(a.step), `round step ${a.step}`);
+    assert(a.min <= min && a.max >= max && a.min >= 0);
+    assert(Math.abs((a.max - a.min) / a.step - div) < 1e-9);
+    assert(Math.abs(a.min / a.step - Math.round(a.min / a.step)) < 1e-9);
+  }
+  assert.equal(R.niceStep(0.5, 'below'), 0.4);
+  assert.equal(R.niceStep(0.5, 'above'), 0.6);
+});
+test('report shows Pb/Pd, trend shape, points used and unit-appropriate pressure digits', () => {
+  const { model } = fixture();
+  assert.equal(R.label(model), 'Pb: 1,000.00 psig @ 35.000 cc');
+  const data = R.createPdf(model, jsPDF).output();
+  assert.match(data, /Estimated bubble-point pressure - Pb/);
+  assert.match(data, /Quadratic curves/);
+  assert.match(data, /21 of 21/);
+  const mpa = { ...model, pressureUnit: 'MPa', intersection: { p: 6.894757, v: 35 } };
+  assert.match(R.label(mpa), /^Pb: 6\.895 MPa g/);
+  assert.match(R.label({ ...mpa, pressureUnit: 'kPa', phase: 'dew' }), /^Pd: 6\.9 kPa g/);
+  const straight = { ...model, degree: 1 };
+  assert.match(R.html(straight), /Straight lines/);
+});
+test('report graph ticks are round values', () => {
+  const { model } = fixture();
+  const ticks = [...R.svg(model).matchAll(/fill="#546e5c">([^<]+)</g)].map((m) =>
+    Number(m[1].replace(/,/g, '')),
+  );
+  assert(ticks.length >= 10);
+  for (const t of ticks)
+    assert(Math.abs(t * 100 - Math.round(t * 100)) < 1e-6, String(t));
 });

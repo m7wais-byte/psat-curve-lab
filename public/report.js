@@ -21,6 +21,56 @@
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });
+  // Round axis steps: 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 × 10^k (at most 1.5× apart, so the
+  // data keeps most of the plot). Grid squares stay square because each
+  // major division keeps its size on the page; only the values the divisions carry change.
+  const STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
+  const clean = (value) => Number(value.toPrecision(12));
+  function niceStep(raw, mode = 'atLeast') {
+    if (!(raw > 0) || !Number.isFinite(raw)) return 1;
+    const e = Math.floor(Math.log10(raw)),
+      steps = [e - 1, e, e + 1].flatMap((k) => STEPS.map((s) => clean(s * 10 ** k)));
+    if (mode === 'below') return steps.filter((s) => s < raw * (1 - 1e-9)).at(-1);
+    if (mode === 'above') return steps.find((s) => s > raw * (1 + 1e-9));
+    return steps.find((s) => s >= raw * (1 - 1e-9));
+  }
+  // Nonnegative axis of `divisions` round steps starting at a multiple of the step.
+  function alignedAxis(start, step, divisions) {
+    const min = Math.max(0, clean(Math.floor(start / step + 1e-9) * step));
+    return { min, max: clean(min + divisions * step), step };
+  }
+  // Smallest round axis covering [min, max] with exactly `divisions` steps.
+  function niceAxis(min, max, divisions) {
+    let step = niceStep((max - min || Math.abs(max) || 1) / divisions);
+    for (let i = 0; i < 20; i++) {
+      const axis = alignedAxis(min, step, divisions);
+      if (axis.max >= max - 1e-9 * step) return axis;
+      step = niceStep(step, 'above');
+    }
+    return { min, max, step: (max - min) / divisions };
+  }
+  // Report precision gives similar resolution (about 0.01–0.15 psi) in every unit.
+  const PRESSURE_DIGITS = { psi: 2, bar: 2, MPa: 3, kPa: 1 };
+  const pressureDigits = (m) => PRESSURE_DIGITS[m.pressureUnit] ?? 2;
+  const symbol = (m) => (m.phase === 'bubble' ? 'Pb' : m.phase === 'dew' ? 'Pd' : 'Psat');
+  function resultTitle(m, separator) {
+    return m.phase === 'bubble'
+      ? 'Estimated bubble-point pressure' + separator + 'Pb'
+      : m.phase === 'dew'
+        ? 'Estimated dew-point pressure' + separator + 'Pd'
+        : 'Estimated saturation pressure' + separator + 'Psat';
+  }
+  function trendName(m) {
+    return m.degree === 1
+      ? 'Straight lines'
+      : m.degree === 2
+        ? 'Quadratic curves'
+        : 'Not recorded';
+  }
+  function pointsUsed(m) {
+    const used = m.points.filter((p) => p.group !== 'none').length;
+    return used + ' of ' + m.points.length;
+  }
   function buildModel(input) {
     const r = input.result;
     if (!r?.intersection || !input.points?.length)
@@ -50,6 +100,7 @@
       syntheticDemo: !!input.syntheticDemo,
       warning: String(r.warning || ''),
       grid: ['paper', 'major', 'none'].includes(input.grid) ? input.grid : 'paper',
+      degree: [1, 2].includes(r.degree) ? r.degree : null,
       origin: r.origin,
       scale: r.scale,
       intersection: { p: r.intersection.p, v: r.intersection.v },
@@ -114,8 +165,9 @@
   }
   function label(m) {
     return (
-      'Psat: ' +
-      fmt(m.intersection.p, 2) +
+      symbol(m) +
+      ': ' +
+      fmt(m.intersection.p, pressureDigits(m)) +
       ' ' +
       unit(m, true) +
       ' @ ' +
@@ -133,7 +185,7 @@
     const z = (v - m.origin) / m.scale;
     return f.coefficients.reduce((sum, c, i) => sum + c * z ** i, 0);
   }
-  function bounds(m) {
+  function bounds(m, cols, rows) {
     const volumes = [...m.points.map((p) => p.v), m.intersection.v],
       pressures = [...m.points.map((p) => p.p), m.intersection.p];
     let vmin = Math.min(...volumes),
@@ -142,12 +194,9 @@
       pmax = Math.max(...pressures);
     const vs = vmax - vmin || 1,
       ps = pmax - pmin || 1;
-    return {
-      vmin: Math.max(0, vmin - vs * 0.045),
-      vmax: vmax + vs * 0.045,
-      pmin: Math.max(0, pmin - ps * 0.07),
-      pmax: pmax + ps * 0.1,
-    };
+    const v = niceAxis(Math.max(0, vmin - vs * 0.045), vmax + vs * 0.045, cols),
+      p = niceAxis(Math.max(0, pmin - ps * 0.07), pmax + ps * 0.1, rows);
+    return { vmin: v.min, vmax: v.max, pmin: p.min, pmax: p.max };
   }
   function tick(v, step) {
     const d = Math.max(0, Math.ceil(-Math.log10(step)) + 1);
@@ -167,7 +216,7 @@
     const cell = (w - l - r) / cols,
       ph = cell * rows,
       h = t + ph + b,
-      B = bounds(m),
+      B = bounds(m, cols, rows),
       C = m.intersection;
     const x = (v) => l + ((v - B.vmin) / (B.vmax - B.vmin)) * (w - l - r),
       y = (p) => t + ph - ((p - B.pmin) / (B.pmax - B.pmin)) * ph;
@@ -231,7 +280,7 @@
       .replace(/</g, '\\u003c')
       .replace(/\u2028/g, '\\u2028')
       .replace(/\u2029/g, '\\u2029');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=1"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}${row('Trend shape', trendName(m))}${row('Points used', pointsUsed(m))}</div><div class="results"><div><div class="result-label">${esc(resultTitle(m, ' · '))}</div><div class="result-number">${fmt(m.intersection.p, pressureDigits(m))}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=3"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -374,6 +423,7 @@
         m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit,
       ],
       ['Pressure unit', unit(m), 'Volume unit', m.volumeUnit],
+      ['Trend shape', trendName(m), 'Points used', pointsUsed(m)],
     ];
     let rowY = 134;
     for (const [a, b, d, e] of rows) {
@@ -393,12 +443,21 @@
     }
     const offset = Math.max(0, rowY - 197);
     line(M, 199 + offset, W - M, 199 + offset);
-    text(M, 217 + offset, 'Estimated saturation pressure - Psat', 9, COLOR.quiet);
+    text(M, 217 + offset, resultTitle(m, ' - '), 9, COLOR.quiet);
     text(mid, 217 + offset, 'Volume at saturation - Vsat', 9, COLOR.quiet);
-    text(M, 247 + offset, fmt(m.intersection.p, 2), 25);
-    text(M + 125, 247 + offset, unit(m), 10, COLOR.quiet);
-    text(mid, 247 + offset, fmt(m.intersection.v, 4), 25);
-    text(mid + 120, 247 + offset, m.volumeUnit, 10, COLOR.quiet);
+    // Units follow the measured number so large values never overlap them.
+    const pressureText = fmt(m.intersection.p, pressureDigits(m)),
+      volumeText = fmt(m.intersection.v, 4);
+    text(M, 247 + offset, pressureText, 25);
+    text(M + doc.getTextWidth(pressureText) + 6, 247 + offset, unit(m), 10, COLOR.quiet);
+    text(mid, 247 + offset, volumeText, 25);
+    text(
+      mid + doc.getTextWidth(volumeText) + 6,
+      247 + offset,
+      m.volumeUnit,
+      10,
+      COLOR.quiet,
+    );
     line(M, 263 + offset, W - M, 263 + offset);
     let warningHeight = 0;
     if (m.warning) {
@@ -413,7 +472,7 @@
       left = M + 45,
       right = left + cell * 8,
       bottom = top + cell * 4,
-      B = bounds(m),
+      B = bounds(m, 8, 4),
       C = m.intersection;
     if (cell < 30)
       throw new Error(
@@ -486,10 +545,16 @@
     );
     doc.setFontSize(9);
     doc.setTextColor('#344f3d');
-    doc.text('Pressure (' + unit(m, true) + ')', M + 4, (top + bottom) / 2, {
-      angle: 90,
-      align: 'center',
-    });
+    // jsPDF centres rotated text along the page x axis, so centre it manually on the plot.
+    const pressureTitle = 'Pressure (' + unit(m, true) + ')';
+    doc.text(
+      pressureTitle,
+      M + 9,
+      (top + bottom) / 2 + doc.getTextWidth(pressureTitle) / 2,
+      {
+        angle: 90,
+      },
+    );
     doc.saveGraphicsState();
     doc.rect(left, top, right - left, bottom - top);
     doc.clip();
@@ -552,6 +617,18 @@
     text(W - M, H - 48, 'A4 portrait - Page 1 of 1', 8, COLOR.quiet, 'right');
     return doc;
   }
-  root.PVReport = { buildModel, svg, html, open, createPdf, save, label, filename };
+  root.PVReport = {
+    buildModel,
+    svg,
+    html,
+    open,
+    createPdf,
+    save,
+    label,
+    filename,
+    niceStep,
+    niceAxis,
+    alignedAxis,
+  };
   if (typeof module !== 'undefined') module.exports = root.PVReport;
 })(typeof window !== 'undefined' ? window : globalThis);
