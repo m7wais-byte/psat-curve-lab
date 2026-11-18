@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=13" />
+    <link rel="stylesheet" href="style.css?v=14" />
   </head>
   <body>
     <header>
@@ -206,14 +206,20 @@
                 ><button id="undo" disabled>↶ Undo</button>
               </div>
             </div>
+            <div class="navigation-toolbar" aria-label="Graph navigation">
+              <button id="panGraph" aria-pressed="false">✥ Move / zoom</button>
+              <button id="zoomIn" disabled>＋ Zoom in</button>
+              <button id="zoomOut" disabled>− Zoom out</button>
+              <button id="focusScale" disabled>◎ Intersection</button>
+              <button id="autoScale" disabled>↺ Fit all</button>
+            </div>
+            <p id="navigationHint" class="navigation-hint"></p>
+            <div id="viewRecovery" class="view-recovery" hidden>
+              No measured points in this view.
+              <button id="recoverScale">Fit all points</button>
+            </div>
             <details class="scale-panel" id="scalePanel">
-              <summary>Scale & zoom <span id="scaleMode">Automatic</span></summary>
-              <div class="scale-actions">
-                <button id="zoomIn" disabled>＋ Zoom in</button
-                ><button id="zoomOut" disabled>− Zoom out</button
-                ><button id="focusScale" disabled>◎ Focus intersection</button
-                ><button id="autoScale" disabled>↺ Auto scale</button>
-              </div>
+              <summary>Exact axis limits <span id="scaleMode">Automatic</span></summary>
               <div class="scale-inputs">
                 <fieldset>
                   <legend id="volumeScaleLabel">Volume · X axis</legend>
@@ -528,9 +534,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=13"></script>
+    <script src="engine.js?v=14"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
-    <script src="report.js?v=3"></script>
-    <script src="app.js?v=13"></script>
+    <script src="report.js?v=4"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>

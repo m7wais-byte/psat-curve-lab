@@ -130,6 +130,8 @@ function fitNow(clearSearch = true) {
   render();
 }
 function load() {
+  zoomTarget = null;
+  dragView = null;
   stopFit();
   err('');
   if (!phaseReady()) return;
@@ -244,6 +246,7 @@ function render() {
 function chart() {
   if (!points.length) {
     autoBounds = null;
+    $('viewRecovery').hidden = true;
     updateScaleControls();
     $('chart').innerHTML =
       '<div class="empty"><div class="empty-chart-icon">⌁</div><h3>Add your measurements</h3><p>Choose a test type, paste data, then select <strong>Plot graph</strong>.</p></div>';
@@ -278,6 +281,7 @@ function chart() {
   updateScaleControls();
   const inside = (p) => p.v >= vmin && p.v <= vmax && p.p >= pmin && p.p <= pmax;
   const visible = points.filter(inside).length;
+  $('viewRecovery').hidden = visible > 0;
   $('scaleStatus').textContent =
     `${viewBounds ? 'Custom' : 'Auto'} scale · ${visible} / ${points.length} points visible.` +
     (visible < points.length ? ' All assigned points still count in the fit.' : '') +
@@ -362,7 +366,9 @@ function chart() {
       };
       el.onmouseenter = inspect;
       el.onfocus = inspect;
-      el.onclick = () => setGroup(Number(el.dataset.id), tool);
+      el.onclick = () => {
+        if (!panMode && !movedView) setGroup(Number(el.dataset.id), tool);
+      };
       el.onkeydown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -411,6 +417,7 @@ $('clear').onclick = () => {
 document.querySelectorAll('[data-tool]').forEach(
   (btn) =>
     (btn.onclick = () => {
+      togglePan(false);
       tool = btn.dataset.tool;
       toolHint();
       document.querySelectorAll('[data-tool]').forEach((b) => {
@@ -420,6 +427,9 @@ document.querySelectorAll('[data-tool]').forEach(
     }),
 );
 $('data').oninput = () => {
+  zoomTarget = null;
+  dragView = null;
+  $('chart').classList.toggle('dragging', false);
   stopFit();
   points = [];
   history = [];
@@ -534,7 +544,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v13',
+      application: 'Psat Curve Lab v14',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -799,6 +809,7 @@ function updateScaleControls() {
   for (const id of [
     'zoomIn',
     'zoomOut',
+    'panGraph',
     'autoScale',
     'applyScale',
     'vMin',
@@ -853,17 +864,17 @@ function applyView(bounds) {
   $('scaleError').textContent = '';
   chart();
 }
-function zoomView(factor, focus = null) {
+function zoomView(factor) {
   if (!autoBounds || !points.length) return;
-  const b = viewBounds || autoBounds,
-    base = focus ? autoBounds : b;
-  const vc = focus ? focus.v : b.vmin + (b.vmax - b.vmin) / 2;
-  const pc = focus ? focus.p : b.pmin + (b.pmax - b.pmin) / 2;
-  const vs = (base.vmax - base.vmin) * factor,
-    ps = (base.pmax - base.pmin) * factor;
-  const vmin = Math.max(0, vc - vs / 2),
-    pmin = Math.max(0, pc - ps / 2);
-  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+  const B = viewBounds || autoBounds,
+    c = zoomTarget || result?.intersection;
+  if (c && c.v >= B.vmin && c.v <= B.vmax && c.p >= B.pmin && c.p <= B.pmax)
+    zoomAt(
+      factor,
+      (c.v - B.vmin) / (B.vmax - B.vmin),
+      (B.pmax - c.p) / (B.pmax - B.pmin),
+    );
+  else zoomAt(factor);
 }
 $('applyScale').onclick = () => {
   const ids = ['vMin', 'vMax', 'pMin', 'pMax'];
@@ -881,11 +892,146 @@ $('applyScale').onclick = () => {
 $('zoomIn').onclick = () => zoomView(1 / 1.4);
 $('zoomOut').onclick = () => zoomView(1.4);
 $('focusScale').onclick = () => {
-  if (result?.intersection) zoomView(0.25, result.intersection);
+  if (result?.intersection) {
+    applyView(PVReport.detailBounds(currentReport()));
+    zoomTarget = { ...result.intersection };
+  }
 };
-$('autoScale').onclick = () => {
+$('autoScale').onclick = () => fitAllView();
+let zoomTarget = null,
+  panMode = false,
+  dragView = null,
+  movedView = false;
+function togglePan(enabled) {
+  panMode = enabled;
+  $('panGraph').setAttribute('aria-pressed', String(enabled));
+  $('chart').classList.toggle('pan-mode', enabled);
+  $('navigationHint').textContent = enabled
+    ? 'Drag to move · Scroll to zoom at the pointer · Double-click to fit all'
+    : 'Drag the background to move · Ctrl + scroll to zoom · Choose Move / zoom to drag anywhere';
+}
+$('panGraph').onclick = () => togglePan(!panMode);
+function plotPosition(event) {
+  const svg = $('chart').querySelector('svg');
+  if (!svg) return null;
+  let x, y;
+  if (svg.createSVGPoint && svg.getScreenCTM?.()) {
+    const p = svg.createSVGPoint();
+    p.x = event.clientX;
+    p.y = event.clientY;
+    const q = p.matrixTransform(svg.getScreenCTM().inverse());
+    x = q.x;
+    y = q.y;
+  } else {
+    const rect = svg.getBoundingClientRect?.();
+    if (!rect || !rect.width || !rect.height) return null;
+    const height = result?.intersection ? 850 : 620;
+    const scale = Math.min(rect.width / 1020, rect.height / height);
+    x = (event.clientX - rect.left - (rect.width - 1020 * scale) / 2) / scale;
+    y = (event.clientY - rect.top - (rect.height - height * scale) / 2) / scale;
+  }
+  return {
+    u: (x - 90) / 900,
+    v: (y - 40) / 500,
+    inside: x >= 90 && x <= 990 && y >= 40 && y <= 540,
+  };
+}
+function zoomAt(factor, u = 0.5, v = 0.5) {
+  if (!autoBounds || !points.length) return;
+  const B = viewBounds || autoBounds;
+  const vs = Math.min(
+    (autoBounds.vmax - autoBounds.vmin) * 4,
+    Math.max((autoBounds.vmax - autoBounds.vmin) / 1e6, (B.vmax - B.vmin) * factor),
+  );
+  const ps = Math.min(
+    (autoBounds.pmax - autoBounds.pmin) * 4,
+    Math.max((autoBounds.pmax - autoBounds.pmin) / 1e6, (B.pmax - B.pmin) * factor),
+  );
+  const vc = B.vmin + u * (B.vmax - B.vmin),
+    pc = B.pmax - v * (B.pmax - B.pmin);
+  const vmin = Math.max(0, vc - u * vs),
+    pmin = Math.max(0, pc - (1 - v) * ps);
+  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+  zoomTarget = { v: vc, p: pc };
+}
+function fitAllView() {
+  zoomTarget = null;
   viewBounds = null;
   $('scaleError').textContent = '';
   chart();
+}
+$('chart').onwheel = (event) => {
+  if (!panMode && !event.ctrlKey && !event.metaKey) return;
+  const p = plotPosition(event);
+  if (!p?.inside || !points.length) return;
+  event.preventDefault();
+  const delta =
+    event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 500 : 1);
+  zoomAt(Math.exp(Math.max(-0.6, Math.min(0.6, delta * 0.002))), p.u, p.v);
 };
+$('chart').onpointerdown = (event) => {
+  if (
+    dragView ||
+    event.button !== 0 ||
+    !points.length ||
+    (!panMode && event.target?.closest?.('[data-id]'))
+  )
+    return;
+  const p = plotPosition(event);
+  if (!p?.inside) return;
+  movedView = false;
+  dragView = { id: event.pointerId, start: p, bounds: { ...(viewBounds || autoBounds) } };
+  $('chart').setPointerCapture?.(event.pointerId);
+  $('chart').classList.toggle('dragging', true);
+  event.preventDefault();
+};
+$('chart').onpointermove = (event) => {
+  if (!dragView || event.pointerId !== dragView.id) return;
+  const p = plotPosition(event);
+  if (!p) return;
+  const { start, bounds: B } = dragView,
+    vs = B.vmax - B.vmin,
+    ps = B.pmax - B.pmin;
+  if (Math.abs(p.u - start.u) + Math.abs(p.v - start.v) < 0.004) return;
+  movedView = true;
+  // Keep the original data envelope reachable; arbitrary blank panning is bounded.
+  const vmin = Math.max(
+    0,
+    Math.min(
+      autoBounds.vmax - vs * 0.1,
+      Math.max(autoBounds.vmin - vs * 0.9, B.vmin - (p.u - start.u) * vs),
+    ),
+  );
+  const pmin = Math.max(
+    0,
+    Math.min(
+      autoBounds.pmax - ps * 0.1,
+      Math.max(autoBounds.pmin - ps * 0.9, B.pmin + (p.v - start.v) * ps),
+    ),
+  );
+  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+  zoomTarget = { v: vmin + vs / 2, p: pmin + ps / 2 };
+  event.preventDefault();
+};
+function endPan(event) {
+  if (!dragView || event.pointerId !== dragView.id) return;
+  dragView = null;
+  try {
+    $('chart').releasePointerCapture?.(event.pointerId);
+  } catch {}
+  $('chart').classList.toggle('dragging', false);
+  setTimeout(() => {
+    movedView = false;
+  }, 0);
+}
+$('chart').onpointerup = endPan;
+$('chart').onpointercancel = endPan;
+$('chart').ondblclick = (event) => {
+  if (plotPosition(event)?.inside) {
+    event.preventDefault();
+    fitAllView();
+  }
+};
+$('recoverScale').onclick = fitAllView;
+togglePan(false);
 updateScaleControls();

@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — Clearer fitted curves
+## Unreleased — Graph navigation and PDF curve rendering
+
+- Added always-visible Move/zoom, cursor-anchored wheel zoom, drag panning and Fit all recovery.
+- Bounded gesture zoom/pan and preserved fitting results during navigation.
+- Changed native PDF curves to explicit continuous clipped paths, outside marker clipping state.
+- Included fitted pressure samples in report bounds and labelled the low-pressure detail curve.
+
+## Clearer fitted curves
 
 - Strengthened curve strokes and orange contrast, reduced grid emphasis, and used filled fitted-point markers in reports.
 - Added a separate intersection/low-pressure detail panel with labelled zoomed axes on screen, SVG export and A4 HTML/PDF reports.

@@ -136,6 +136,15 @@
   function bounds(m) {
     const volumes = [...m.points.map((p) => p.v), m.intersection.v],
       pressures = [...m.points.map((p) => p.p), m.intersection.p];
+    for (const f of [m.high, m.low])
+      for (let i = 0; i <= 80; i++) {
+        const v =
+          Math.min(f.min, m.intersection.v) +
+          ((Math.max(f.max, m.intersection.v) - Math.min(f.min, m.intersection.v)) * i) /
+            80;
+        const p = predict(m, f, v);
+        if (Number.isFinite(p)) pressures.push(p);
+      }
     let vmin = Math.min(...volumes),
       vmax = Math.max(...volumes),
       pmin = Math.min(...pressures),
@@ -318,7 +327,7 @@
       .replace(/</g, '\\u003c')
       .replace(/\u2028/g, '\\u2028')
       .replace(/\u2029/g, '\\u2029');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=3"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=4"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -344,6 +353,55 @@
     return doc;
   }
   // Native PDF drawing: curves, logo and text remain vector objects.
+  function clippedPaths(points, frame) {
+    const { left, top, right, bottom } = frame,
+      paths = [];
+    for (let i = 1; i < points.length; i++) {
+      let [x0, y0] = points[i - 1],
+        [x1, y1] = points[i];
+      if (![x0, y0, x1, y1].every(Number.isFinite)) continue;
+      const dx = x1 - x0,
+        dy = y1 - y0;
+      let a = 0,
+        b = 1,
+        ok = true;
+      for (const [p, q] of [
+        [-dx, x0 - left],
+        [dx, right - x0],
+        [-dy, y0 - top],
+        [dy, bottom - y0],
+      ]) {
+        if (p === 0) {
+          if (q < 0) {
+            ok = false;
+            break;
+          }
+        } else {
+          const t = q / p;
+          if (p < 0) a = Math.max(a, t);
+          else b = Math.min(b, t);
+          if (a > b) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      if (ok) {
+        const first = [x0 + a * dx, y0 + a * dy],
+          last = [x0 + b * dx, y0 + b * dy],
+          previous = paths.at(-1),
+          end = previous?.at(-1).c;
+        if (end && Math.abs(end[0] - first[0]) + Math.abs(end[1] - first[1]) < 1e-8)
+          previous.push({ op: 'l', c: last });
+        else
+          paths.push([
+            { op: 'm', c: first },
+            { op: 'l', c: last },
+          ]);
+      }
+    }
+    return paths;
+  }
   function createPdf(m, Constructor = root.jspdf?.jsPDF) {
     validate(m);
     if (!Constructor)
@@ -585,18 +643,15 @@
       doc.setDrawColor(color);
       doc.setLineWidth(2.2);
       doc.setLineDashPattern(dashed ? [4, 3] : [], 0);
-      const path = [];
+      const samples = [];
       for (let i = 0; i <= 100; i++) {
         const v = a + ((b - a) * i) / 100;
-        path.push({ op: i ? 'l' : 'm', c: [x(v), y(predict(m, f, v))] });
+        samples.push([x(v), y(predict(m, f, v))]);
       }
-      doc.path(path).stroke();
+      for (const path of clippedPaths(samples, { left, top, right, bottom }))
+        doc.path(path).stroke();
       doc.setLineDashPattern([], 0);
     }
-    curve(m.high, m.high.min, m.high.max, COLOR.high, false);
-    curve(m.high, m.high.max, C.v, COLOR.high, true);
-    curve(m.low, m.low.min, m.low.max, COLOR.low, false);
-    curve(m.low, C.v, m.low.min, COLOR.low, true);
     doc.setLineDashPattern([2, 3], 0);
     line(left, y(C.p), x(C.v), y(C.p), '#6b8272', 0.65);
     line(x(C.v), y(C.p), x(C.v), bottom, '#6b8272', 0.65);
@@ -616,6 +671,14 @@
     doc.setLineWidth(1.2);
     doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     doc.restoreGraphicsState();
+    curve(m.high, m.high.min, m.high.max, COLOR.high, false);
+    curve(m.high, m.high.max, C.v, COLOR.high, true);
+    curve(m.low, m.low.min, m.low.max, COLOR.low, false);
+    curve(m.low, C.v, m.low.min, COLOR.low, true);
+    doc.setFillColor('#ffffff');
+    doc.setDrawColor(COLOR.ink);
+    doc.setLineWidth(1.2);
+    doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     text(right - 4, Math.max(top + 14, y(C.p) - 16), label(m), 9, COLOR.ink, 'right');
     const D = detailScene(m, W - 2 * M, 112),
       ox = M,
@@ -662,14 +725,6 @@
     doc.rect(ox + D.l, oy + D.t, D.w - D.l - D.r, D.h - D.t - D.b);
     doc.clip();
     doc.discardPath();
-    for (const f of D.curves) {
-      doc.setDrawColor(f.color);
-      doc.setLineWidth(1.8);
-      doc.setLineDashPattern(f.dashed ? [4, 3] : [], 0);
-      doc
-        .path(f.points.map(([x, y], i) => ({ op: i ? 'l' : 'm', c: [ox + x, oy + y] })))
-        .stroke();
-    }
     doc.setLineDashPattern([], 0);
     for (const p of m.points)
       if (p.v >= D.B.vmin && p.v <= D.B.vmax) {
@@ -689,6 +744,21 @@
     doc.setLineWidth(1);
     doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
     doc.restoreGraphicsState();
+    for (const f of D.curves) {
+      doc.setDrawColor(f.color);
+      doc.setLineWidth(2);
+      doc.setLineDashPattern(f.dashed ? [4, 3] : [], 0);
+      for (const path of clippedPaths(
+        f.points.map(([x, y]) => [ox + x, oy + y]),
+        { left: ox + D.l, top: oy + D.t, right: ox + D.w - D.r, bottom: oy + D.h - D.b },
+      ))
+        doc.path(path).stroke();
+    }
+    doc.setLineDashPattern([], 0);
+    doc.setFillColor('#ffffff');
+    doc.setDrawColor(COLOR.ink);
+    doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
+    text(ox + D.w - D.r, oy + 14, 'Low-pressure fit', 9, COLOR.low, 'right', true);
     text(
       ox + (D.l + D.w - D.r) / 2,
       oy + D.h - 1,
@@ -740,6 +810,7 @@
     filename,
     detailSvg,
     detailBounds,
+    clippedPaths,
   };
   if (typeof module !== 'undefined') module.exports = root.PVReport;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -54,12 +54,15 @@ Exact coefficients and branch quality measures are in the collapsible equations 
 
 ## Adjust the graph scale
 
-Open **Graph scale** after plotting data:
+The graph navigation buttons stay visible above the plot:
 
-- **Zoom in / Zoom out** narrows or widens both axes around the current view center.
-- **Focus on intersection** centers a closer view on the current graphical crossing.
-- **Minimum / Maximum** lets you set exact volume (X) and pressure (Y) limits. Select Apply axis limits to use them.
-- **Auto scale** restores the complete point range, including the fitted intersection when present.
+- **Move / zoom:** drag anywhere on the main graph to pan; scroll at a location to zoom around that point. Outside this mode, dragging the background pans and Ctrl/Command + scroll zooms, while ordinary scrolling still moves the page.
+- **Zoom in / Zoom out:** keeps the chosen zoom target or graphical intersection in view. After panning, the view center becomes the zoom target. Gesture zoom is bounded from one-millionth to four times the overview span per axis.
+- **Intersection:** opens the same close pressure/volume range used in the report's detail panel.
+- **Fit all:** restores the complete overview. Double-click the main graph for the same action. A recovery prompt appears if no measured points are visible.
+- **Exact axis limits:** expand this panel to set precise pressure and volume minima/maxima. These manual values are validated separately from gesture bounds.
+
+Choose High fit, Low fit or No fit to return to point editing. Pan and zoom never change point membership, equations, R² or Psat. Dragging is bounded so the original data envelope remains reachable. The separate detail panel retains its own labelled scale; navigation gestures apply to the main graph.
 
 All limits must be finite and nonnegative, with each maximum greater than its minimum. An excessively narrow range is rejected to avoid unreliable labels. Tick-label precision adjusts as you zoom. The graph-paper squares remain square; the values represented by each square change with the axis limits.
 

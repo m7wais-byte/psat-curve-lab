@@ -47,7 +47,12 @@ function element(id = '') {
       return this.pointElements;
     },
     querySelector(selector) {
-      return selector === 'svg' ? { outerHTML: this.innerHTML } : null;
+      return selector === 'svg'
+        ? {
+            outerHTML: this.innerHTML,
+            getBoundingClientRect: () => ({ left: 0, top: 0, width: 1020, height: 850 }),
+          }
+        : null;
     },
     click() {
       this.onclick?.();

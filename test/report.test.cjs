@@ -136,3 +136,52 @@ test('overview and magnified detail preserve measurements, coefficients and resu
   assert.match(pdf.output(), /Intersection detail - zoomed axes/);
   assert(!pdf.output().includes('/Subtype /Image'));
 });
+
+test('PDF clipping preserves continuous colored paths for both fitted branches', () => {
+  const frame = { left: 0, right: 10, top: 0, bottom: 10 };
+  const paths = R.clippedPaths(
+    [
+      [-5, 5],
+      [5, 5],
+      [15, 5],
+    ],
+    frame,
+  );
+  assert.equal(paths.length, 1);
+  assert.equal(paths[0].length, 3);
+  for (const op of paths[0])
+    assert(op.c[0] >= 0 && op.c[0] <= 10 && op.c[1] >= 0 && op.c[1] <= 10);
+  assert.deepEqual(
+    R.clippedPaths(
+      [
+        [-5, -5],
+        [-1, -1],
+      ],
+      frame,
+    ),
+    [],
+  );
+  const { model } = fixture(),
+    strokes = [];
+  function Recorder(options) {
+    const doc = new jsPDF(options);
+    let color;
+    const set = doc.setDrawColor.bind(doc),
+      path = doc.path.bind(doc);
+    doc.setDrawColor = (value, ...args) => {
+      color = value;
+      return set(value, ...args);
+    };
+    doc.path = (ops) => {
+      if (ops.length > 3 && ops.every((p) => p.op === 'm' || p.op === 'l'))
+        strokes.push({ color, ops });
+      return path(ops);
+    };
+    return doc;
+  }
+  const pdf = R.createPdf(model, Recorder);
+  assert(strokes.some((p) => p.color === '#0f766e'));
+  assert(strokes.some((p) => p.color === '#c05a13'));
+  for (const p of strokes) for (const op of p.ops) assert(op.c.every(Number.isFinite));
+  assert.equal(pdf.getNumberOfPages(), 1);
+});
