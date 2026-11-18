@@ -126,6 +126,7 @@ function resetResult() {
   $('psat').textContent = '—';
   $('vsat').textContent = '—';
   $('evidence').textContent = points.length ? 'Select two branches' : 'Awaiting data';
+  $('evidence').style.color = '';
   $('psatSub').textContent = 'Intersection of independent trends';
   $('diagnostics').textContent = '';
   $('equations').innerHTML =
@@ -716,15 +717,24 @@ function yCheck() {
       : '');
   $('yChart').innerHTML = yChart(y, label);
 }
+function redrawYChart() {
+  if (yResult && $('yCheck').open)
+    $('yChart').innerHTML = yChart(yResult, pressureLabel());
+}
+$('yCheck').ontoggle = redrawYChart;
+window.addEventListener?.('resize', redrawYChart);
 function esc(value) {
   return String(value).replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
 }
+// Draw at the panel's real width (300–640 px) so text stays readable on phones.
 function yChart(y, label) {
-  const W = 640,
-    H = 300,
+  const W = Math.round(Math.min(640, Math.max(300, $('yChart').clientWidth || 640))),
+    narrow = W < 480,
+    xDiv = narrow ? 4 : 6,
+    H = narrow ? 260 : 300,
     l = 64,
     r = 16,
     t = 18,
@@ -737,7 +747,7 @@ function yChart(y, label) {
     X = PVReport.niceAxis(
       Math.max(0, Math.min(...ps) - pRange * 0.06),
       Math.max(...ps) + pRange * 0.06,
-      6,
+      xDiv,
     ),
     Y = PVReport.niceAxis(
       Math.max(0, Math.min(...ys) - yRange * 0.1),
@@ -747,7 +757,7 @@ function yChart(y, label) {
   const x = (p) => l + ((p - X.min) / (X.max - X.min)) * (W - l - r),
     yy = (v) => H - b - ((v - Y.min) / (Y.max - Y.min)) * (H - t - b);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Y-function versus pressure for the low-pressure points"><defs><clipPath id="yArea"><rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}"/></clipPath></defs>`;
-  for (let i = 0; i <= 6; i++) {
+  for (let i = 0; i <= xDiv; i++) {
     const p = X.min + X.step * i;
     s += `<path d="M${x(p)} ${t}V${H - b}" stroke="#e8efe6"/><text x="${x(p)}" y="${H - b + 18}" text-anchor="middle" font-size="11" fill="#546e5c">${axisTick(p, X.step)}</text>`;
   }
@@ -771,7 +781,7 @@ function yChart(y, label) {
       (s += `<circle data-y="best" cx="${x(q.p)}" cy="${yy(q.y)}" r="4.2" fill="#c97725"><title>Point ${q.id + 1} · Y ${num(q.y, 4)} at most-linear Pb</title></circle>`),
   );
   s += `</g><text x="${(W + l - r) / 2}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#52685b">Pressure (${esc(label)})</text><text transform="translate(16 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#52685b">Y (dimensionless)</text>`;
-  s += `<g font-size="11" fill="#52685b"><circle cx="${l + 12}" cy="${t + 14}" r="4" fill="#c97725"/><text x="${l + 22}" y="${t + 18}">At most-linear Pb</text>${y.graphical ? `<circle cx="${l + 140}" cy="${t + 14}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"/><text x="${l + 150}" y="${t + 18}">At graphical Pb</text>` : ''}</g></svg>`;
+  s += `<g font-size="11" fill="#52685b"><circle cx="${l + 12}" cy="${t + 14}" r="4" fill="#c97725"/><text x="${l + 22}" y="${t + 18}">At most-linear Pb</text>${y.graphical ? `<circle cx="${l + (narrow ? 12 : 140)}" cy="${t + (narrow ? 30 : 14)}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"/><text x="${l + (narrow ? 22 : 150)}" y="${t + (narrow ? 34 : 18)}">At graphical Pb</text>` : ''}</g></svg>`;
   return s;
 }
 function phaseSymbol() {
@@ -929,7 +939,8 @@ function updateWorkspace() {
   $('inputVolumeLabel').textContent = 'Volume (' + $('vunit').value + ')';
   $('sampleBadge').hidden = !demo;
   if (presentation && !ready) {
-    ((presentation = false), (viewBounds = null), (autoBounds = null));
+    // Leave presentation but keep the user's graph scale.
+    presentation = false;
     document.body.classList.toggle('presentation', false);
     $('present').textContent = 'Present';
     $('present').setAttribute('aria-pressed', 'false');
@@ -998,7 +1009,8 @@ function updateScaleControls() {
     ['pMin', 'pmin'],
     ['pMax', 'pmax'],
   ])
-    $(id).value = bounds ? String(bounds[key]) : '';
+    // 12 significant digits hides float noise such as 32.400000000000006.
+    $(id).value = bounds ? String(Number(bounds[key].toPrecision(12))) : '';
   if (!ready) $('scaleStatus').textContent = 'Plot data to adjust the graph scale.';
 }
 function applyView(bounds) {
