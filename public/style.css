@@ -1649,3 +1649,44 @@ footer {
 .fit-search-status:empty {
   display: none;
 }
+
+.navigation-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.navigation-hint {
+  font-size: 12px;
+  color: #52685b;
+  margin: 8px 0;
+}
+.navigation-toolbar [aria-pressed='true'] {
+  background: #0f766e;
+  color: white;
+}
+#chart.pan-mode {
+  touch-action: none;
+  cursor: grab;
+}
+#chart.dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+#chart.pan-mode .chartpoint {
+  cursor: grab;
+}
+.view-recovery {
+  padding: 10px;
+  background: #fff7ec;
+  color: #855c30;
+  border-radius: 6px;
+}
+
+@media print {
+  .navigation-toolbar,
+  .navigation-hint,
+  .view-recovery {
+    display: none !important;
+  }
+}

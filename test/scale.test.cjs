@@ -105,6 +105,82 @@ test('export records the current axis bounds and mode', async () => {
   assert.equal(record.graphView.mode, 'custom');
   assert.deepEqual(record.graphView.bounds, expected);
 });
+
+test('pointer wheel zoom keeps the chosen data location fixed and does not intercept page scrolling', () => {
+  const h = harness();
+  h.demo();
+  const before = bounds(h),
+    state = fingerprint(h);
+  let prevented = false;
+  const event = {
+    clientX: 810,
+    clientY: 440,
+    deltaY: -200,
+    deltaMode: 0,
+    preventDefault() {
+      prevented = true;
+    },
+  };
+  h.get('chart').onwheel(event);
+  assert(!prevented);
+  assert.deepEqual(bounds(h), before);
+  h.get('panGraph').onclick();
+  h.get('chart').onwheel(event);
+  assert(prevented);
+  const after = bounds(h);
+  assert(
+    Math.abs(
+      before.vmin +
+        0.8 * (before.vmax - before.vmin) -
+        (after.vmin + 0.8 * (after.vmax - after.vmin)),
+    ) < 1e-9,
+  );
+  assert(
+    Math.abs(
+      before.pmax -
+        0.8 * (before.pmax - before.pmin) -
+        (after.pmax - 0.8 * (after.pmax - after.pmin)),
+    ) < 1e-8,
+  );
+  assert.equal(fingerprint(h), state);
+});
+test('dragging pans the viewport without reassigning points and Fit all recovers the graph', () => {
+  const h = harness();
+  h.demo();
+  h.get('zoomIn').onclick();
+  h.get('panGraph').onclick();
+  const B = bounds(h),
+    state = fingerprint(h),
+    event = { button: 0, pointerId: 1, clientX: 540, clientY: 290, preventDefault() {} };
+  h.get('chart').onpointerdown(event);
+  h.get('chart').onpointerdown({ ...event, pointerId: 2 });
+  h.get('chart').onpointermove({ ...event, clientX: 630, clientY: 340 });
+  const after = bounds(h);
+  assert(after.vmin < B.vmin);
+  assert(after.pmin > B.pmin);
+  h.get('chart').pointElements[0]?.onclick();
+  assert.equal(fingerprint(h), state);
+  h.get('chart').onpointerup(event);
+  h.get('recoverScale').onclick();
+  assert.equal(h.get('scaleMode').textContent, 'Automatic');
+  assert.equal(fingerprint(h), state);
+});
+test('repeated button zoom retains the intersection, is bounded, and double-click restores overview', () => {
+  const h = harness();
+  h.demo();
+  const initial = bounds(h),
+    state = fingerprint(h);
+  for (let i = 0; i < 70; i++) h.get('zoomIn').onclick();
+  const B = bounds(h),
+    C = h.run('result.intersection');
+  assert(B.vmin <= C.v && B.vmax >= C.v && B.pmin <= C.p && B.pmax >= C.p);
+  assert(B.vmax - B.vmin >= ((initial.vmax - initial.vmin) / 1e6) * 0.999);
+  assert(!h.get('chart').innerHTML.includes('NaN'));
+  h.get('chart').ondblclick({ clientX: 540, clientY: 290, preventDefault() {} });
+  assert.deepEqual(bounds(h), initial);
+  assert.equal(fingerprint(h), state);
+});
+
 test('automatic, zoomed and focused views keep round tick values on the grid', () => {
   const h = harness();
   h.demo();

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Graph navigation and PDF curve rendering
+
+- Added always-visible Move/zoom, cursor-anchored wheel zoom, drag panning and Fit all recovery.
+- Bounded gesture zoom/pan and preserved fitting results during navigation.
+- Changed native PDF curves to explicit continuous clipped paths, outside marker clipping state.
+- Included fitted pressure samples in report bounds and labelled the low-pressure detail curve.
+
 ## Unreleased — Automatic site publishing
 
 - Added `.github/workflows/publish.yml`: every push to `main` runs `npm run verify` and, if it passes, publishes `public/` to the `gh-pages` branch served by GitHub Pages (`scripts/publish-pages.sh`). Unchanged files produce no commit. It can also be run manually.

@@ -65,7 +65,7 @@ function build() {
   const m = model();
   const doc = PVReport.createPdf(m, jsPDF);
   // Fixed metadata keeps the committed PDF byte-for-byte reproducible.
-  doc.setCreationDate(new Date('2026-11-18T00:00:00Z'));
+  doc.setCreationDate("D:20261118000000+00'00'");
   doc.setFileId('00000000000000000000000000000000');
   return {
     model: m,
