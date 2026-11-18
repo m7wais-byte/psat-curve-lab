@@ -279,3 +279,28 @@ test('narrow report graphs use the Pb/Pd label and unit digits too', () => {
   assert.match(R.svg(dew, 300), /<tspan x="[\d.]+">Pd: 1,000\.000 MPa g<\/tspan>/);
   assert(!R.svg(model, 300).includes('Psat:'));
 });
+
+test('report identifies every small-case measurement without changing fitting data', () => {
+  const { model } = fixture(),
+    before = JSON.stringify(model),
+    overview = R.svg(model).split('data-fit-detail=')[0];
+  for (const p of model.points) {
+    assert(overview.includes(`data-report-point="${p.id}"`));
+    assert(overview.includes(`data-point-number="${p.id + 1}"`));
+  }
+  assert.equal((overview.match(/data-report-point=/g) || []).length, model.points.length);
+  assert.equal(JSON.stringify(model), before);
+  const dense = {
+    ...model,
+    points: Array.from({ length: 40 }, (_, id) => ({
+      ...model.points[id % model.points.length],
+      id,
+    })),
+  };
+  const markup = R.svg(dense);
+  assert.equal((markup.match(/data-report-point=/g) || []).length, 40);
+  assert(
+    !markup.includes('data-point-number='),
+    'dense cases keep markers without crowded row labels',
+  );
+});

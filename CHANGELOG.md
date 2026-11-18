@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — Graph navigation and PDF curve rendering
+## Unreleased — Clear report measurements
+
+- Enlarged the PDF overview by compacting the report header and case details.
+- Drew larger, white-separated measurement markers above the fitted curves; excluded readings are hollow crossed circles.
+- Numbered points by input row for cases with up to 32 measurements, consistently in the overview and detail panel.
+- Kept all measurements visible in dense cases without adding crowded number labels.
+
+## Graph navigation and PDF curve rendering
 
 - Added always-visible Move/zoom, cursor-anchored wheel zoom, drag panning and Fit all recovery.
 - Bounded gesture zoom/pan and preserved fitting results during navigation.
