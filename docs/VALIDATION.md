@@ -51,3 +51,5 @@ Use real Chrome/Edge/Firefox or the intended laboratory browser. Check at deskto
 Record browser/version, viewport, dataset, expected behavior and observed result. Keep this review separate from the automated check results.
 
 The generated current-case PDF was rendered and visually inspected offline. Actual browser print pagination, popup handling and download interaction still require browser review.
+
+Deep fit checks include comparison with independent mask/split enumeration, deterministic order and pressure-scale behavior, bounded-mode disclosure and progress, worker protocol, cancellation, stale-result rejection, errors and search metadata exports. These worker tests exercise the shipped code and UI message handling in Node/fake DOM; actual browser responsiveness is not a visual sign-off.

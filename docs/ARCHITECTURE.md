@@ -2,18 +2,21 @@
 
 ## Runtime
 
-The application is buildless and consists of four static files:
+The application is buildless and serves static runtime files:
 
-| File                | Responsibility                                                                                           |
-| ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `public/index.html` | Phase-first setup, import controls, graph containers, help text and report layout                        |
-| `public/style.css`  | Responsive page styling, square-grid context, pinned results, point tools, presentation and print styles |
-| `public/engine.js`  | Input parsing, least-squares regression, root calculation and automatic branch suggestion                |
-| `public/app.js`     | Browser state, DOM rendering, SVG generation, metadata interpretation, undo and exports                  |
+| File                   | Responsibility                                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `public/index.html`    | Phase-first setup, import controls, graph containers, help text and report layout                        |
+| `public/style.css`     | Responsive page styling, square-grid context, pinned results, point tools, presentation and print styles |
+| `public/engine.js`     | Input parsing, least-squares regression, root calculation and automatic branch suggestion                |
+| `public/fit-worker.js` | Dedicated deep-search worker and progress/result protocol                                                |
+| `public/report.js`     | A4 HTML and vector PDF case reports using locally vendored jsPDF                                         |
+| `public/vaps-logo.svg` | Vector header logo                                                                                       |
+| `public/app.js`        | Browser state, DOM rendering, SVG generation, metadata interpretation, undo and exports                  |
 
 `engine.js` supports browser `window.PV` and CommonJS `require`. HTML loads the engine before the app. The query suffixes in asset URLs are cache-busting labels inherited from the working app, not a build system.
 
-No framework, runtime dependencies, remote fonts, external graph libraries, analytics, API keys or database are used. The local development server uses only Node built-ins.
+No framework, remote fonts, external graph libraries, analytics, API keys or database are used. The pinned jsPDF runtime is vendored locally for report export. The local development server uses only Node built-ins.
 
 ## Main browser state
 
@@ -25,6 +28,8 @@ No framework, runtime dependencies, remote fonts, external graph libraries, anal
 - `presentation`: whether editing controls are hidden and graph reassignment is blocked.
 - `viewBounds`: user-selected display limits, or null for the automatic view.
 - `autoBounds`: the latest bounds covering measurements and the fitted crossing.
+- `fitWorker` / `fitSequence`: cancellable background search and stale-result protection.
+- `searchInfo`: search scope and winning score metadata, cleared by edits/context changes.
 - `loadedText`: input text retained from the last parse; no persistence mechanism is attached.
 
 The browser state is in memory. No persistence or analysis-file import exists.
@@ -32,7 +37,7 @@ The browser state is in memory. No persistence or analysis-file import exists.
 ## Data flow
 
 1. `setupPhase` updates the input gate and expected phase labels.
-2. `load` calls `PV.parse`, then `PV.autoAssign` and `PV.analyze` where possible.
+2. `load` calls `PV.parse`, then `runDeepFit`, which starts `public/fit-worker.js` using a point snapshot. The worker calls `PV.deepFit`; the main thread applies only the current request, then calls `PV.analyze`.
 3. Manual point/range changes preserve an undo snapshot and call `fitNow`.
 4. `render` updates result cards, point table, graph, equations and the case summary.
 5. `chart` renders an inline SVG. Gridlines, shading, axis bounds and point readouts are display operations only. Scaling calls the graph renderer without refitting or changing point groups.
@@ -77,3 +82,5 @@ python scripts/generate-report-preview.py
 ```
 
 ReportLab is an optional development tool for regenerating this fixed sample, not a browser/runtime dependency. Commit the regenerated PDF along with changes to the sample. The HTML and PDF layouts are generated separately, so both need review when the layout changes.
+
+The worker imports the same versioned engine used for manual analysis. It communicates only plain point assignments, progress, search metadata and error messages. Measurements remain in the browser. Without Worker support the synchronous compatibility path uses the same engine.
