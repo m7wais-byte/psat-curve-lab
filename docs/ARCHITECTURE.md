@@ -62,3 +62,18 @@ The existing privately hosted Site continues using its own checkout. This GitHub
 Keep numerical changes separate from presentation changes. For engine changes, include cases where a fit should fail or warn, alongside successful crossings. For UI changes, rerun the smoke tests and complete browser checks where a real browser is available. Update the method documentation whenever numerical thresholds or assumptions change.
 
 The stylesheet uses a consolidated teal/orange palette, responsive layout, pinned result strip, and separate presentation/print rules. Real-browser visual review is still required for visual sign-off.
+
+## Standalone A4 layout preview
+
+`public/report-preview.html` demonstrates the proposed report with fixed example data. Its two summary values are separate; the compact `Psat: ... psig @ ... cc` annotation is in the graph. All measurements, including gray excluded points, remain visible.
+
+Print opens the browser dialog. Save as PDF directly downloads `public/report-preview.pdf`, a pre-generated single-page A4 PDF with vector logo, vector graph and text. Neither action exports the live app's current user measurements yet; this is a layout preview.
+
+To regenerate the sample PDF after editing the preview data or layout:
+
+```sh
+python -m pip install -r requirements-report.txt
+python scripts/generate-report-preview.py
+```
+
+ReportLab is an optional development tool for regenerating this fixed sample, not a browser/runtime dependency. Commit the regenerated PDF along with changes to the sample. The HTML and PDF layouts are generated separately, so both need review when the layout changes.

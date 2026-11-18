@@ -37,17 +37,28 @@ test('A4 preview shows all measurements including the three excluded points', ()
   }
   assert(html.includes('Excluded points shown; not used in either fit'));
 });
-test('A4 preview pairs Psat with its volume and retains both fit R-squared values', () => {
+test('A4 preview keeps the separate top values and combines the graph annotation only', () => {
   const get = preview(608);
-  assert.equal(
-    get('[data-result="summary"]').textContent,
-    'Psat: 1,006.90 psig @ 34.998 cc',
-  );
+  assert.equal(get('[data-result="pressure"]').innerHTML, '1,006.90<span>psi g</span>');
+  assert.equal(get('[data-result="volume"]').innerHTML, '34.9975<span>cc</span>');
+  assert(get('[data-report-plot]').innerHTML.includes('Psat: 1,006.90 psig @ 34.998 cc'));
   assert.equal(get('[data-r2="high"]').textContent, 'R² = 0.999991');
   assert.equal(get('[data-r2="low"]').textContent, 'R² = 0.998976');
+  assert(html.indexOf('<div class="details">') < html.indexOf('data-result="pressure"'));
 });
 
-test('Psat summary appears above the test details and graph', () => {
-  assert(html.indexOf('data-result="summary"') < html.indexOf('<div class="details">'));
-  assert(html.indexOf('data-result="summary"') < html.indexOf('data-report-plot'));
+test('Print and Save as PDF are separate actions and the PDF is an A4 vector report', () => {
+  assert(/id="printReport"[^>]*onclick="window.print\(\)"/.test(html));
+  assert(/id="saveReportPdf"[\s\S]*?href="report-preview.pdf"/.test(html));
+  assert(html.includes('download="VAPS-report-preview.pdf"'));
+  assert(!html.includes('Print / Save as PDF'));
+  const pdf = fs
+    .readFileSync(path.join(__dirname, '../public/report-preview.pdf'))
+    .toString('latin1');
+  assert(pdf.startsWith('%PDF-'));
+  assert(/\/Count\s+1\b/.test(pdf));
+  assert(pdf.includes('595.2756') && pdf.includes('841.8898'));
+  assert(!pdf.includes('/Subtype /Image'));
+  assert(pdf.includes('Psat: 1,006.90 psig @ 34.998 cc'));
+  assert(pdf.includes('0.999991') && pdf.includes('0.998976'));
 });
