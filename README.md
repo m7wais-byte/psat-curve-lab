@@ -82,19 +82,20 @@ The coefficients minimize the sum of squared pressure residuals for that branch.
 
 ## Repository guide
 
-| Path                           | Purpose                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `public/`                      | The four files used by the current application; ready for static hosting |
-| `scripts/`                     | Local development server and source checks                               |
-| `test/`                        | Numerical, UI smoke and development-server tests                         |
-| `examples/`                    | Synthetic data only; no laboratory case records                          |
-| `docs/USER_GUIDE.md`           | Controls, workflow, units, exports and troubleshooting                   |
-| `docs/METHOD.md`               | Equations, exact algorithm thresholds and assumptions                    |
-| `docs/ARCHITECTURE.md`         | Source layout, state, data flow and hosting                              |
-| `docs/VALIDATION.md`           | What tests establish and what still needs validation                     |
-| `docs/REVIEW.md`               | Checklist for the joint review before public release                     |
-| `docs/PROVENANCE.md`           | Which working version was copied and what was excluded                   |
-| `.github/workflows/checks.yml` | Formatting, source checks and tests; no deployment                       |
+| Path                            | Purpose                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `public/`                       | The four files used by the current application; ready for static hosting |
+| `scripts/`                      | Local development server and source checks                               |
+| `test/`                         | Numerical, UI smoke and development-server tests                         |
+| `examples/`                     | Synthetic data only; no laboratory case records                          |
+| `docs/USER_GUIDE.md`            | Controls, workflow, units, exports and troubleshooting                   |
+| `docs/METHOD.md`                | Equations, exact algorithm thresholds and assumptions                    |
+| `docs/ARCHITECTURE.md`          | Source layout, state, data flow and hosting                              |
+| `docs/VALIDATION.md`            | What tests establish and what still needs validation                     |
+| `docs/REVIEW.md`                | Checklist for the joint review before public release                     |
+| `docs/PROVENANCE.md`            | Which working version was copied and what was excluded                   |
+| `.github/workflows/checks.yml`  | Formatting, source checks and tests on every push and pull request       |
+| `.github/workflows/publish.yml` | On `main`: the same checks, then publishes `public/` to GitHub Pages     |
 
 Also see [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
@@ -102,7 +103,7 @@ Also see [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
 Measurements are processed in the browser. This version has no analytics, application server, database or automatic cloud storage. Exports remain the user's responsibility. External reference links open external websites only when followed.
 
-The repository is intended to remain private until review. `package.json` is marked `private: true` to prevent accidental npm publication; **GitHub visibility is a separate setting**. No GitHub Pages deployment, release automation, hosting credentials or existing Site identity is included.
+The repository is intended to remain private until review. `package.json` is marked `private: true` to prevent accidental npm publication; **GitHub visibility is a separate setting**. The site is published to GitHub Pages from the `gh-pages` branch: each merge into `main` runs the checks and, if they pass, publishes `public/` automatically (`.github/workflows/publish.yml`). No release automation, hosting credentials or existing Site identity is included.
 
 No open-source license has been granted. The package is marked `UNLICENSED`; an appropriate license and ownership statement must be chosen before public distribution.
 

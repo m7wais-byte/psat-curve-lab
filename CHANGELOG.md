@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased — Report preview from live code
+## Unreleased — Automatic site publishing
+
+- Added `.github/workflows/publish.yml`: every push to `main` runs `npm run verify` and, if it passes, publishes `public/` to the `gh-pages` branch served by GitHub Pages (`scripts/publish-pages.sh`). Unchanged files produce no commit. It can also be run manually.
+
+## Report preview from live code
 
 - The A4 report preview (HTML and PDF) is now generated from the live report code with `npm run preview`, so it includes the intersection detail panel and can no longer drift from real reports. A test fails if the committed preview is stale.
 - Replaced the separate Python/ReportLab preview generator; ReportLab is no longer needed.
