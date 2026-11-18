@@ -126,16 +126,14 @@ function render() {
   $('highCount').textContent = hi;
   $('lowCount').textContent = lo;
   $('noneCount').textContent = none;
-  let note = points.some((p) => p.p === 0)
-    ? ' Zero-pressure readings are flagged for review; suggestions leave them out.'
-    : '';
+  let note = points.some((p) => p.p === 0) ? ' Review zero-pressure readings.' : '';
   if (r) {
     $('evidence').textContent = r.intersection
       ? r.warning
         ? 'Review crossing'
         : 'Intersection found'
       : 'No clear crossing';
-    $('evidence').style.color = r.intersection && !r.warning ? '#2563b9' : '#a16c34';
+    $('evidence').style.color = r.intersection && !r.warning ? '#0f766e' : '#a16c34';
     if (r.intersection) {
       $('psat').innerHTML =
         num(r.intersection.p) +
@@ -148,12 +146,10 @@ function render() {
         num(r.intersection.v) + ' <small>' + $('vunit').value + '</small>';
       $('psatSub').textContent = $('temp').value
         ? `Test temperature ${$('temp').value} ${$('tunit').value}`
-        : 'Temperature not provided · graphical estimate';
+        : 'Graphical estimate';
     }
     $('message').textContent =
-      (r.warning ||
-        'Independent trends fitted. Dashed portions are extrapolations toward the intersection; review the selected points.') +
-      note;
+      (r.warning || 'Review the fits and their intersection.') + note;
     $('diagnostics').textContent =
       `Pressure RMSE: high branch ${num(r.high.rmse, 4)} ${$('punit').value}; low branch ${num(r.low.rmse, 4)} ${$('punit').value}. ${r.omitted} point(s) remain visible but do not influence either fit.`;
   } else
@@ -162,8 +158,7 @@ function render() {
         ? 'Assign at least ' +
           (Number($('model').value) + 2) +
           ' points to each branch. Points may be left out of both fits.'
-        : 'Your original points stay visible, including those left out of both fits.') +
-      note;
+        : 'Select a fit tool, then click the points to use.') + note;
   table();
   chart();
   equations();
@@ -174,7 +169,7 @@ function chart() {
     autoBounds = null;
     updateScaleControls();
     $('chart').innerHTML =
-      '<div class="empty"><div class="empty-chart-icon">⌁</div><h3>Your analysis starts with a few points.</h3><p>Choose a phase, paste your measurements,<br>then select <strong>Plot & fit curves</strong>.</p><span class="empty-note">Or explore the workflow with sample data.</span></div>';
+      '<div class="empty"><div class="empty-chart-icon">⌁</div><h3>Add your measurements</h3><p>Choose a test type, paste data, then select <strong>Plot graph</strong>.</p></div>';
     return;
   }
   const W = 1020,
@@ -207,9 +202,10 @@ function chart() {
   const inside = (p) => p.v >= vmin && p.v <= vmax && p.p >= pmin && p.p <= pmax;
   const visible = points.filter(inside).length;
   $('scaleStatus').textContent =
-    `${viewBounds ? 'Custom scale' : 'Auto scale'} · ${visible} of ${points.length} points visible. All assigned points still contribute to the fits.` +
+    `${viewBounds ? 'Custom' : 'Auto'} scale · ${visible} / ${points.length} points visible.` +
+    (visible < points.length ? ' All assigned points still count in the fit.' : '') +
     (c && !inside(c)
-      ? ' The intersection is outside this view; use Focus on intersection or Auto scale.'
+      ? ' The intersection is outside this view. Reset or focus to see it.'
       : '');
   const x = (v) => l + ((v - vmin) / (vmax - vmin)) * (W - l - rt),
     y = (p) => H - b - ((p - pmin) / (pmax - pmin)) * (H - t - b);
@@ -218,8 +214,8 @@ function chart() {
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="white"/>`;
   if (r && $('shade').checked) {
     for (const [name, f, color] of [
-      ['high', r.high, '#2563b9'],
-      ['low', r.low, '#d47726'],
+      ['high', r.high, '#0f766e'],
+      ['low', r.low, '#c97725'],
     ])
       h += `<rect clip-path="url(#area)" data-region="${name}" x="${x(f.min)}" y="${t}" width="${Math.max(0, x(f.max) - x(f.min))}" height="500" fill="${color}" opacity=".055"><title>Selected ${name}-pressure fitting range</title></rect>`;
     h += `<rect clip-path="url(#area)" data-region="gap" x="${x(r.gap[0])}" y="${t}" width="${Math.max(0, x(r.gap[1]) - x(r.gap[0]))}" height="500" fill="#758499" opacity=".065"><title>Interval between selected fitting ranges</title></rect>`;
@@ -229,13 +225,13 @@ function chart() {
     let xx = l + i * 20,
       major = i % 5 === 0;
     if (grid === 'none' || (!major && grid !== 'paper')) continue;
-    h += `<path d="M${xx} ${t}V${H - b}" stroke="${major ? '#c4d0dd' : '#e8edf3'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
+    h += `<path d="M${xx} ${t}V${H - b}" stroke="${major ? '#ccd9d2' : '#edf2ee'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   for (let i = 0; i <= 25; i++) {
     let yy = t + i * 20,
       major = i % 5 === 0;
     if (grid === 'none' || (!major && grid !== 'paper')) continue;
-    h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#c4d0dd' : '#e8edf3'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
+    h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#ccd9d2' : '#edf2ee'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="none" stroke="#8191a4" stroke-width="1"/><path d="M${l} ${t}V${H - b}H${W - rt}" fill="none" stroke="#34475c" stroke-width="1.8"/>`;
   for (let i = 0; i <= 9; i++) {
@@ -258,8 +254,8 @@ function chart() {
   h += `<g clip-path="url(#area)">`;
   if (r) {
     for (let [f, color] of [
-      [r.high, '#2563b9'],
-      [r.low, '#d47726'],
+      [r.high, '#0f766e'],
+      [r.low, '#c97725'],
     ]) {
       h += path(f, f.min, f.max, color, false);
       let target = c ? c.v : (r.gap[0] + r.gap[1]) / 2;
@@ -272,7 +268,7 @@ function chart() {
   }
   points.filter(inside).forEach((p) => {
     let color =
-      p.group === 'high' ? '#2563b9' : p.group === 'low' ? '#d47726' : '#9ba69f';
+      p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c97725' : '#82918c';
     h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
   });
   h += `</g>`;
@@ -399,8 +395,7 @@ $('demo').onclick = () => {
   $('vunit').value = 'cc';
   $('temp').value = '';
   demo = true;
-  $('demoNote').textContent =
-    'Synthetic curve-fitting demonstration only; not a fluid simulation or laboratory case.';
+  $('demoNote').textContent = 'Example data — not a laboratory test.';
   load();
   setupPhase();
 };
@@ -440,7 +435,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v7',
+      application: 'Psat Curve Lab v8',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -578,7 +573,7 @@ function setupPhase() {
     'Low-pressure fit' + (low ? ' · ' + low.toLowerCase() + ' expected' : '');
   if (dew && boundary === 'lower')
     $('demoNote').textContent = demo
-      ? 'Synthetic curve-fitting example only; it does not simulate a lower dew boundary.'
+      ? 'Example data only — not a lower-dew simulation.'
       : $('demoNote').textContent;
 }
 ['phase', 'direction', 'boundary'].forEach(
@@ -602,16 +597,15 @@ function remember() {
 function toolHint() {
   $('toolHelp').textContent =
     tool === 'high'
-      ? 'Blue tool selected: click a point to use it in the high-pressure fit.'
+      ? 'Click a point to add it to the high-pressure fit.'
       : tool === 'low'
-        ? 'Orange tool selected: click a point to use it in the low-pressure fit.'
-        : 'Neither fit selected: click a point to leave it visible without affecting either curve.';
+        ? 'Click a point to add it to the low-pressure fit.'
+        : 'Click a point to leave it out of both fits.';
 }
 function updateWorkspace() {
   $('axisReadout').textContent =
     'Y: Pressure (' + $('punit').value + ') · X: Volume (' + $('vunit').value + ')';
-  $('pointReadout').textContent =
-    'Hover or focus a point to inspect its pressure and volume.';
+  $('pointReadout').textContent = '';
   const ready = !!result?.intersection;
   $('present').disabled = !ready;
   $('undo').disabled = !history.length;
@@ -622,20 +616,19 @@ function updateWorkspace() {
       ? 'Not plotted'
       : 'No data';
   $('inputStatus').textContent = points.length
-    ? 'Your points are plotted. Refine the branch selections on the graph.'
+    ? 'Click graph points to adjust the fit.'
     : raw
-      ? 'Measurements entered. Select Plot & fit curves to continue.'
+      ? 'Ready to plot.'
       : $('phase').value
-        ? 'Paste your measurements or import a CSV / TXT file.'
-        : 'Choose a phase above to get started.';
+        ? 'Paste data or upload CSV / TXT.'
+        : 'Select a test type first.';
   $('summaryCase').textContent =
-    $('case').value.trim() ||
-    (points.length ? 'Untitled analysis' : 'Your next analysis');
+    $('case').value.trim() || (points.length ? 'Untitled case' : 'No case loaded');
   const phase =
     $('phase').value === 'bubble'
-      ? 'Bubble-point analysis'
+      ? 'Bubble point'
       : $('phase').value === 'dew'
-        ? 'Dew-point analysis · ' +
+        ? 'Dew point · ' +
           ($('boundary').value === 'lower'
             ? 'lower boundary'
             : $('boundary').value === 'unknown'
@@ -650,15 +643,14 @@ function updateWorkspace() {
     ($('basis').value || '').toLowerCase() +
     ' · ' +
     $('vunit').value +
-    ' · ' +
-    ($('temp').value
-      ? $('temp').value + ' ' + $('tunit').value
-      : 'Temperature not provided');
+    ($('temp').value ? ' · ' + $('temp').value + ' ' + $('tunit').value : '');
+  $('inputPressureLabel').textContent = 'Pressure (' + $('punit').value + ')';
+  $('inputVolumeLabel').textContent = 'Volume (' + $('vunit').value + ')';
   $('sampleBadge').hidden = !demo;
   if (presentation && !ready) {
     ((presentation = false), (viewBounds = null), (autoBounds = null));
     document.body.classList.toggle('presentation', false);
-    $('present').textContent = '▣ Presentation view';
+    $('present').textContent = 'Present';
     $('present').setAttribute('aria-pressed', 'false');
   }
 }
@@ -673,7 +665,7 @@ $('present').onclick = () => {
   if (!result?.intersection) return;
   presentation = !presentation;
   document.body.classList.toggle('presentation', presentation);
-  $('present').textContent = presentation ? '← Back to editing' : '▣ Presentation view';
+  $('present').textContent = presentation ? '← Edit' : 'Present';
   $('present').setAttribute('aria-pressed', presentation ? 'true' : 'false');
   chart();
   window.scrollTo?.({ top: 0, behavior: 'smooth' });
