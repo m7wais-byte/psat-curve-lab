@@ -8,6 +8,18 @@ let points = [],
   presentation = false,
   viewBounds = null,
   autoBounds = null;
+function pressureSelection() {
+  const [unit, basis] = $('punit').value.split(':');
+  return { unit, basis };
+}
+function pressureLabel() {
+  const { unit, basis } = pressureSelection();
+  return unit === 'psi'
+    ? basis === 'Gauge'
+      ? 'psig'
+      : 'psia'
+    : unit + (basis === 'Gauge' ? ' (gauge)' : ' (absolute)');
+}
 const num = (v, d = 3) =>
   Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
 function err(s) {
@@ -136,12 +148,7 @@ function render() {
     $('evidence').style.color = r.intersection && !r.warning ? '#0f766e' : '#a16c34';
     if (r.intersection) {
       $('psat').innerHTML =
-        num(r.intersection.p) +
-        ' <small>' +
-        $('punit').value +
-        ' ' +
-        ($('basis').value === 'Gauge' ? 'g' : 'a') +
-        '</small>';
+        num(r.intersection.p) + ' <small>' + pressureLabel() + '</small>';
       $('vsat').innerHTML =
         num(r.intersection.v) + ' <small>' + $('vunit').value + '</small>';
       $('psatSub').textContent = $('temp').value
@@ -151,7 +158,7 @@ function render() {
     $('message').textContent =
       (r.warning || 'Review the fits and their intersection.') + note;
     $('diagnostics').textContent =
-      `Pressure RMSE: high branch ${num(r.high.rmse, 4)} ${$('punit').value}; low branch ${num(r.low.rmse, 4)} ${$('punit').value}. ${r.omitted} point(s) remain visible but do not influence either fit.`;
+      `Pressure RMSE: high branch ${num(r.high.rmse, 4)} ${pressureLabel()}; low branch ${num(r.low.rmse, 4)} ${pressureLabel()}. ${r.omitted} point(s) remain visible but do not influence either fit.`;
   } else
     $('message').textContent =
       (points.length
@@ -263,7 +270,7 @@ function chart() {
       if (target < f.min) h += path(f, target, f.min, color, true);
     }
     if (c && inside(c)) {
-      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${$('punit').value}</text>`;
+      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
     }
   }
   points.filter(inside).forEach((p) => {
@@ -272,7 +279,7 @@ function chart() {
     h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
   });
   h += `</g>`;
-  h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${$('punit').value}, ${$('basis').value.toLowerCase()})</text></svg>`;
+  h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text></svg>`;
   $('chart').innerHTML = h;
   $('chart')
     .querySelectorAll('[data-id]')
@@ -281,7 +288,7 @@ function chart() {
         const p = points.find((p) => p.id === Number(el.dataset.id));
         if (p)
           $('pointReadout').textContent =
-            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${$('punit').value} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? 'No fit' : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
+            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${pressureLabel()} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? 'No fit' : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
       };
       el.onmouseenter = inspect;
       el.onfocus = inspect;
@@ -390,8 +397,7 @@ $('demo').onclick = () => {
     'DEMONSTRATION · ' +
     ($('phase').value === 'dew' ? 'dew' : 'bubble') +
     ' curve fitting';
-  $('punit').value = 'psi';
-  $('basis').value = 'Gauge';
+  $('punit').value = 'psi:Gauge';
   $('vunit').value = 'cc';
   $('temp').value = '';
   demo = true;
@@ -399,7 +405,7 @@ $('demo').onclick = () => {
   load();
   setupPhase();
 };
-['model', 'temp', 'tunit', 'punit', 'basis', 'vunit'].forEach(
+['model', 'temp', 'tunit', 'punit', 'vunit'].forEach(
   (id) => ($(id).onchange = () => fitNow()),
 );
 function currentReport() {
@@ -408,8 +414,8 @@ function currentReport() {
     result,
     caseName: $('case').value,
     phase: $('phase').value,
-    pressureUnit: $('punit').value,
-    pressureBasis: $('basis').value,
+    pressureUnit: pressureSelection().unit,
+    pressureBasis: pressureSelection().basis,
     volumeUnit: $('vunit').value,
     temperature: $('temp').value,
     temperatureUnit: $('tunit').value,
@@ -465,14 +471,14 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v9',
+      application: 'Psat Curve Lab v10',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
       temperature: $('temp').value || null,
       temperatureUnit: $('tunit').value,
-      pressureUnit: $('punit').value,
-      pressureBasis: $('basis').value,
+      pressureUnit: pressureSelection().unit,
+      pressureBasis: pressureSelection().basis,
       volumeUnit: $('vunit').value,
       expectedTransition: $('phase').value,
       pressurePath: $('direction').value,
@@ -518,9 +524,9 @@ function equations() {
     for (let i = 1; i < c.length; i++)
       formula +=
         (c[i] < 0 ? ' − ' : ' + ') + fmt(Math.abs(c[i])) + (i === 1 ? 'z' : 'z²');
-    html += `<article><div class="eyebrow">${name}</div><code>${formula}</code><div class="fitstats"><span>R² <strong>${f.r2 === null ? 'Undefined' : num(f.r2, 6)}</strong></span><span>RMSE <strong>${num(f.rmse, 4)} ${$('punit').value}</strong></span><span><strong>${f.count}</strong> points</span></div></article>`;
+    html += `<article><div class="eyebrow">${name}</div><code>${formula}</code><div class="fitstats"><span>R² <strong>${f.r2 === null ? 'Undefined' : num(f.r2, 6)}</strong></span><span>RMSE <strong>${num(f.rmse, 4)} ${pressureLabel()}</strong></span><span><strong>${f.count}</strong> points</span></div></article>`;
   }
-  html += `<p class="small normalization">For both equations: z = (V − ${num(r.origin, 6)}) / ${num(r.scale, 6)}. Pressure in ${$('punit').value}; volume in ${$('vunit').value}. Displayed coefficients are rounded; calculations use full precision.</p>`;
+  html += `<p class="small normalization">For both equations: z = (V − ${num(r.origin, 6)}) / ${num(r.scale, 6)}. Pressure in ${pressureLabel()}; volume in ${$('vunit').value}. Displayed coefficients are rounded; calculations use full precision.</p>`;
   $('equations').innerHTML = html;
 }
 
@@ -634,7 +640,7 @@ function toolHint() {
 }
 function updateWorkspace() {
   $('axisReadout').textContent =
-    'Y: Pressure (' + $('punit').value + ') · X: Volume (' + $('vunit').value + ')';
+    'Y: Pressure (' + pressureLabel() + ') · X: Volume (' + $('vunit').value + ')';
   $('pointReadout').textContent = '';
   const ready = !!result?.intersection;
   $('present').disabled = !ready;
@@ -670,13 +676,11 @@ function updateWorkspace() {
   $('summaryMeta').textContent =
     phase +
     ' · ' +
-    $('punit').value +
-    ' ' +
-    ($('basis').value || '').toLowerCase() +
+    pressureLabel() +
     ' · ' +
     $('vunit').value +
     ($('temp').value ? ' · ' + $('temp').value + ' ' + $('tunit').value : '');
-  $('inputPressureLabel').textContent = 'Pressure (' + $('punit').value + ')';
+  $('inputPressureLabel').textContent = 'Pressure (' + pressureLabel() + ')';
   $('inputVolumeLabel').textContent = 'Volume (' + $('vunit').value + ')';
   $('sampleBadge').hidden = !demo;
   if (presentation && !ready) {
@@ -741,7 +745,7 @@ function updateScaleControls() {
   $('focusScale').disabled = !ready || !result?.intersection;
   $('scaleMode').textContent = viewBounds ? 'Custom' : 'Automatic';
   $('volumeScaleLabel').textContent = 'Volume · X axis (' + $('vunit').value + ')';
-  $('pressureScaleLabel').textContent = 'Pressure · Y axis (' + $('punit').value + ')';
+  $('pressureScaleLabel').textContent = 'Pressure · Y axis (' + pressureLabel() + ')';
   const bounds = viewBounds || autoBounds;
   for (const [id, key] of [
     ['vMin', 'vmin'],

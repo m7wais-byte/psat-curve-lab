@@ -37,6 +37,9 @@ header {
   border-bottom: 1px solid var(--border);
 }
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-right: auto;
   color: var(--high);
   font-size: 22px;
@@ -223,7 +226,7 @@ input[type='checkbox'] {
 }
 .setup-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0 16px;
 }
 .phase-select {
@@ -1572,4 +1575,25 @@ footer {
   color: #98a79f;
   background: #f4f6f3;
   border-color: #e1e7e1;
+}
+
+.brand-logo {
+  width: 86px;
+  height: 51px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .brand {
+    gap: 8px;
+  }
+  .brand-logo {
+    width: 64px;
+    height: 40px;
+  }
+}
+@media (max-width: 420px) {
+  .brand .muted {
+    display: none;
+  }
 }
