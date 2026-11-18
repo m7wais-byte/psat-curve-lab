@@ -234,3 +234,17 @@ test('automatic fitting rejects insufficient evidence and does not force paralle
   }));
   assert.throws(() => PV.autoAssign(parallel, 1), /No supported deep fit/);
 });
+test('a crossing exactly at a selected end point is not reported as extrapolated', () => {
+  // Same shape as the in-app Example: the break at V = 35 is itself a measurement.
+  const points = Array.from({ length: 21 }, (_, id) => {
+    const v = Number((33 + id * 0.2).toFixed(3)),
+      d = v - 35,
+      p = d < 0 ? 1000 - 1400 * d + 150 * d * d : 1000 - 190 * d + 15 * d * d;
+    return { id, v, p: Number(p.toFixed(3)), group: v <= 35 ? 'high' : 'low' };
+  });
+  const r = PV.analyze(points, 2);
+  assert(r.intersection);
+  assert(Math.abs(r.intersection.v - 35) < 1e-9);
+  assert(Math.abs(r.intersection.p - 1000) < 1e-6);
+  assert.equal(r.warning, '');
+});

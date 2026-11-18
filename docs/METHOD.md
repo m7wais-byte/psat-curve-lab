@@ -85,7 +85,7 @@ Here `P_high` is evaluated at the corresponding normalized volume internally.
 
 ### Root screening
 
-Let `gap = [max(V_high), min(V_low)]`. Analysis considers nonnegative-pressure crossings in the gap or within **8% of S** outside either gap end. If any roots lie strictly within the gap, those roots are preferred. There must be exactly one remaining root.
+Let `gap = [max(V_high), min(V_low)]`. Analysis considers nonnegative-pressure crossings in the gap or within **8% of S** outside either gap end. If any roots lie within the gap, those roots are preferred. "Within the gap" includes a tolerance of `1e−9 × S` at both ends, so a crossing exactly at a selected end point is not misreported as extrapolated because of floating-point rounding. There must be exactly one remaining root.
 
 The pressure derivative and predicted pressure are checked at the ends of each fitted-plus-extended interval. The derivative is linear for quadratic models, so endpoint checks establish its sign throughout that interval. A branch that reverses direction or predicts negative pressure over that interval does not produce an accepted crossing.
 

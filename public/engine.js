@@ -119,13 +119,16 @@
       throw Error(
         'Keep the two branch ranges separate: high-pressure points should have smaller volumes than low-pressure points.',
       );
+    // Relative tolerance so a crossing exactly at a selected end point counts as in the gap.
     let gap = [a.max, b.min],
+      tolerance = 1e-9 * scale,
+      inGap = (v) => v >= gap[0] - tolerance && v <= gap[1] + tolerance,
       allRoots = roots(a, b, min, scale),
       candidates = allRoots.filter(
         (v) =>
           v >= gap[0] - scale * 0.08 && v <= gap[1] + scale * 0.08 && a.predict(v) >= 0,
       ),
-      within = candidates.filter((v) => v >= gap[0] && v <= gap[1]),
+      within = candidates.filter(inGap),
       valid = within.length ? within : candidates;
     let intersection = null,
       warning = '';
@@ -151,7 +154,7 @@
         valid.length > 1
           ? 'Multiple nearby intersections: adjust the selected regions to resolve the result.'
           : 'The two trends do not intersect near the selected branch ends. Adjust the branch selections.';
-    if (intersection && !(intersection.v >= gap[0] && intersection.v <= gap[1]))
+    if (intersection && !inGap(intersection.v))
       warning =
         'Intersection is outside the gap between the selected regions; check the extrapolation.';
     if (
