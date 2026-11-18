@@ -238,9 +238,9 @@
   function open(m, options = {}) {
     const target = root.open('', '_blank');
     if (!target) return null;
+    target.document.open();
     if (options.print)
       target.addEventListener('load', () => target.print(), { once: true });
-    target.document.open();
     target.document.write(html(m, root.location?.href || ''));
     target.document.close();
     return target;
