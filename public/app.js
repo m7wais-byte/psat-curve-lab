@@ -537,6 +537,14 @@ function currentReport() {
     boundary: $('boundary').value,
     syntheticDemo: demo,
     grid: $('grid').value,
+    yCheck: yResult && {
+      pb: yResult.best.pb,
+      vb: yResult.best.vb,
+      relativeRmse: yResult.best.relativeRmse,
+      graphicalRelativeRmse: yResult.graphical?.relativeRmse ?? null,
+      atEdge: yResult.atEdge,
+      atmosphere: yResult.atmosphere,
+    },
   });
 }
 $('print').onclick = () => {

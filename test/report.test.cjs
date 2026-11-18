@@ -165,3 +165,39 @@ test('report graph ticks are round values', () => {
   for (const t of ticks)
     assert(Math.abs(t * 100 - Math.round(t * 100)) < 1e-6, String(t));
 });
+test('bubble-point reports include the Y-function cross-check; dew-point reports do not', () => {
+  const { h, model } = fixture();
+  assert(model.yCheck && Number.isFinite(model.yCheck.pb));
+  assert.equal(model.yCheck.atmosphere, 14.696);
+  const pdf = R.createPdf(model, jsPDF);
+  assert.equal(pdf.getNumberOfPages(), 1);
+  const data = pdf.output();
+  assert.match(data, /Y-function check - bubble point/);
+  assert.match(data, /Most-linear Pb [\d,.]+ psig/);
+  assert.match(data, /difference from the graphical Pb [+-][\d,.]+ psig/);
+  assert.match(data, /Cross-check only; the reported Pb is the graphical intersection/);
+  assert.match(data, /one standard atmosphere/);
+  assert.match(data, /14\.696 psi/);
+  const html = R.html(model);
+  assert.match(html, /Y-function check · bubble point/);
+  assert.match(html, /Most-linear Pb/);
+  assert.equal(
+    model.intersection.p,
+    h.run('result.intersection.p'),
+    'reported Pb stays graphical',
+  );
+  h.get('phase').value = 'dew';
+  h.get('phase').onchange();
+  const dew = h.run('currentReport()');
+  assert.equal(dew.yCheck, null);
+  assert(!R.createPdf(dew, jsPDF).output().includes('Y-function'));
+  assert(!R.html(dew).includes('Y-function'));
+  assert.throws(
+    () => R.createPdf({ ...model, yCheck: { ...model.yCheck, pb: NaN } }, jsPDF),
+    /Invalid Y-function/,
+  );
+});
+test('an empty report error box takes no space, so printing stays on one A4 page', () => {
+  const { model } = fixture();
+  assert.match(R.html(model), /#case-a4-report #reportError:empty \{display:none;\}/);
+});
