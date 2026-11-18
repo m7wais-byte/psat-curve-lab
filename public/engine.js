@@ -101,7 +101,15 @@
       (a, b) => a - b,
     );
   }
+  // A degree is 1 (straight) or 2 (quadratic): one number for both branches, or {high, low}.
+  function branchDegrees(degree) {
+    const d = typeof degree === 'number' ? { high: degree, low: degree } : degree || {};
+    if (![1, 2].includes(d.high) || ![1, 2].includes(d.low))
+      throw Error('Choose straight or quadratic trends.');
+    return { high: d.high, low: d.low };
+  }
   function analyze(points, degree = 2) {
+    const degrees = branchDegrees(degree);
     let used = points.filter((p) => p.group !== 'none'),
       high = used.filter((p) => p.group === 'high'),
       low = used.filter((p) => p.group === 'low');
@@ -111,8 +119,8 @@
       max = Math.max(...used.map((p) => p.v)),
       scale = max - min;
     if (!scale) throw Error('Volumes must span a range.');
-    let a = fit(high, degree, min, scale),
-      b = fit(low, degree, min, scale);
+    let a = fit(high, degrees.high, min, scale),
+      b = fit(low, degrees.low, min, scale);
     if (a.max >= b.min)
       throw Error(
         'Keep the two branch ranges separate: high-pressure points should have smaller volumes than low-pressure points.',
@@ -183,11 +191,12 @@
       allRoots,
       used: used.length,
       omitted: points.length - used.length,
-      degree,
+      degree: degrees.high === degrees.low ? degrees.high : null,
+      degrees,
     };
   }
   function deepFit(points, degree = 2, progress = () => {}) {
-    if (![1, 2].includes(degree)) throw Error('Choose straight or quadratic trends.');
+    const degrees = branchDegrees(degree);
     if (
       !Array.isArray(points) ||
       points.length > 500 ||
@@ -201,11 +210,12 @@
         .filter((p) => p.p !== 0)
         .sort((a, b) => a.v - b.v || a.id - b.id),
       n = sorted.length,
-      minimum = degree + 3,
+      minHigh = degrees.high + 3,
+      minLow = degrees.low + 3,
       maxExcluded = Math.floor(0.25 * n);
-    if (n < 2 * minimum)
+    if (n < minHigh + minLow)
       throw Error(
-        `Need at least ${2 * minimum} nonzero-pressure points for deep fitting. Zero readings remain unassigned for review.`,
+        `Need at least ${minHigh + minLow} nonzero-pressure points for deep fitting. Zero readings remain unassigned for review.`,
       );
     const exhaustive = n <= 20,
       budget = 30000,
@@ -237,12 +247,12 @@
       if (!exhaustive) seen.add(key);
       const high = groups.filter((g) => g === 1).length,
         low = groups.filter((g) => g === 2).length;
-      if (high < minimum || low < minimum || n - high - low > maxExcluded) return null;
+      if (high < minHigh || low < minLow || n - high - low > maxExcluded) return null;
       examined++;
       if (examined % 256 === 0)
         progress({ examined, valid, mode: exhaustive ? 'exhaustive' : 'bounded' });
       try {
-        const r = analyze(assignment(groups), degree);
+        const r = analyze(assignment(groups), degrees);
         if (!Number.isFinite(r.high.r2) || !Number.isFinite(r.low.r2)) return null;
         const c = {
           groups,
@@ -266,7 +276,7 @@
       const excluded = new Set();
       function visit(start) {
         const kept = sorted.map((_, i) => i).filter((i) => !excluded.has(i));
-        for (let k = minimum; k <= kept.length - minimum; k++) {
+        for (let k = minHigh; k <= kept.length - minLow; k++) {
           const groups = Array(n).fill(0);
           kept.forEach((i, j) => (groups[i] = j < k ? 1 : 2));
           evaluate(groups);
@@ -292,9 +302,9 @@
           [0, 1, 2, 4, 8, 16, 32, 64, maxExcluded].filter((g) => g <= maxExcluded),
         ),
       ].sort((a, b) => a - b);
-      for (let split = minimum; split <= n - minimum; split++)
+      for (let split = minHigh; split <= n - minLow; split++)
         for (const gap of gaps) {
-          if (split + gap > n - minimum) continue;
+          if (split + gap > n - minLow) continue;
           keep(
             evaluate(sorted.map((_, i) => (i < split ? 1 : i < split + gap ? 0 : 2))),
             beam,
@@ -381,7 +391,7 @@
         examined,
         valid,
         budget: exhaustive ? null : budget,
-        minimumPerBranch: minimum,
+        minimumPerBranch: minHigh === minLow ? minHigh : { high: minHigh, low: minLow },
         maxExcluded,
         nonzeroPoints: n,
         zeroReadings: points.length - n,

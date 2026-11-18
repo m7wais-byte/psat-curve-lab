@@ -36,7 +36,7 @@ P_high(z) = a_h + b_h z + c_h z²
 P_low(z)  = a_l + b_l z + c_l z²
 ```
 
-Degree 1 omits the quadratic coefficient. For each branch, the objective is:
+Degree 1 omits the quadratic coefficient. Each branch has its own degree: `analyze(points, degree)` accepts one number for both branches or `{high, low}`, for example a straight high-pressure (single-phase) trend with a quadratic low-pressure trend. The degrees change only which terms each branch fits; the regression, intersection and screening below are otherwise identical. The result records `degrees: {high, low}`, and `degree` is the shared degree or `null` when they differ. For each branch, the objective is:
 
 ```text
 RSS = Σ [P_i − P_fit(V_i)]²
@@ -53,7 +53,7 @@ Minimum selection requirements:
 | Straight / degree 1 | At least 3        | At least 2                  |
 | Curved / degree 2   | At least 4        | At least 3                  |
 
-The curves are independent and are not constrained to join at a selected data point.
+The requirement applies per branch, using that branch's shape. The curves are independent and are not constrained to join at a selected data point. When one branch is straight, the difference polynomial in the intersection step has a quadratic term only from the other branch.
 
 ## Intersection
 
@@ -99,12 +99,12 @@ When both conditions apply, both warnings are reported together. These threshold
 
 ## Deep automatic selection
 
-`deepFit(points, degree, progress)` returns assignments and an auditable search summary. `autoAssign` is a compatibility wrapper returning only those assignments. Selection runs on Plot graph and **Deep fit**. It changes membership, not the regression equations above.
+`deepFit(points, degree, progress)` (degree as in `analyze`: one number or `{high, low}`) returns assignments and an auditable search summary. `autoAssign` is a compatibility wrapper returning only those assignments. Selection runs on Plot graph and **Deep fit**. It changes membership, not the regression equations above.
 
 ### Permitted selections and objective
 
 - Exactly zero-pressure readings remain unassigned for review; zero gauge pressure can be real. Sort nonzero readings by volume and then numeric point ID.
-- Keep at least `degree + 3` points in each branch: five for quadratic or four for linear. At most `floor(0.25 × n)` nonzero readings may be excluded overall. The minimum input is therefore 10 curved or 8 straight readings. The previous heuristic's per-region 80% count/span rules no longer apply.
+- Keep at least `degree + 3` points in each branch, using that branch's degree: five for quadratic or four for linear. At most `floor(0.25 × n)` nonzero readings may be excluded overall. The minimum input is therefore the sum of the two branch minimums: 10 curved/curved, 9 mixed or 8 straight/straight readings. `minimumPerBranch` in the summary is one number when both minimums match and `{high, low}` otherwise. The previous heuristic's per-region 80% count/span rules no longer apply.
 - Every retained high-region volume precedes every retained low-region volume. Exclusions may be anywhere, including region interiors and endpoints.
 - Use the same `analyze` safeguards as the displayed fit: distinct-volume requirements, supported unique crossing (preferring roots in the gap), nonnegative/decreasing fitted branches and the 8% selected-span root allowance. Candidates rejected by the displayed analysis cannot win the search. A warning, such as extrapolation or nearly parallel trends, remains visible if present.
 - Both branch R² values must be defined. A constant-pressure branch has undefined R² and cannot win an R² optimization; it remains available for manual analysis.

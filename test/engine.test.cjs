@@ -269,3 +269,67 @@ test('parse errors report the line number as pasted, including leading blank lin
     'Line 6: use two numbers, pressure then volume.',
   ]);
 });
+test('each branch can use its own trend shape', () => {
+  // Straight high branch, quadratic low branch, crossing exactly at V = 35, P = 1000.
+  const points = [
+    ...[33, 33.4, 33.8, 34.2, 34.6].map((v) => ({ v, p: 1000 - 1400 * (v - 35) })),
+    ...[35.4, 35.8, 36.2, 36.6, 37].map((v) => ({
+      v,
+      p: 1000 - 190 * (v - 35) + 15 * (v - 35) ** 2,
+    })),
+  ].map((p, id) => ({ ...p, id, group: p.v < 35 ? 'high' : 'low' }));
+  const r = PV.analyze(points, { high: 1, low: 2 });
+  assert.equal(r.high.coeff.length, 2);
+  assert.equal(r.low.coeff.length, 3);
+  assert.deepEqual(r.degrees, { high: 1, low: 2 });
+  assert.equal(r.degree, null);
+  assert(
+    Math.abs(r.intersection.v - 35) < 1e-9 && Math.abs(r.intersection.p - 1000) < 1e-6,
+  );
+  // A plain number still means the same shape for both branches.
+  const same = PV.analyze(points, 2);
+  assert.equal(same.degree, 2);
+  assert.deepEqual(same.degrees, { high: 2, low: 2 });
+  assert.throws(() => PV.analyze(points, { high: 3, low: 1 }), /straight or quadratic/);
+  // Per-branch minimum counts follow each branch's shape.
+  const few = points.map((p) => ({
+    ...p,
+    group: p.id < 3 ? 'high' : p.id < 7 ? 'low' : 'none',
+  }));
+  assert(PV.analyze(few, { high: 1, low: 2 }).high);
+  assert.throws(
+    () => PV.analyze(few, { high: 2, low: 2 }),
+    /curved branch needs at least 4/,
+  );
+});
+test('deep fit applies per-branch minimums and returns mixed-shape fits', () => {
+  const points = Array.from({ length: 12 }, (_, id) => {
+    const v = 33 + id * 0.4,
+      d = v - 35;
+    return {
+      id,
+      v,
+      p: d < 0 ? 1000 - 1400 * d : 1000 - 190 * d + 15 * d * d,
+      group: 'none',
+    };
+  });
+  const d = PV.deepFit(points, { high: 1, low: 2 });
+  assert.deepEqual(d.search.minimumPerBranch, { high: 4, low: 5 });
+  const high = d.points.filter((p) => p.group === 'high').length,
+    low = d.points.filter((p) => p.group === 'low').length;
+  assert(high >= 4 && low >= 5);
+  const r = PV.analyze(d.points, { high: 1, low: 2 });
+  assert(Math.abs(r.intersection.p - 1000) < 1e-6);
+  assert.equal(PV.deepFit(points, 2).search.minimumPerBranch, 5);
+  // 8 nonzero points: enough for straight/straight (4 + 4) but not straight/curved (4 + 5).
+  assert(
+    PV.deepFit(
+      points.slice(0, 8).map((p, i) => ({ ...p, id: i })),
+      1,
+    ),
+  );
+  assert.throws(
+    () => PV.deepFit(points.slice(0, 8), { high: 1, low: 2 }),
+    /Need at least 9 nonzero-pressure points/,
+  );
+});
