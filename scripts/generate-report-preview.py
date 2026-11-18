@@ -5,10 +5,12 @@ This does not generate live user reports; report-preview.html contains example d
 """
 from pathlib import Path
 import json
+import math
 import subprocess
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import simpleSplit
 from reportlab.pdfgen import canvas
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,7 +103,9 @@ rows = [
     ('Sample / case', 'Example sample 01', 'Date', '18 Nov 2026'),
     ('Test type', 'Bubble point', 'Temperature', 'Not recorded'),
     ('Pressure unit', 'psig', 'Volume unit', 'cc'),
+    ('Trend shape', 'Quadratic curves', 'Points used', f"{data['used']} of {data['used'] + data['excluded']}"),
 ]
+OFF = 21  # the fourth details row moves everything below it down, as in the live PDF
 mid = W/2 + 10
 for i, (a, b, d, e) in enumerate(rows):
     y = H-134-i*21
@@ -111,21 +115,47 @@ for i, (a, b, d, e) in enumerate(rows):
     text(W-M, y, e, 9, align='right')
     line(M, y-7, mid-24, y-7, '#edf1ed', .4)
     line(mid, y-7, W-M, y-7, '#edf1ed', .4)
-line(M, H-199, W-M, H-199)
-text(M, H-217, 'Estimated saturation pressure - Psat', 9, QUIET)
-text(mid, H-217, 'Volume at saturation - Vsat', 9, QUIET)
-text(M, H-247, f"{data['psat']:,.2f}", 25)
-text(M+119, H-247, 'psi g', 10, QUIET)
-text(mid, H-247, f"{data['vsat']:.4f}", 25)
-text(mid+113, H-247, 'cc', 10, QUIET)
-line(M, H-263, W-M, H-263)
-text(M, H-285, 'Pressure-volume graph', 11)
-text(W-M, H-285, f"{data['used']} points used - {data['excluded']} excluded", 9, QUIET, 'right')
-left, right, top = M+45, W-M-3, H-309
+line(M, H-199-OFF, W-M, H-199-OFF)
+text(M, H-217-OFF, 'Estimated bubble-point pressure - Pb', 9, QUIET)
+text(mid, H-217-OFF, 'Volume at saturation - Vsat', 9, QUIET)
+# Units follow the printed number, as in the live PDF.
+psat_text, vsat_text = f"{data['psat']:,.2f}", f"{data['vsat']:.4f}"
+text(M, H-247-OFF, psat_text, 25)
+text(M+c.stringWidth(psat_text, 'Helvetica', 25)+6, H-247-OFF, 'psig', 10, QUIET)
+text(mid, H-247-OFF, vsat_text, 25)
+text(mid+c.stringWidth(vsat_text, 'Helvetica', 25)+6, H-247-OFF, 'cc', 10, QUIET)
+line(M, H-263-OFF, W-M, H-263-OFF)
+text(M, H-285-OFF, 'Pressure-volume graph', 11)
+text(W-M, H-285-OFF, f"{data['used']} points used - {data['excluded']} excluded", 9, QUIET, 'right')
+left, right, top = M+45, W-M-3, H-309-OFF
 cell = (right-left)/8
 bottom = top-cell*4
-xp = lambda v: left+(v-32.8)/4.4*(right-left)
-yp = lambda p: bottom+p/4800*(top-bottom)
+
+
+def nice_axis(lo, hi, divisions):
+    """Same round-step rule as PVReport.niceAxis: 1/1.5/2/2.5/3/4/5/6/8 x 10^k."""
+    raw = (hi-lo)/divisions
+    e = math.floor(math.log10(raw))
+    for k in range(e-1, e+3):
+        for base in (1, 1.5, 2, 2.5, 3, 4, 5, 6, 8):
+            step = float(f'{base*10**k:.12g}')
+            if step < raw*(1-1e-9):
+                continue
+            start = max(0.0, float(f'{math.floor(lo/step+1e-9)*step:.12g}'))
+            end = float(f'{start+divisions*step:.12g}')
+            if end >= hi-1e-9*step:
+                return start, end, step
+    raise ValueError('no axis')
+
+
+volumes = [p['v'] for p in data['points']] + [data['vsat']]
+pressures = [p['p'] for p in data['points']] + [data['psat']]
+vspan, pspan = max(volumes)-min(volumes), max(pressures)-min(pressures)
+X0, X1, XS = nice_axis(max(0, min(volumes)-vspan*.045), max(volumes)+vspan*.045, 8)
+Y0, Y1, YS = nice_axis(max(0, min(pressures)-pspan*.07), max(pressures)+pspan*.1, 4)
+xp = lambda v: left+(v-X0)/(X1-X0)*(right-left)
+yp = lambda p: bottom+(p-Y0)/(Y1-Y0)*(top-bottom)
+tick = lambda v: f'{v:,.2f}'.rstrip('0').rstrip('.')
 for i in range(41):
     x = left+i*cell/5
     line(x, bottom, x, top, '#cedbd3' if i%5 == 0 else '#eef3ef', .55 if i%5 == 0 else .3)
@@ -133,9 +163,9 @@ for i in range(21):
     y = bottom+i*cell/5
     line(left, y, right, y, '#cedbd3' if i%5 == 0 else '#eef3ef', .55 if i%5 == 0 else .3)
 for i in range(9):
-    text(left+i*cell, bottom-15, f'{32.8+4.4*i/8:.2f}', 8, '#546e5c', 'center')
+    text(left+i*cell, bottom-15, tick(X0+XS*i), 8, '#546e5c', 'center')
 for i in range(5):
-    text(left-8, bottom+i*cell-3, f'{1200*i:,}', 8, '#546e5c', 'right')
+    text(left-8, bottom+i*cell-3, tick(Y0+YS*i), 8, '#546e5c', 'right')
 text((left+right)/2, bottom-32, 'Volume (cc)', 9, '#344f3d', 'center')
 c.saveState()
 c.translate(M+4, (bottom+top)/2)
@@ -186,7 +216,7 @@ c.setStrokeColor(HexColor(INK))
 c.setLineWidth(1.2)
 c.circle(xp(data['vsat']), yp(data['psat']), 3.5, stroke=1, fill=1)
 c.restoreState()
-text(right-4, yp(data['psat'])+16, f"Psat: {data['psat']:,.2f} psig @ {data['vsat']:.3f} cc", 9, INK, 'right')
+text(right-4, yp(data['psat'])+16, f"Pb: {data['psat']:,.2f} psig @ {data['vsat']:.3f} cc", 9, INK, 'right')
 legend_y = bottom-51
 for x, name, color in [(M+18,'High-pressure fit',HIGH),(M+146,'Low-pressure fit',LOW),(M+271,'Extended trend','#7e8d84')]:
     c.setDash([3,2] if name=='Extended trend' else [])
@@ -202,6 +232,26 @@ text(M, bottom-91, 'High-pressure fit', 10)
 text(mid, bottom-91, 'Low-pressure fit', 10)
 text(M, bottom-116, f"R² = {data['high']['r2']:.6f}", 17)
 text(mid, bottom-116, f"R² = {data['low']['r2']:.6f}", 17)
+# Y-function cross-check: values are engine results stored in the preview data.
+yc = data['yCheck']
+diff = yc['pb']-data['psat']
+sign = '+' if diff >= 0 else '-'
+y_lines = [
+    (f"Most-linear Pb {yc['pb']:,.2f} psig (Vb {yc['vb']:.4f} cc); difference from the graphical Pb "
+     f"{sign}{abs(diff):,.2f} psig ({sign}{100*abs(diff)/data['psat']:.2f}%).", INK),
+    (f"Y line scatter {100*yc['relativeRmse']:.2f}% at the most-linear Pb; "
+     f"{100*yc['graphicalRelativeRmse']:.2f}% at the graphical Pb.", INK),
+    ('Cross-check only; the reported Pb is the graphical intersection. Gauge readings converted '
+     f"with one standard atmosphere ({yc['atmosphere']} psi).", QUIET),
+]
+line(M, bottom-132, W-M, bottom-132)
+text(M, bottom-149, 'Y-function check - bubble point', 10)
+ty = bottom-164
+for value, color in y_lines:
+    for part in simpleSplit(value, 'Helvetica', 8.5, W-2*M):
+        text(M, ty, part, 8.5, color)
+        ty -= 10.5
+assert ty > 63+6, 'Y-function section overlaps the footer'
 line(M, 63, W-M, 63)
 text(M, 48, 'Excluded points shown; not used in either fit', 8, QUIET)
 text(W-M, 48, 'A4 portrait - Page 1 of 1', 8, QUIET, 'right')
