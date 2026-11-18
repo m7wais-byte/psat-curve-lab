@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Psat Curve Lab — Independent branch fitting</title>
+    <link rel="stylesheet" href="style.css?v=7" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#"
+        >◈ <span>Psat<span class="muted"> / Curve Lab</span></span></a
+      ><span class="badge">PVT ANALYSIS WORKSPACE</span
+      ><a class="help-link" href="#aboutTool">ⓘ How it works</a
+      ><button id="present" class="presentation-button" disabled aria-pressed="false">
+        ▣ Presentation view</button
+      ><button id="export">↓ Export analysis</button>
+    </header>
+    <main>
+      <div class="intro">
+        <div>
+          <div class="eyebrow">PRESSURE–VOLUME WORKSPACE</div>
+          <h1>P–V analysis, <span>in focus.</span></h1>
+          <p>Keep your measurements, fitted curves and saturation estimate together.</p>
+        </div>
+        <div class="intro-note">
+          <span class="privacy">● Browser-local processing</span
+          ><small>Your measurements stay on this device.</small>
+        </div>
+      </div>
+      <nav class="workflow" aria-label="Analysis steps">
+        <span><b>1</b> Choose phase & units</span><i>→</i
+        ><span><b>2</b> Add & select points</span><i>→</i
+        ><span><b>3</b> Review Psat & fit quality</span>
+      </nav>
+      <section class="test-setup" id="setup">
+        <div class="sectionhead">
+          <div>
+            <div class="eyebrow">STEP 1 · BEFORE ENTERING DATA</div>
+            <h2>Set up your test</h2>
+          </div>
+          <span class="badge">START HERE</span>
+        </div>
+        <div class="setup-grid">
+          <label class="phase-select"
+            >Phase to estimate <span class="required">Required</span
+            ><select id="phase" required>
+              <option value="">Select bubble or dew point…</option>
+              <option value="bubble">Bubble point · first gas from liquid</option>
+              <option value="dew">Dew point · first liquid from gas</option>
+            </select></label
+          ><label
+            >Case name<input
+              id="case"
+              placeholder="Your sample or case reference" /></label
+          ><label
+            >Pressure unit<select id="punit">
+              <option>psi</option>
+              <option>bar</option>
+              <option>MPa</option>
+              <option>kPa</option>
+            </select></label
+          ><label
+            >Pressure basis<select id="basis">
+              <option>Gauge</option>
+              <option>Absolute</option>
+            </select></label
+          ><label
+            >Volume unit<select id="vunit">
+              <option>cc</option>
+              <option>mL</option>
+              <option>cm³</option>
+              <option>Relative volume</option></select
+            ><span class="field-note">1 cc = 1 mL = 1 cm³</span></label
+          ><label id="boundaryField" hidden
+            >Dew-point boundary<select id="boundary">
+              <option value="upper">Upper / retrograde dew boundary</option>
+              <option value="lower">Lower dew boundary</option>
+              <option value="unknown">Boundary not confirmed</option>
+            </select></label
+          >
+        </div>
+        <details class="additional-conditions">
+          <summary>
+            Additional test conditions <span>Temperature & pressure path · optional</span>
+          </summary>
+          <div class="additional-grid">
+            <label
+              >Temperature · optional<input
+                id="temp"
+                type="number"
+                step="any"
+                placeholder="Not available" /></label
+            ><label
+              >Temperature unit<select id="tunit">
+                <option>°C</option>
+                <option>°F</option>
+                <option>K</option>
+              </select></label
+            ><label
+              >Pressure path<select id="direction">
+                <option value="unknown">Not recorded</option>
+                <option value="decreasing">Pressure decreasing · expansion</option>
+                <option value="increasing">Pressure increasing · compression</option>
+              </select></label
+            >
+          </div>
+        </details>
+        <details class="phase-guidance">
+          <summary>Understand the selected phase & units</summary>
+          <div id="phaseContext" class="phase-context" role="status">
+            Select the phase above to unlock data entry. Units describe your input values;
+            changing a unit label does not convert the numbers.
+          </div>
+        </details>
+        <div id="expectedRegions" class="expected-regions"></div>
+      </section>
+      <div class="workspace">
+        <aside>
+          <section class="input-card">
+            <div class="sectionhead">
+              <h2>02 · Measurements</h2>
+              <span id="dataState" class="mini-badge">No data</span>
+            </div>
+            <p class="small">
+              Paste two columns from Excel:<br /><strong
+                >Pressure first · Volume second</strong
+              >
+            </p>
+            <textarea
+              id="data"
+              disabled
+              spellcheck="false"
+              aria-label="Pressure and volume data"
+              placeholder="Pressure, Volume&#10;4669, 33.400&#10;3192, 33.800&#10;1852, 34.200"
+            ></textarea>
+            <div class="examples">
+              <label class="upload"
+                >↑ Import file<input
+                  id="file"
+                  disabled
+                  type="file"
+                  accept=".csv,.txt,.tsv"
+                  hidden /></label
+              ><button id="demo" disabled>Try sample data</button>
+            </div>
+            <div id="errors" role="alert"></div>
+            <button id="load" disabled class="primary">Plot & fit curves →</button>
+            <div id="inputStatus" class="small" role="status">
+              Choose a phase above to get started.
+            </div>
+            <div id="demoNote" class="small"></div>
+          </section>
+          <section class="quickguide">
+            <div class="guide-icon">↗</div>
+            <h2>A simple way to review</h2>
+            <p>
+              Start with the suggested branches. Use the colored point tools to refine
+              which measurements shape each curve.
+            </p>
+            <p>Points around the bend can stay visible without influencing either fit.</p>
+            <a href="#aboutTool" class="guide-link">How the method works →</a>
+          </section>
+        </aside>
+        <div class="results" id="analysis">
+          <section class="case-summary" aria-label="Analysis context">
+            <div>
+              <div class="eyebrow">CURRENT ANALYSIS</div>
+              <h2 id="summaryCase">Your next analysis</h2>
+              <p id="summaryMeta">Choose the test phase and add your measurements.</p>
+            </div>
+            <span id="sampleBadge" class="sample-badge" hidden>SYNTHETIC EXAMPLE</span>
+          </section>
+          <div class="metrics" aria-label="Pinned analysis results">
+            <article>
+              <div id="psatTitle" class="eyebrow">ESTIMATED Psat</div>
+              <div id="psat" class="metric" aria-live="polite" aria-atomic="true">—</div>
+              <div id="psatSub" class="small">Intersection of independent trends</div>
+            </article>
+            <article>
+              <div class="eyebrow">VOLUME AT INTERSECTION</div>
+              <div id="vsat" class="metric">—</div>
+              <div class="small">Volume on X · Pressure on Y</div>
+            </article>
+            <article>
+              <div class="eyebrow">REVIEW STATUS</div>
+              <div id="evidence" class="metric status">Awaiting data</div>
+              <div id="count" class="small">0 measurements</div>
+            </article>
+          </div>
+          <section class="chartcard">
+            <div class="sectionhead">
+              <div>
+                <h2>Pressure–volume plot</h2>
+                <p class="small">
+                  Independent fitted trends and their graphical intersection.
+                </p>
+              </div>
+              <div class="chartactions">
+                <button id="saveSvg">↓ Save graph</button
+                ><button id="print">Print</button>
+              </div>
+            </div>
+            <div class="plot-toolbar">
+              <div class="tools" role="group" aria-label="Assign clicked points">
+                <button data-tool="high" aria-pressed="true" class="active">
+                  <span class="tool-mark">●</span
+                  ><span>High-pressure fit<small>Use in blue curve</small></span
+                  ><b id="highCount" class="tool-count">0</b></button
+                ><button data-tool="low" aria-pressed="false">
+                  <span class="tool-mark">●</span
+                  ><span>Low-pressure fit<small>Use in orange curve</small></span
+                  ><b id="lowCount" class="tool-count">0</b></button
+                ><button data-tool="none" aria-pressed="false">
+                  <span class="tool-mark">○</span
+                  ><span>No fit<small>Keep visible only</small></span
+                  ><b id="noneCount" class="tool-count">0</b>
+                </button>
+              </div>
+              <div class="plotsettings">
+                <label
+                  >Grid<select id="grid">
+                    <option value="paper">Graph paper</option>
+                    <option value="major">Major squares</option>
+                    <option value="none">No grid</option>
+                  </select></label
+                ><label class="shade-control"
+                  ><input id="shade" type="checkbox" checked /> Shade fit ranges</label
+                ><button id="undo" disabled>↶ Undo</button>
+              </div>
+            </div>
+            <details class="scale-panel" id="scalePanel">
+              <summary>Graph scale <span id="scaleMode">Automatic</span></summary>
+              <div class="scale-actions">
+                <button id="zoomIn" disabled>＋ Zoom in</button
+                ><button id="zoomOut" disabled>− Zoom out</button
+                ><button id="focusScale" disabled>◎ Focus on intersection</button
+                ><button id="autoScale" disabled>↺ Auto scale</button>
+              </div>
+              <div class="scale-inputs">
+                <fieldset>
+                  <legend id="volumeScaleLabel">Volume · X axis</legend>
+                  <label
+                    >Minimum<input
+                      id="vMin"
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled /></label
+                  ><label
+                    >Maximum<input id="vMax" type="number" step="any" min="0" disabled
+                  /></label>
+                </fieldset>
+                <fieldset>
+                  <legend id="pressureScaleLabel">Pressure · Y axis</legend>
+                  <label
+                    >Minimum<input
+                      id="pMin"
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled /></label
+                  ><label
+                    >Maximum<input id="pMax" type="number" step="any" min="0" disabled
+                  /></label>
+                </fieldset>
+              </div>
+              <button id="applyScale" disabled>Apply axis limits</button>
+              <p class="small">
+                Changes only the view. Points outside the view remain in their fitting
+                groups and still contribute to the calculation.
+              </p>
+              <div id="scaleError" role="alert"></div>
+            </details>
+            <div id="scaleStatus" class="scale-status" role="status">
+              Plot data to adjust the graph scale.
+            </div>
+            <div class="graph-guidance">
+              <div id="toolHelp" class="tool-help">
+                Blue tool selected: click a point to use it in the high-pressure fit.
+              </div>
+              <span id="axisReadout" class="axis-readout">Y: Pressure · X: Volume</span>
+            </div>
+            <div id="chart">
+              <div class="empty">
+                <div class="empty-chart-icon">⌁</div>
+                <h3>Your analysis starts with a few points.</h3>
+                <p>
+                  Choose a phase, paste your measurements,<br />then select
+                  <strong>Plot & fit curves</strong>.
+                </p>
+                <span class="empty-note">Or explore the workflow with sample data.</span>
+              </div>
+            </div>
+            <div class="legend">
+              <span
+                ><i class="line teal"></i
+                ><span id="highLegend">High-pressure fit</span></span
+              ><span
+                ><i class="line orange"></i
+                ><span id="lowLegend">Low-pressure fit</span></span
+              ><span>┄ Extended trend</span><span>○ Not used in either fit</span>
+            </div>
+            <div id="pointReadout" class="point-readout" role="status">
+              Hover or focus a point to inspect its pressure and volume.
+            </div>
+            <div id="message" role="status">
+              Your original points stay visible, including those left out of both fits.
+            </div>
+            <div class="presentation-disclaimer">
+              Graphical saturation-pressure estimate · Independent branch fitting ·
+              Laboratory validation pending
+            </div>
+          </section>
+          <section class="fit-section">
+            <div class="sectionhead">
+              <h2>03 · Shape the two trends</h2>
+              <button id="suggest">Suggest branches again</button>
+            </div>
+            <div class="fitcontrols">
+              <label
+                >Trend shape<select id="model">
+                  <option value="2">Flexible · quadratic curves</option>
+                  <option value="1">Straight · linear trends</option>
+                </select></label
+              ><label
+                >Blue fit · last volume<input
+                  id="highEnd"
+                  type="number"
+                  step="any"
+                  placeholder="Choose range end" /></label
+              ><label
+                >Orange fit · first volume<input
+                  id="lowStart"
+                  type="number"
+                  step="any"
+                  placeholder="Choose range start"
+              /></label>
+            </div>
+            <button id="ranges">Apply branch ranges</button>
+            <button id="clear">Clear fit selections</button>
+            <p class="small">
+              Range controls assign the two outer regions and leave all points between
+              them out of both fits. Use individual assignments below for exceptions.
+              Zero-pressure readings require individual review.
+            </p>
+            <div id="diagnostics" class="small"></div>
+            <details class="technical-details">
+              <summary>View fitted equations & quality measures</summary>
+              <div id="equations" class="equations">
+                <div class="equation-placeholder">
+                  Your branch equations and fit quality will appear here.
+                </div>
+              </div>
+            </details>
+            <details>
+              <summary>Equations, selection method & accuracy</summary>
+              <div class="method">
+                <p>
+                  <strong>Independent curves:</strong> Pₕ(z) = aₕ + bₕz + cₕz² and Pₗ(z) =
+                  aₗ + bₗz + cₗz², with z = (V − V₀) / S. Each branch has its own
+                  coefficients. V₀ and S only rescale volume for numerical stability.
+                </p>
+                <p>
+                  <strong>Least squares:</strong> choose each branch’s coefficients to
+                  minimize Σ[Pᵢ − Pfit(Vᵢ)]² over its selected points. Points assigned to
+                  neither branch have no effect on the fits.
+                </p>
+                <p>
+                  <strong>Intersection:</strong> solve (cₕ − cₗ)z² + (bₕ − bₗ)z + (aₕ −
+                  aₗ) = 0, then Vsat = V₀ + Sz and Psat = Pₕ(z). A crossing must lie near
+                  the selected branch ends and have decreasing fitted pressure. Ambiguous
+                  crossings are flagged.
+                </p>
+                <p>
+                  <strong>Fit quality:</strong> RMSE = √[Σ(Pᵢ − Pfit)² / n], in pressure
+                  units. R² = 1 − Σ(Pᵢ − Pfit)² / Σ(Pᵢ − Pmean)². R² is undefined for a
+                  constant-pressure branch. Neither metric proves Psat accuracy.
+                </p>
+                <p>
+                  <strong>Automatic suggestions:</strong> the current heuristic compares
+                  candidate outer regions using normalized pressure RMSE plus a penalty
+                  for skipped bend points. It can skip up to 8 points or 25% of
+                  nonzero-pressure readings, whichever is smaller. Always review the
+                  proposal; it is not a validated physical phase detector.
+                </p>
+                <p>
+                  <strong>Limits:</strong> quadratic curves cannot represent every fluid
+                  or test path. Long extrapolations, nearly parallel trends, noisy
+                  readings, or unsuitable selections can move the intersection. Validate
+                  on reference tests before relying on the result.
+                </p>
+              </div>
+              <p>
+                Each branch is fitted independently as pressure versus volume. Quadratic
+                least-squares curves follow the selected measurements without being forced
+                through every noisy point. Dashed extensions find the crossing; neither
+                branch is forced to meet a chosen point. The automatic suggestion may
+                leave several bend points unassigned and is only a starting point for
+                review.
+              </p>
+              <p>
+                This is a graphical Psat estimate, not a thermodynamic phase confirmation.
+                Test temperature is optional for fitting; when unknown, the result has no
+                reported temperature. Review phase identity using your test observations.
+                No calibrated confidence percentage is claimed. Use for
+                constant-temperature expansion segments with unchanged overall
+                composition.
+              </p>
+            </details>
+          </section>
+          <section class="point-section">
+            <details class="point-details">
+              <summary>
+                <span>04 · Review individual measurements</span
+                ><small>Open the table to assign points individually</small>
+              </summary>
+              <div class="tablewrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fit assignment</th>
+                      <th>Point</th>
+                      <th>Pressure</th>
+                      <th>Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody id="points">
+                    <tr>
+                      <td colspan="4">No measurements yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        </div>
+      </div>
+      <details id="aboutTool" class="about-tool">
+        <summary>
+          <span>ⓘ About Psat Curve Lab</span
+          ><small>What it does · phase behavior · equations in plain language</small>
+        </summary>
+        <div class="about-content">
+          <p class="about-lead">
+            A digital version of the flexible ruler used to estimate saturation pressure
+            from your laboratory P–V graph.
+          </p>
+          <div class="about-grid">
+            <article>
+              <h3>1. Start with measured points</h3>
+              <p>
+                You provide pressure and volume readings from an equilibrated,
+                constant-temperature test segment. The graph shows volume along the bottom
+                and pressure up the side. Temperature can be left blank if it is
+                unavailable.
+              </p>
+            </article>
+            <article>
+              <h3>2. Fit two separate trends</h3>
+              <p>
+                One trend follows each side of the change in behavior. Each has its own
+                gently curved equation. Points around the bend can remain visible without
+                belonging to either fit, just as on your paper graph.
+              </p>
+            </article>
+            <article>
+              <h3>3. Find where they cross</h3>
+              <p>
+                The tool extends the two trends toward one another. The pressure at their
+                crossing is the graphical Psat estimate. The curves are not forced to meet
+                a measured point.
+              </p>
+            </article>
+            <article>
+              <h3>4. Review before accepting</h3>
+              <p>
+                Check which points were used, how far each trend was extended, and the fit
+                errors. A curve that follows points closely can still give an uncertain
+                crossing. Dew points and near-critical samples can be especially difficult
+                to resolve.
+              </p>
+            </article>
+          </div>
+          <div class="friendly-math">
+            <h3>The equations, without the jargon</h3>
+            <p>
+              <code>P = a + bz + cz²</code> describes one gently curved trend.
+              <strong>a</strong> shifts it up or down, <strong>b</strong> changes its
+              slope, and <strong>c</strong> controls its curvature. Here
+              <code>z = (V − V₀) / S</code> is rescaled volume, used to keep the
+              calculations stable. Each branch has its own a, b and c.
+            </p>
+            <p>
+              We choose the coefficients that minimize the squared pressure differences
+              between the selected points and the curve. Then we solve
+              <code>P_high(V) = P_low(V)</code> to find the crossing. Points marked
+              “Neither fit” contribute to neither equation.
+            </p>
+            <p>
+              <strong>RMSE</strong> tells you the typical pressure deviation from the
+              selected points. <strong>R²</strong> describes how closely the trend follows
+              their pressure variation. These are fit measures, not a percentage guarantee
+              for Psat accuracy. Exact equations and coefficients appear with your
+              results.
+            </p>
+          </div>
+          <div class="phase-basics">
+            <h3>Bubble point and dew point</h3>
+            <p>
+              <strong>Bubble point:</strong> at the boundary, the first gas appears from a
+              liquid when entering the gas–liquid region. <strong>Dew point:</strong> the
+              first liquid appears from a gas when entering that region. At equilibrium,
+              reversing the test path changes whether that phase appears or disappears; it
+              does not automatically reverse the P–V axes.
+            </p>
+            <p>
+              In a typical CCE pressure reduction, both the bubble point and the upper
+              (retrograde) dew point may be approached from higher pressure. A lower dew
+              boundary has a different arrangement of phases, so select the boundary that
+              matches your procedure. This tool does not calculate a phase envelope or
+              confirm phases from P–V data alone.
+            </p>
+            <p class="small">
+              Background:
+              <a
+                href="https://courses.ems.psu.edu/png520/m12_p2.html"
+                target="_blank"
+                rel="noopener"
+                >Penn State — phase behavior</a
+              >
+              ·
+              <a
+                href="https://glossary.slb.com/en/terms/d/dewpoint"
+                target="_blank"
+                rel="noopener"
+                >SLB — dewpoint</a
+              >
+            </p>
+          </div>
+          <p class="small">
+            This is an exploratory graphical fitting tool. It does not use an equation of
+            state, and its quadratic curves are not a universal model of every fluid.
+            Validate the estimates against your laboratory references.
+          </p>
+        </div>
+      </details>
+      <footer>
+        Psat Curve Lab
+        <span>Independent trends. Transparent selections. Reviewable results.</span>
+      </footer>
+    </main>
+    <script src="engine.js?v=7"></script>
+    <script src="app.js?v=7"></script>
+  </body>
+</html>
