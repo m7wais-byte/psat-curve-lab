@@ -234,6 +234,15 @@
   function bounds(m, cols, rows) {
     const volumes = [...m.points.map((p) => p.v), m.intersection.v],
       pressures = [...m.points.map((p) => p.p), m.intersection.p];
+    for (const f of [m.high, m.low])
+      for (let i = 0; i <= 80; i++) {
+        const v =
+          Math.min(f.min, m.intersection.v) +
+          ((Math.max(f.max, m.intersection.v) - Math.min(f.min, m.intersection.v)) * i) /
+            80;
+        const p = predict(m, f, v);
+        if (Number.isFinite(p)) pressures.push(p);
+      }
     let vmin = Math.min(...volumes),
       vmax = Math.max(...volumes),
       pmin = Math.min(...pressures),
@@ -422,7 +431,7 @@
             .map((t, i) => `<p${i === 2 ? ' class="quiet"' : ''}>${esc(t)}</p>`)
             .join('')}</div>`
         : ''
-    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=7"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=8"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -448,6 +457,55 @@
     return doc;
   }
   // Native PDF drawing: curves, logo and text remain vector objects.
+  function clippedPaths(points, frame) {
+    const { left, top, right, bottom } = frame,
+      paths = [];
+    for (let i = 1; i < points.length; i++) {
+      let [x0, y0] = points[i - 1],
+        [x1, y1] = points[i];
+      if (![x0, y0, x1, y1].every(Number.isFinite)) continue;
+      const dx = x1 - x0,
+        dy = y1 - y0;
+      let a = 0,
+        b = 1,
+        ok = true;
+      for (const [p, q] of [
+        [-dx, x0 - left],
+        [dx, right - x0],
+        [-dy, y0 - top],
+        [dy, bottom - y0],
+      ]) {
+        if (p === 0) {
+          if (q < 0) {
+            ok = false;
+            break;
+          }
+        } else {
+          const t = q / p;
+          if (p < 0) a = Math.max(a, t);
+          else b = Math.min(b, t);
+          if (a > b) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      if (ok) {
+        const first = [x0 + a * dx, y0 + a * dy],
+          last = [x0 + b * dx, y0 + b * dy],
+          previous = paths.at(-1),
+          end = previous?.at(-1).c;
+        if (end && Math.abs(end[0] - first[0]) + Math.abs(end[1] - first[1]) < 1e-8)
+          previous.push({ op: 'l', c: last });
+        else
+          paths.push([
+            { op: 'm', c: first },
+            { op: 'l', c: last },
+          ]);
+      }
+    }
+    return paths;
+  }
   function createPdf(m, Constructor = root.jspdf?.jsPDF) {
     validate(m);
     if (!Constructor)
@@ -709,18 +767,15 @@
       doc.setDrawColor(color);
       doc.setLineWidth(2.2);
       doc.setLineDashPattern(dashed ? [4, 3] : [], 0);
-      const path = [];
+      const samples = [];
       for (let i = 0; i <= 100; i++) {
         const v = a + ((b - a) * i) / 100;
-        path.push({ op: i ? 'l' : 'm', c: [x(v), y(predict(m, f, v))] });
+        samples.push([x(v), y(predict(m, f, v))]);
       }
-      doc.path(path).stroke();
+      for (const path of clippedPaths(samples, { left, top, right, bottom }))
+        doc.path(path).stroke();
       doc.setLineDashPattern([], 0);
     }
-    curve(m.high, m.high.min, m.high.max, COLOR.high, false);
-    curve(m.high, m.high.max, C.v, COLOR.high, true);
-    curve(m.low, m.low.min, m.low.max, COLOR.low, false);
-    curve(m.low, C.v, m.low.min, COLOR.low, true);
     doc.setLineDashPattern([2, 3], 0);
     line(left, y(C.p), x(C.v), y(C.p), '#6b8272', 0.65);
     line(x(C.v), y(C.p), x(C.v), bottom, '#6b8272', 0.65);
@@ -740,6 +795,14 @@
     doc.setLineWidth(1.2);
     doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     doc.restoreGraphicsState();
+    curve(m.high, m.high.min, m.high.max, COLOR.high, false);
+    curve(m.high, m.high.max, C.v, COLOR.high, true);
+    curve(m.low, m.low.min, m.low.max, COLOR.low, false);
+    curve(m.low, C.v, m.low.min, COLOR.low, true);
+    doc.setFillColor('#ffffff');
+    doc.setDrawColor(COLOR.ink);
+    doc.setLineWidth(1.2);
+    doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     text(right - 4, Math.max(top + 14, y(C.p) - 16), label(m), 9, COLOR.ink, 'right');
     const D = detailScene(m, W - 2 * M, detailHeight),
       ox = M,
@@ -786,14 +849,6 @@
     doc.rect(ox + D.l, oy + D.t, D.w - D.l - D.r, D.h - D.t - D.b);
     doc.clip();
     doc.discardPath();
-    for (const f of D.curves) {
-      doc.setDrawColor(f.color);
-      doc.setLineWidth(1.8);
-      doc.setLineDashPattern(f.dashed ? [4, 3] : [], 0);
-      doc
-        .path(f.points.map(([x, y], i) => ({ op: i ? 'l' : 'm', c: [ox + x, oy + y] })))
-        .stroke();
-    }
     doc.setLineDashPattern([], 0);
     for (const p of m.points)
       if (p.v >= D.B.vmin && p.v <= D.B.vmax) {
@@ -813,6 +868,21 @@
     doc.setLineWidth(1);
     doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
     doc.restoreGraphicsState();
+    for (const f of D.curves) {
+      doc.setDrawColor(f.color);
+      doc.setLineWidth(2);
+      doc.setLineDashPattern(f.dashed ? [4, 3] : [], 0);
+      for (const path of clippedPaths(
+        f.points.map(([x, y]) => [ox + x, oy + y]),
+        { left: ox + D.l, top: oy + D.t, right: ox + D.w - D.r, bottom: oy + D.h - D.b },
+      ))
+        doc.path(path).stroke();
+    }
+    doc.setLineDashPattern([], 0);
+    doc.setFillColor('#ffffff');
+    doc.setDrawColor(COLOR.ink);
+    doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
+    text(ox + D.w - D.r, oy + 14, 'Low-pressure fit', 9, COLOR.low, 'right', true);
     text(
       ox + (D.l + D.w - D.r) / 2,
       oy + D.h - 1,
@@ -884,6 +954,7 @@
     alignedAxis,
     detailSvg,
     detailBounds,
+    clippedPaths,
   };
   if (typeof module !== 'undefined') module.exports = root.PVReport;
 })(typeof window !== 'undefined' ? window : globalThis);
