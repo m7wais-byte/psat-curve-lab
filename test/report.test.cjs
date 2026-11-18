@@ -78,3 +78,40 @@ test('Print and PDF actions receive the latest edited case; unavailable without 
   assert.equal(options.print, true);
   assert.equal(JSON.stringify(printed), JSON.stringify(saved));
 });
+test('print listener is attached after opening the report document', () => {
+  const fs = require('node:fs');
+  const vm = require('node:vm');
+  const { model } = fixture();
+  let listener,
+    printed = false,
+    written = '';
+  const target = {
+    print() {
+      printed = true;
+    },
+    addEventListener(name, fn) {
+      listener = fn;
+    },
+    document: {
+      open() {
+        listener = null;
+      },
+      write(s) {
+        written = s;
+      },
+      close() {
+        listener?.();
+      },
+    },
+  };
+  const window = { open: () => target, location: { href: 'https://example.com/' } };
+  const context = { window };
+  vm.createContext(context);
+  vm.runInContext(
+    fs.readFileSync(require.resolve('../public/report.js'), 'utf8'),
+    context,
+  );
+  window.PVReport.open(model, { print: true });
+  assert(printed);
+  assert.match(written, /CURRENT-CASE/);
+});
