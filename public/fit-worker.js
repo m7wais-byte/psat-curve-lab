@@ -1,5 +1,5 @@
 /* Dedicated local worker: no measurements leave the browser. */
-importScripts('engine.js?v=12');
+importScripts('engine.js?v=13');
 self.onmessage = ({ data }) => {
   const { requestId, points, degree } = data;
   try {

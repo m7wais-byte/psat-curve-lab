@@ -12,7 +12,7 @@ A focused, browser-local tool for drawing pressure–volume measurements, fittin
 - Plot **volume on X** and **pressure on Y**, with square major/minor gridlines.
 - Run Deep fit: exhaustive point selection for up to 20 nonzero readings, bounded background search for larger cases. Review and adjust both regions.
 - Assign points to the high-pressure fit, low-pressure fit, or neither fit.
-- Fit gently curved quadratic trends; straight trends remain an explicit option.
+- Fit gently curved quadratic trends; either branch can be set to a straight trend independently.
 - Review the graphical intersection, equations, RMSE, R² and warnings.
 - Zoom in/out, focus on the intersection, or set exact pressure/volume axis limits without changing the fitted result.
 - Keep the result strip visible while scrolling through the analysis.

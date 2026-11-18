@@ -31,11 +31,15 @@ function pointNumbers(list) {
     ? ids.slice(0, 12).join(', ') + ` and ${ids.length - 12} more`
     : ids.join(', ');
 }
+// Trend shape per branch: 1 = straight, 2 = quadratic.
+function degrees() {
+  return { high: Number($('shapeHigh').value), low: Number($('shapeLow').value) };
+}
 function runDeepFit(saveUndo = false) {
   stopFit('', false);
   const requestId = fitSequence;
   const snapshot = points.map((p) => ({ ...p }));
-  const degree = Number($('model').value);
+  const degree = degrees();
   $('suggest').disabled = true;
   $('cancelFit').hidden = false;
   $('fitSearchStatus').textContent = 'Deep fit is comparing point selections…';
@@ -76,7 +80,7 @@ function runDeepFit(saveUndo = false) {
   }
   if (typeof Worker !== 'undefined') {
     try {
-      fitWorker = new Worker('fit-worker.js?v=12');
+      fitWorker = new Worker('fit-worker.js?v=13');
       fitWorker.onmessage = (event) => finish(event.data);
       fitWorker.onerror = () =>
         finish({
@@ -137,7 +141,7 @@ function fitNow(clearSearch = true) {
   }
   if (points.length) {
     try {
-      result = PV.analyze(points, Number($('model').value));
+      result = PV.analyze(points, degrees());
     } catch (e) {
       err(e.message);
     }
@@ -219,6 +223,12 @@ function table() {
     body.append(tr);
   });
 }
+function minimumMessage() {
+  const { high, low } = degrees();
+  return high === low
+    ? `Assign at least ${high + 2} points to each branch.`
+    : `Assign at least ${high + 2} high-pressure and ${low + 2} low-pressure points.`;
+}
 function render() {
   let r = result,
     hi = points.filter((p) => p.group === 'high').length,
@@ -252,9 +262,7 @@ function render() {
   } else
     $('message').textContent =
       (points.length
-        ? 'Assign at least ' +
-          (Number($('model').value) + 2) +
-          ' points to each branch. Points may be left out of both fits.'
+        ? minimumMessage() + ' Points may be left out of both fits.'
         : 'Select a fit tool, then click the points to use.') + note;
   table();
   chart();
@@ -494,7 +502,8 @@ $('demo').onclick = () => {
     rows.push(p.toFixed(3) + ',' + v.toFixed(3));
   }
   $('data').value = rows.join('\n');
-  $('model').value = '2';
+  $('shapeHigh').value = '2';
+  $('shapeLow').value = '2';
   $('case').value =
     'DEMONSTRATION · ' +
     ($('phase').value === 'dew' ? 'dew' : 'bubble') +
@@ -507,7 +516,8 @@ $('demo').onclick = () => {
   load();
   setupPhase();
 };
-$('model').onchange = () => fitNow();
+// A new shape changes the fit, so it cancels a running Deep fit like a manual edit.
+$('shapeHigh').onchange = $('shapeLow').onchange = () => fitNow();
 // Units and temperature only relabel values: keep a running Deep fit and its search record.
 ['temp', 'tunit', 'punit', 'vunit'].forEach(
   (id) => ($(id).onchange = () => (fitWorker ? render() : fitNow(false))),
@@ -575,7 +585,7 @@ $('export').onclick = () => {
   }
   let r = result,
     record = {
-      application: 'Psat Curve Lab v12',
+      application: 'Psat Curve Lab v13',
       case: $('case').value,
       syntheticDemo: demo,
       method: 'Independent pressure-versus-volume least-squares branch fits',
@@ -599,7 +609,8 @@ $('export').onclick = () => {
       },
       estimatedIntersection: r?.intersection || null,
       warning: r ? r.warning : 'Fit incomplete',
-      degree: Number($('model').value),
+      degree: degrees().high === degrees().low ? degrees().high : null,
+      trendShape: degrees(),
       branches: r
         ? {
             high: { coefficients: r.high.coeff, rmse: r.high.rmse, rSquared: r.high.r2 },

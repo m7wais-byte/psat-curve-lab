@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Psat Curve Lab — Independent branch fitting</title>
-    <link rel="stylesheet" href="style.css?v=12" />
+    <link rel="stylesheet" href="style.css?v=13" />
   </head>
   <body>
     <header>
@@ -302,9 +302,14 @@
             ></p>
             <div class="fitcontrols">
               <label
-                >Trend shape<select id="model">
-                  <option value="2">Flexible · quadratic curves</option>
-                  <option value="1">Straight · linear trends</option>
+                >High fit · trend shape<select id="shapeHigh">
+                  <option value="2">Curved · quadratic</option>
+                  <option value="1">Straight · linear</option>
+                </select></label
+              ><label
+                >Low fit · trend shape<select id="shapeLow">
+                  <option value="2">Curved · quadratic</option>
+                  <option value="1">Straight · linear</option>
                 </select></label
               ><label
                 >High fit · last volume<input
@@ -529,9 +534,9 @@
         <span>Graphical estimate · Review before use</span>
       </footer>
     </main>
-    <script src="engine.js?v=12"></script>
+    <script src="engine.js?v=13"></script>
     <script src="vendor/jspdf.umd.min.js?v=4.2.1"></script>
-    <script src="report.js?v=3"></script>
-    <script src="app.js?v=12"></script>
+    <script src="report.js?v=4"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>

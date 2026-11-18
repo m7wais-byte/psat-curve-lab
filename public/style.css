@@ -841,7 +841,8 @@ svg text {
 }
 .fitcontrols {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
+  /* High-branch controls on the left, low-branch controls on the right. */
+  grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 .fit-section button {

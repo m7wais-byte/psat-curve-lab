@@ -37,7 +37,7 @@ Undo restores the previous point-group assignment. Up to 25 assignment snapshots
 
 The range controls assign teal points at/below the high-range volume limit and orange points at/above the low-range volume limit. Intermediate points belong to neither fit. Zero-pressure readings are kept unassigned by automatic and range selection; they can be reviewed and assigned individually.
 
-The current model requires separate ranges: all teal volumes must be smaller than all orange volumes. Quadratic trends require four points per branch; straight trends require three.
+The current model requires separate ranges: all teal volumes must be smaller than all orange volumes. Each branch has its own trend shape (High fit · trend shape and Low fit · trend shape). A curved (quadratic) branch needs at least four points; a straight branch needs three. Both start as curved. For a bubble point, a straight high-pressure (single-phase liquid) trend with a curved low-pressure trend can be a useful check: the liquid trend then cannot bend near the break. Compare the two results; neither shape is validated as more accurate.
 
 ## Read the graph and result
 
@@ -88,7 +88,7 @@ The interface itself does not save cases to disk, localStorage, a database or th
 | Automatic suggestion unavailable      | Assign the two branches manually                                    |
 | Ranges overlap                        | Move the branch limits apart or reassign conflicting points         |
 | No nearby intersection                | Review the point groups and curvature; do not force a result        |
-| Reversing fitted trend                | Adjust the selected range or try the straight model                 |
+| Reversing fitted trend                | Adjust the selected range or make that branch straight              |
 | Nearly parallel trends                | Treat the crossing as sensitive; review additional measurements     |
 | Unexpected zeros                      | Check whether these are true readings or missing-value placeholders |
 | Labels look wrong after a unit change | Remember that unit changes relabel rather than convert values       |

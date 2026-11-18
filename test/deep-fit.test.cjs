@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const PV = require('../public/engine.js');
 const { harness } = require('./harness.cjs');
+const R = require('../public/report.js');
 function synthetic(n = 12) {
   return Array.from({ length: n }, (_, id) => {
     const v = 1 + (2 * id) / (n - 1),
@@ -202,8 +203,8 @@ test('unit and temperature changes keep a running deep fit; trend-shape changes 
   assert.equal(data.volumeUnit, 'mL');
   h.get('suggest').onclick();
   const cancelled = workers.at(-1);
-  h.get('model').value = '1';
-  h.get('model').onchange();
+  h.get('shapeLow').value = '1';
+  h.get('shapeLow').onchange();
   assert(cancelled.terminated);
 });
 test('intersection leader lines are drawn unfilled', () => {
@@ -263,4 +264,43 @@ test('a Deep fit that keeps every point says so', () => {
   assert.match(h.get('fitSearchStatus').textContent, /No points left out/);
   assert(!h.get('chart').innerHTML.includes('data-auto-excluded'));
   assert(h.get('autoExcludedLegend').hidden);
+});
+test('branch trend shapes reach the fit, Deep fit, equations, messages, export and report', async () => {
+  const { Worker, workers } = mockWorkers(),
+    h = harness({ Worker });
+  h.get('phase').value = 'bubble';
+  h.get('phase').onchange();
+  h.get('shapeHigh').value = '1';
+  h.get('data').value = synthetic()
+    .map((p) => `${p.p},${p.v}`)
+    .join('\n');
+  h.get('load').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(workers[0].message.degree)), {
+    high: 1,
+    low: 2,
+  });
+  workers[0].complete();
+  assert.deepEqual(JSON.parse(h.run('JSON.stringify(result.degrees)')), {
+    high: 1,
+    low: 2,
+  });
+  const [highEq, lowEq] = [
+    ...h.get('equations').innerHTML.matchAll(/<code>([^<]+)<\/code>/g),
+  ].map((m) => m[1]);
+  assert(!highEq.includes('z²') && highEq.includes('z'));
+  assert(lowEq.includes('z²'));
+  h.get('export').onclick();
+  const data = JSON.parse(await h.blobs.at(-1).text());
+  assert.deepEqual(data.trendShape, { high: 1, low: 2 });
+  assert.equal(data.degree, null);
+  assert.equal(data.branches.high.coefficients.length, 2);
+  assert.match(R.html(h.run('currentReport()')), /High straight · low quadratic/);
+  h.get('clear').onclick();
+  assert.match(
+    h.get('message').textContent,
+    /at least 3 high-pressure and 4 low-pressure points/,
+  );
+  h.get('shapeHigh').value = '2';
+  h.get('shapeHigh').onchange();
+  assert.match(h.get('message').textContent, /at least 4 points to each branch/);
 });

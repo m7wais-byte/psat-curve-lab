@@ -148,8 +148,13 @@ test('report shows Pb/Pd, trend shape, points used and unit-appropriate pressure
   const mpa = { ...model, pressureUnit: 'MPa', intersection: { p: 6.894757, v: 35 } };
   assert.match(R.label(mpa), /^Pb: 6\.895 MPa g/);
   assert.match(R.label({ ...mpa, pressureUnit: 'kPa', phase: 'dew' }), /^Pd: 6\.9 kPa g/);
-  const straight = { ...model, degree: 1 };
-  assert.match(R.html(straight), /Straight lines/);
+  assert.match(R.html({ ...model, degrees: { high: 1, low: 1 } }), /Straight lines/);
+  const mixed = { ...model, degrees: { high: 1, low: 2 } };
+  assert.match(R.html(mixed), /High straight · low quadratic/);
+  assert.match(
+    R.createPdf(mixed, jsPDF).output(),
+    /High straight \267 low quadratic|High straight · low quadratic/,
+  );
 });
 test('report graph ticks are round values', () => {
   const { model } = fixture();
