@@ -315,6 +315,19 @@
     }
     return { B, l, r, t, b, w, h, x, y, curves };
   }
+  function pointMarkerSvg(p, xx, yy, tag, B) {
+    const color =
+      p.group === 'high' ? COLOR.high : p.group === 'low' ? COLOR.low : COLOR.excluded;
+    let s = `<circle cx="${xx}" cy="${yy}" r="5.1" fill="white"/><circle data-${tag}-point="${p.id}" ${tag === 'report' ? `data-group="${p.group}"` : `data-detail-group="${p.group}"`} cx="${xx}" cy="${yy}" r="3.8" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="1.5"/>`;
+    if (p.group === 'none')
+      s += `<path d="M${xx - 2} ${yy - 2}l4 4m-4 0l4-4" fill="none" stroke="${color}" stroke-width="1.2"/>`;
+    let labelY = yy + (p.id % 2 ? 15 : -10);
+    if (labelY > B.bottom - 5) labelY = yy - 10;
+    if (labelY < B.top + 9) labelY = yy + 15;
+    if (B.numbered)
+      s += `<text data-point-number="${p.id + 1}" x="${Math.max(B.left + 8, Math.min(B.right - 8, xx))}" y="${Math.max(B.top + 9, Math.min(B.bottom - 5, labelY))}" text-anchor="middle" font-size="9" font-weight="bold" fill="${COLOR.ink}" stroke="white" stroke-width="3" paint-order="stroke">${p.id + 1}</text>`;
+    return s;
+  }
   function detailSvg(m, w = 608, h = 150) {
     const S = detailScene(m, w, h),
       { B, l, r, t, b, x, y, curves } = S;
@@ -333,15 +346,14 @@
     for (const f of curves)
       s += `<path d="${f.points.map(([x, y], i) => (i ? 'L' : 'M') + x + ',' + y).join('')}" fill="none" stroke="${f.color}" stroke-width="2.8"${f.dashed ? ' stroke-dasharray="5 4"' : ''}/>`;
     for (const p of m.points)
-      if (p.v >= B.vmin && p.v <= B.vmax) {
-        const color =
-          p.group === 'high'
-            ? COLOR.high
-            : p.group === 'low'
-              ? COLOR.low
-              : COLOR.excluded;
-        s += `<circle data-detail-point="${p.id}" cx="${x(p.v)}" cy="${y(p.p)}" r="2.7" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="1.2"/>`;
-      }
+      if (p.v >= B.vmin && p.v <= B.vmax)
+        s += pointMarkerSvg(p, x(p.v), y(p.p), 'detail', {
+          left: l,
+          right: w - r,
+          top: t,
+          bottom: h - b,
+          numbered: m.points.length <= 32,
+        });
     s += `<circle cx="${x(m.intersection.v)}" cy="${y(m.intersection.p)}" r="4" fill="white" stroke="${COLOR.ink}" stroke-width="1.7"/></g><text x="${(l + w - r) / 2}" y="${h - 2}" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Volume (${esc(m.volumeUnit)})</text><text transform="translate(11 ${(t + h - b) / 2}) rotate(-90)" text-anchor="middle" font-size="9" fill="${COLOR.ink}">Pressure (${esc(unit(m, true))})</text></svg>`;
     return s;
   }
@@ -401,9 +413,13 @@
       curve(m.low, C.v, m.low.min, COLOR.low, true);
     s += `<path d="M${l},${y(C.p)}H${x(C.v)}V${t + ph}" fill="none" stroke="#6b8272" stroke-width=".9" stroke-dasharray="3 4"/>`;
     m.points.forEach((p) => {
-      const color =
-        p.group === 'high' ? COLOR.high : p.group === 'low' ? COLOR.low : COLOR.excluded;
-      s += `<circle data-report-point="${p.id}" data-group="${p.group}" cx="${x(p.v)}" cy="${y(p.p)}" r="2.8" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="1.1"/>`;
+      s += pointMarkerSvg(p, x(p.v), y(p.p), 'report', {
+        left: l,
+        right: w - r,
+        top: t,
+        bottom: t + ph,
+        numbered: m.points.length <= 32,
+      });
     });
     s += `<circle cx="${x(C.v)}" cy="${y(C.p)}" r="4.7" fill="white" stroke="${COLOR.ink}" stroke-width="1.6"/></g>`;
     const ax = w - r - 7,
@@ -431,7 +447,7 @@
             .map((t, i) => `<p${i === 2 ? ' class="quiet"' : ''}>${esc(t)}</p>`)
             .join('')}</div>`
         : ''
-    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=8"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    }<div class="report-footer"><span>${m.points.length <= 32 ? 'Point numbers = input rows; crossed points excluded from fits' : 'Excluded points shown; not used in either fit'}</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=9"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -602,18 +618,18 @@
       doc.circle(...P(31, 49), 8.7 * s, 'F');
       text(...P(94, 85), 'APS', 38 * s, '#2d7db8', 'left', true);
     }
-    logo(M, M, 105);
-    text(W - M, 44, 'Saturation pressure report', 17, COLOR.ink, 'right');
-    text(W - M, 62, 'Final pressure-volume plot', 10, COLOR.quiet, 'right');
+    logo(M, 20, 88);
+    text(W - M, 35, 'Saturation pressure report', 17, COLOR.ink, 'right');
+    text(W - M, 51, 'Final pressure-volume plot', 10, COLOR.quiet, 'right');
     text(
       W - M,
-      80,
+      67,
       m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE',
       9,
       '#927039',
       'right',
     );
-    line(M, 108, W - M, 108, COLOR.high, 1.3);
+    line(M, 84, W - M, 84, COLOR.high, 1.3);
     const rows = [
       ['Sample / case', m.caseName, 'Date', m.date],
       [
@@ -625,7 +641,7 @@
       ['Pressure unit', unit(m), 'Volume unit', m.volumeUnit],
       ['Trend shape', trendName(m), 'Points used', pointsUsed(m)],
     ];
-    let rowY = 134;
+    let rowY = 104;
     for (const [a, b, d, e] of rows) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
@@ -636,38 +652,68 @@
       text(mid - 24, rowY, left, 9, COLOR.ink, 'right');
       text(mid, rowY, d, 9, COLOR.quiet);
       text(W - M, rowY, right, 9, COLOR.ink, 'right');
-      const rowHeight = Math.max(21, lines * 11 + 7);
+      const rowHeight = Math.max(18, lines * 11 + 5);
       line(M, rowY + rowHeight - 14, mid - 24, rowY + rowHeight - 14, '#edf1ed', 0.4);
       line(mid, rowY + rowHeight - 14, W - M, rowY + rowHeight - 14, '#edf1ed', 0.4);
       rowY += rowHeight;
     }
-    const offset = Math.max(0, rowY - 197);
-    line(M, 199 + offset, W - M, 199 + offset);
-    text(M, 217 + offset, resultTitle(m, ' - '), 9, COLOR.quiet);
-    text(mid, 217 + offset, 'Volume at saturation - Vsat', 9, COLOR.quiet);
+    const offset = Math.max(0, rowY - 176);
+    line(M, 184 + offset, W - M, 184 + offset);
+    text(M, 200 + offset, resultTitle(m, ' - '), 9, COLOR.quiet);
+    text(mid, 200 + offset, 'Volume at saturation - Vsat', 9, COLOR.quiet);
     // Units follow the measured number so large values never overlap them.
     const pressureText = fmt(m.intersection.p, pressureDigits(m)),
       volumeText = fmt(m.intersection.v, 4);
-    text(M, 247 + offset, pressureText, 25);
-    text(M + doc.getTextWidth(pressureText) + 6, 247 + offset, unit(m), 10, COLOR.quiet);
-    text(mid, 247 + offset, volumeText, 25);
+    text(M, 228 + offset, pressureText, 25);
+    text(M + doc.getTextWidth(pressureText) + 6, 228 + offset, unit(m), 10, COLOR.quiet);
+    text(mid, 228 + offset, volumeText, 25);
     text(
       mid + doc.getTextWidth(volumeText) + 6,
-      247 + offset,
+      228 + offset,
       m.volumeUnit,
       10,
       COLOR.quiet,
     );
-    line(M, 263 + offset, W - M, 263 + offset);
+    line(M, 242 + offset, W - M, 242 + offset);
     let warningHeight = 0;
     if (m.warning) {
       doc.setFontSize(9);
       const lines = doc.splitTextToSize('Review: ' + m.warning, W - 2 * M);
       doc.setTextColor('#94602e');
-      doc.text(lines, M, 279 + offset);
+      doc.text(lines, M, 258 + offset);
       warningHeight = lines.length * 11 + 10;
     }
-    const top = 309 + offset + warningHeight,
+    function drawPoint(p, xx, yy, frame) {
+      const color =
+        p.group === 'high' ? COLOR.high : p.group === 'low' ? COLOR.low : COLOR.excluded;
+      doc.setFillColor('#ffffff');
+      doc.setDrawColor('#ffffff');
+      doc.setLineWidth(1);
+      doc.circle(xx, yy, 4.1, 'FD');
+      doc.setDrawColor(color);
+      doc.setFillColor(p.group === 'none' ? '#ffffff' : color);
+      doc.setLineWidth(1.1);
+      doc.circle(xx, yy, 3.1, 'FD');
+      if (p.group === 'none') {
+        line(xx - 1.7, yy - 1.7, xx + 1.7, yy + 1.7, color, 0.9);
+        line(xx - 1.7, yy + 1.7, xx + 1.7, yy - 1.7, color, 0.9);
+      }
+      if (m.points.length <= 32) {
+        let labelY = yy + (p.id % 2 ? 12 : -8);
+        if (labelY > frame.bottom - 4) labelY = yy - 8;
+        if (labelY < frame.top + 8) labelY = yy + 12;
+        const tx = Math.max(frame.left + 6, Math.min(frame.right - 6, xx)),
+          ty = Math.max(frame.top + 8, Math.min(frame.bottom - 4, labelY));
+        const number = String(p.id + 1);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        const tw = doc.getTextWidth(number);
+        doc.setFillColor('#ffffff');
+        doc.rect(tx - tw / 2 - 1, ty - 6, tw + 2, 8, 'F');
+        text(tx, ty, number, 7, COLOR.ink, 'center', true);
+      }
+    }
+    const top = 284 + offset + warningHeight,
       yLines = yCheckLines(m),
       // Bubble-point reports also carry the Y-function section: the detail panel is a little
       // shorter and the main plot shrinks just enough to keep everything above the footer.
@@ -685,10 +731,10 @@
     const x = (v) => left + ((v - B.vmin) / (B.vmax - B.vmin)) * (right - left),
       y = (p) => bottom - ((p - B.pmin) / (B.pmax - B.pmin)) * (bottom - top);
     const excluded = m.points.filter((p) => p.group === 'none').length;
-    text(M, 285 + offset + warningHeight, 'Pressure-volume graph', 11);
+    text(M, 265 + offset + warningHeight, 'Pressure-volume graph', 11);
     text(
       W - M,
-      285 + offset + warningHeight,
+      265 + offset + warningHeight,
       `${m.points.length - excluded} points used - ${excluded} excluded`,
       9,
       COLOR.quiet,
@@ -799,6 +845,7 @@
     curve(m.high, m.high.max, C.v, COLOR.high, true);
     curve(m.low, m.low.min, m.low.max, COLOR.low, false);
     curve(m.low, C.v, m.low.min, COLOR.low, true);
+    m.points.forEach((p) => drawPoint(p, x(p.v), y(p.p), { left, top, right, bottom }));
     doc.setFillColor('#ffffff');
     doc.setDrawColor(COLOR.ink);
     doc.setLineWidth(1.2);
@@ -879,6 +926,14 @@
         doc.path(path).stroke();
     }
     doc.setLineDashPattern([], 0);
+    for (const p of m.points)
+      if (p.v >= D.B.vmin && p.v <= D.B.vmax && p.p >= D.B.pmin && p.p <= D.B.pmax)
+        drawPoint(p, ox + D.x(p.v), oy + D.y(p.p), {
+          left: ox + D.l,
+          top: oy + D.t,
+          right: ox + D.w - D.r,
+          bottom: oy + D.h - D.b,
+        });
     doc.setFillColor('#ffffff');
     doc.setDrawColor(COLOR.ink);
     doc.circle(ox + D.x(C.v), oy + D.y(C.p), 3, 'FD');
@@ -916,6 +971,8 @@
     doc.setDrawColor(COLOR.excluded);
     doc.setFillColor('#ffffff');
     doc.circle(W - M - 92, ly - 2, 2.5, 'FD');
+    line(W - M - 93.5, ly - 3.5, W - M - 90.5, ly - 0.5, COLOR.excluded, 0.8);
+    line(W - M - 93.5, ly - 0.5, W - M - 90.5, ly - 3.5, COLOR.excluded, 0.8);
     text(W - M - 84, ly + 1, 'Excluded points', 8, COLOR.quiet);
     line(M, bottom + 70 + detailShift, W - M, bottom + 70 + detailShift);
     text(M, bottom + 91 + detailShift, 'High-pressure fit', 10);
@@ -936,7 +993,15 @@
         throw new Error('The Y-function section does not fit on the page.');
     }
     line(M, H - 63, W - M, H - 63);
-    text(M, H - 48, 'Excluded points shown; not used in either fit', 8, COLOR.quiet);
+    text(
+      M,
+      H - 48,
+      m.points.length <= 32
+        ? 'Point numbers = input rows; crossed points excluded from fits'
+        : 'Excluded points shown; not used in either fit',
+      8,
+      COLOR.quiet,
+    );
     text(W - M, H - 48, 'A4 portrait - Page 1 of 1', 8, COLOR.quiet, 'right');
     return doc;
   }
