@@ -53,3 +53,5 @@ Record browser/version, viewport, dataset, expected behavior and observed result
 The generated current-case PDF was rendered and visually inspected offline. Actual browser print pagination, popup handling and download interaction still require browser review.
 
 Deep fit checks include comparison with independent mask/split enumeration, deterministic order and pressure-scale behavior, bounded-mode disclosure and progress, worker protocol, cancellation, stale-result rejection, errors and search metadata exports. These worker tests exercise the shipped code and UI message handling in Node/fake DOM; actual browser responsiveness is not a visual sign-off.
+
+The revised two-panel A4 PDF was rendered and visually inspected with a supplied case. Checks cover finite detail bounds, overview point retention, unchanged coefficients/results and one-page vector PDF output. Browser layout and native print pagination still need browser review.
