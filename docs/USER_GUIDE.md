@@ -17,9 +17,9 @@ Paste or upload exactly two columns, in this order:
 
 Use a decimal point without thousands separators. CSV, TXT and TSV imports are accepted. An optional header should be `Pressure,Volume`. Imports are limited to 1 MB and analyses to 500 points. Pressure must be nonnegative and volume positive.
 
-Use Plot & fit curves to read the current input, draw the points and propose fitting branches. Changing the text clears the previous result until it is replotted. A replot resets point assignments to the automatic proposal.
+Use Plot graph to read the current input, draw the points and propose fitting branches. Changing the text clears the previous result until it is replotted. A replot resets point assignments to the automatic proposal.
 
-The Try sample data button uses synthetic values and labels the analysis as a synthetic example. It preserves your selected bubble/dew context, but the example is a curve-fitting demonstration, not a simulation of the selected fluid. It sets its own case name, psi/gauge and cc units and clears temperature.
+The Example button uses synthetic values and labels the analysis as a synthetic example. It preserves your selected bubble/dew context, but the example is a curve-fitting demonstration, not a simulation of the selected fluid. It sets its own case name, psi/gauge and cc units and clears temperature.
 
 ## Review and adjust branches
 
@@ -27,7 +27,7 @@ The graph always has volume on X and pressure on Y. Input order does not reverse
 
 | Point tool                | Meaning                                                       |
 | ------------------------- | ------------------------------------------------------------- |
-| Blue / High-pressure fit  | Include a point in the blue branch regression                 |
+| Teal / High-pressure fit  | Include a point in the teal branch regression                 |
 | Orange / Low-pressure fit | Include a point in the orange branch regression               |
 | Gray / No fit             | Keep a point visible while excluding it from both regressions |
 
@@ -35,9 +35,9 @@ Choose a tool, then click a measurement. Tool counts show how many points belong
 
 Undo restores the previous point-group assignment. Up to 25 assignment snapshots are retained. Undo covers per-point changes, range changes, clearing selections and automatic reassignment. It does not undo metadata, raw data edits or model changes. Importing or replotting data resets selection history.
 
-The range controls assign blue points at/below the high-range volume limit and orange points at/above the low-range volume limit. Intermediate points belong to neither fit. Zero-pressure readings are kept unassigned by automatic and range selection; they can be reviewed and assigned individually.
+The range controls assign teal points at/below the high-range volume limit and orange points at/above the low-range volume limit. Intermediate points belong to neither fit. Zero-pressure readings are kept unassigned by automatic and range selection; they can be reviewed and assigned individually.
 
-The current model requires separate ranges: all blue volumes must be smaller than all orange volumes. Quadratic trends require four points per branch; straight trends require three.
+The current model requires separate ranges: all teal volumes must be smaller than all orange volumes. Quadratic trends require four points per branch; straight trends require three.
 
 ## Read the graph and result
 
@@ -69,11 +69,11 @@ The current scale is retained when adjusting points or the background. Editing/i
 
 ## Present and export
 
-Presentation view becomes available once there is an intersection. It emphasizes the case context, result strip and graph; editing controls are hidden and graph reassignment is disabled. Use Back to editing or Escape to return. Any review warning and the synthetic-example label remain visible.
+Presentation view becomes available once there is an intersection. It emphasizes the case context, result strip and graph; editing controls are hidden and graph reassignment is disabled. Use Edit or Escape to return. Any review warning and the synthetic-example label remain visible.
 
 - **Save graph:** downloads the current SVG plot, including axes, fitted curves, points and optional shading. The surrounding page's case metadata, HTML legend and warnings are not embedded in the SVG. Pair it with the analysis export when preserving context.
 - **Print:** uses the browser's print dialog. The print layout includes case context, result cards, graph and review note. Select Save as PDF in the browser if available.
-- **Export analysis:** downloads JSON with measurements, point assignments, coefficients, errors and metadata. It is a record, not a supported reimport format in this version.
+- **Download analysis (JSON)**, under the collapsed Equations & fit quality panel: downloads JSON with measurements, point assignments, coefficients, errors and metadata. It is a record, not a supported reimport format in this version.
 
 The interface itself does not save cases to disk, localStorage, a database or the cloud. Reloading or closing the page loses the current state unless it was exported.
 

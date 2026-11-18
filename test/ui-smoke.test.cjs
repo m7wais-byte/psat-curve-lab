@@ -76,7 +76,7 @@ test('tool choice and point inspection use actual event handlers', () => {
   const h = harness();
   h.demo();
   h.tools[2].onclick();
-  assert.match(h.get('toolHelp').textContent, /Neither fit selected/);
+  assert.match(h.get('toolHelp').textContent, /out of both fits/);
   const point = h.get('chart').pointElements[0];
   point.onmouseenter();
   assert.match(h.get('pointReadout').textContent, /Point 1 · Pressure/);
@@ -122,4 +122,17 @@ test('case names remain text and analysis export records method and point groups
   assert.equal(record.measurements.length, 21);
   assert(record.branches.high.coefficients.length === 3);
   assert.match(record.note, /not validated/);
+});
+
+test('input column labels follow selected units', () => {
+  const h = harness();
+  h.demo();
+  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (psi)');
+  assert.equal(h.get('inputVolumeLabel').textContent, 'Volume (cc)');
+  h.get('punit').value = 'bar';
+  h.get('punit').onchange();
+  h.get('vunit').value = 'mL';
+  h.get('vunit').onchange();
+  assert.equal(h.get('inputPressureLabel').textContent, 'Pressure (bar)');
+  assert.equal(h.get('inputVolumeLabel').textContent, 'Volume (mL)');
 });
