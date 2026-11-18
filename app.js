@@ -20,11 +20,26 @@ function stopFit(message = '', clearInfo = true) {
   $('cancelFit').hidden = true;
   $('fitSearchStatus').textContent = message;
 }
+// Nonzero points Deep fit left out of both fits. searchInfo is cleared by any selection
+// edit, so this only describes Deep fit's own, unchanged selection.
+function deepFitExcluded() {
+  return searchInfo ? points.filter((p) => p.group === 'none' && p.p !== 0) : [];
+}
+function pointNumbers(list) {
+  const ids = list.map((p) => p.id + 1);
+  return ids.length > 12
+    ? ids.slice(0, 12).join(', ') + ` and ${ids.length - 12} more`
+    : ids.join(', ');
+}
+// Trend shape per branch: 1 = straight, 2 = quadratic.
+function degrees() {
+  return { high: Number($('shapeHigh').value), low: Number($('shapeLow').value) };
+}
 function runDeepFit(saveUndo = false) {
   stopFit('', false);
   const requestId = fitSequence;
   const snapshot = points.map((p) => ({ ...p }));
-  const degree = Number($('model').value);
+  const degree = degrees();
   $('suggest').disabled = true;
   $('cancelFit').hidden = false;
   $('fitSearchStatus').textContent = 'Deep fit is comparing point selections…';
@@ -56,12 +71,16 @@ function runDeepFit(saveUndo = false) {
     searchInfo = data.search;
     syncRanges();
     fitNow(false);
+    const excluded = deepFitExcluded();
     $('fitSearchStatus').textContent =
-      `Deep fit · ${searchInfo.complete ? 'All permitted selections compared' : 'Bounded search — optimum not guaranteed'} · ${num(searchInfo.examined, 0)} tested · ${points.filter((p) => p.group !== 'none').length}/${points.length} points used`;
+      `Deep fit · ${searchInfo.complete ? 'All permitted selections compared' : 'Bounded search — optimum not guaranteed'} · ${num(searchInfo.examined, 0)} tested · ${points.filter((p) => p.group !== 'none').length}/${points.length} points used` +
+      (excluded.length
+        ? ` · Left out: point${excluded.length > 1 ? 's' : ''} ${pointNumbers(excluded)} (marked ×)`
+        : ' · No points left out');
   }
   if (typeof Worker !== 'undefined') {
     try {
-      fitWorker = new Worker('fit-worker.js?v=12');
+      fitWorker = new Worker('fit-worker.js?v=14');
       fitWorker.onmessage = (event) => finish(event.data);
       fitWorker.onerror = () =>
         finish({
@@ -107,6 +126,7 @@ function resetResult() {
   $('psat').textContent = '—';
   $('vsat').textContent = '—';
   $('evidence').textContent = points.length ? 'Select two branches' : 'Awaiting data';
+  $('evidence').style.color = '';
   $('psatSub').textContent = 'Intersection of independent trends';
   $('diagnostics').textContent = '';
   $('equations').innerHTML =
@@ -122,7 +142,7 @@ function fitNow(clearSearch = true) {
   }
   if (points.length) {
     try {
-      result = PV.analyze(points, Number($('model').value));
+      result = PV.analyze(points, degrees());
     } catch (e) {
       err(e.message);
     }
@@ -167,11 +187,14 @@ function setGroup(id, group) {
   fitNow();
 }
 function table() {
-  const body = $('points');
+  const body = $('points'),
+    autoExcluded = new Set(deepFitExcluded().map((p) => p.id));
   body.replaceChildren();
   points.forEach((p) => {
     let tr = document.createElement('tr');
-    tr.className = p.group === 'none' ? 'unassigned' : 'row-' + p.group;
+    tr.className =
+      (p.group === 'none' ? 'unassigned' : 'row-' + p.group) +
+      (autoExcluded.has(p.id) ? ' auto-excluded' : '');
     let td = document.createElement('td'),
       select = document.createElement('select');
     [
@@ -189,15 +212,23 @@ function table() {
     select.onchange = () => setGroup(p.id, select.value);
     td.append(select);
     tr.append(td);
-    [p.id + 1, num(p.p, 6) + (p.p === 0 ? ' · review zero' : ''), num(p.v, 6)].forEach(
-      (value) => {
-        let cell = document.createElement('td');
-        cell.textContent = value;
-        tr.append(cell);
-      },
-    );
+    [
+      p.id + 1 + (autoExcluded.has(p.id) ? ' · left out by Deep fit' : ''),
+      num(p.p, 6) + (p.p === 0 ? ' · review zero' : ''),
+      num(p.v, 6),
+    ].forEach((value) => {
+      let cell = document.createElement('td');
+      cell.textContent = value;
+      tr.append(cell);
+    });
     body.append(tr);
   });
+}
+function minimumMessage() {
+  const { high, low } = degrees();
+  return high === low
+    ? `Assign at least ${high + 2} points to each branch.`
+    : `Assign at least ${high + 2} high-pressure and ${low + 2} low-pressure points.`;
 }
 function render() {
   let r = result,
@@ -232,15 +263,17 @@ function render() {
   } else
     $('message').textContent =
       (points.length
-        ? 'Assign at least ' +
-          (Number($('model').value) + 2) +
-          ' points to each branch. Points may be left out of both fits.'
+        ? minimumMessage() + ' Points may be left out of both fits.'
         : 'Select a fit tool, then click the points to use.') + note;
   table();
   chart();
   equations();
+  yCheck();
   updateWorkspace();
 }
+// Major grid divisions on the 900 × 500 plot area (100 px squares).
+const X_DIV = 9,
+  Y_DIV = 5;
 function chart() {
   if (!points.length) {
     autoBounds = null;
@@ -269,10 +302,15 @@ function chart() {
     pmax = Math.max(...pressures),
     vs = vmax - vmin || 1,
     ps = pmax - pmin || 1;
-  vmin = Math.max(0, vmin - vs * 0.045);
-  vmax += vs * 0.045;
-  pmin = Math.max(0, pmin - ps * 0.07);
-  pmax += ps * 0.1;
+  // Snap the padded data range to round steps on the major grid lines.
+  const vAxis = PVReport.niceAxis(
+      Math.max(0, vmin - vs * 0.045),
+      vmax + vs * 0.045,
+      X_DIV,
+    ),
+    pAxis = PVReport.niceAxis(Math.max(0, pmin - ps * 0.07), pmax + ps * 0.1, Y_DIV);
+  ({ min: vmin, max: vmax } = vAxis);
+  ({ min: pmin, max: pmax } = pAxis);
   autoBounds = { vmin, vmax, pmin, pmax };
   if (viewBounds) ({ vmin, vmax, pmin, pmax } = viewBounds);
   updateScaleControls();
@@ -311,13 +349,13 @@ function chart() {
     h += `<path d="M${l} ${yy}H${W - rt}" stroke="${major ? '#dbe4df' : '#f1f5f3'}" stroke-width="${major ? 1.2 : 0.6}"/>`;
   }
   h += `<rect x="${l}" y="${t}" width="900" height="500" fill="none" stroke="#8191a4" stroke-width="1"/><path d="M${l} ${t}V${H - b}H${W - rt}" fill="none" stroke="#34475c" stroke-width="1.8"/>`;
-  for (let i = 0; i <= 9; i++) {
-    let v = vmin + ((vmax - vmin) * i) / 9;
-    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${axisTick(v, (vmax - vmin) / 9)}</text>`;
+  for (let i = 0; i <= X_DIV; i++) {
+    let v = vmin + ((vmax - vmin) * i) / X_DIV;
+    h += `<path d="M${x(v)} ${H - b}v6" stroke="#34475c"/><text x="${x(v)}" y="${H - b + 26}" text-anchor="middle" font-size="12" fill="#46596e">${axisTick(v, (vmax - vmin) / X_DIV)}</text>`;
   }
-  for (let i = 0; i <= 5; i++) {
-    let p = pmin + ((pmax - pmin) * i) / 5;
-    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${axisTick(p, (pmax - pmin) / 5)}</text>`;
+  for (let i = 0; i <= Y_DIV; i++) {
+    let p = pmin + ((pmax - pmin) * i) / Y_DIV;
+    h += `<path d="M${l - 6} ${y(p)}h6" stroke="#34475c"/><text x="${l - 13}" y="${y(p) + 4}" text-anchor="end" font-size="12" fill="#46596e">${axisTick(p, (pmax - pmin) / Y_DIV)}</text>`;
   }
   function path(f, start, end, color, dashed) {
     let d = '';
@@ -340,13 +378,24 @@ function chart() {
       if (target < f.min) h += path(f, target, f.min, color, true);
     }
     if (c && inside(c)) {
-      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
+      h += `<path d="M${l} ${y(c.p)}H${x(c.v)}V${H - b}" fill="none" stroke="#718378" stroke-dasharray="4 5"/><circle cx="${x(c.v)}" cy="${y(c.p)}" r="7" fill="white" stroke="#19352f" stroke-width="2.5"/><text x="${Math.min(W - 180, x(c.v) + 15)}" y="${y(c.p) - 17}" font-size="13" fill="#19352f" stroke="white" stroke-width="5" paint-order="stroke">${phaseSymbol()} ${num(c.p)} ${pressureLabel()}</text>`;
     }
   }
+  const autoExcluded = new Set(deepFitExcluded().map((p) => p.id));
+  $('autoExcludedLegend').hidden = !autoExcluded.size;
   points.filter(inside).forEach((p) => {
     let color =
-      p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c05a13' : '#82918c';
-    h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}"><circle cx="${x(p.v)}" cy="${y(p.p)}" r="11" fill="transparent"/><circle cx="${x(p.v)}" cy="${y(p.p)}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${p.group === 'none' ? 'Neither fit' : p.group + ' branch'}</title></circle></g>`;
+        p.group === 'high' ? '#0f766e' : p.group === 'low' ? '#c05a13' : '#82918c',
+      auto = autoExcluded.has(p.id),
+      cx = x(p.v),
+      cy = y(p.p),
+      state = auto
+        ? 'Left out by Deep fit'
+        : p.group === 'none'
+          ? 'Neither fit'
+          : p.group + ' branch';
+    // Deep fit exclusions get a cross so they read differently from manual "neither" points.
+    h += `<g class="chartpoint" tabindex="0" role="button" data-id="${p.id}" aria-label="Assign point ${p.id + 1}, pressure ${p.p}, volume ${p.v}${auto ? ', left out by Deep fit' : ''}"><circle cx="${cx}" cy="${cy}" r="11" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="5.2" fill="${p.group === 'none' ? 'white' : color}" stroke="${color}" stroke-width="2"><title>Point ${p.id + 1} · P ${p.p}, V ${p.v} · ${state}</title></circle>${auto ? `<path data-auto-excluded="${p.id}" d="M${cx - 3} ${cy - 3}l6 6m0 -6l-6 6" stroke="${color}" stroke-width="1.6" pointer-events="none"/>` : ''}</g>`;
   });
   h += `</g>`;
   h += `<text x="${(W + l - rt) / 2}" y="${H - 13}" text-anchor="middle" font-size="13" fill="#52685b">Volume (${$('vunit').value})</text><text transform="translate(22 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#52685b">Pressure (${pressureLabel()})</text>${c ? PVReport.detailSvg(currentReport(), W - l - rt + 50, 210).replace('<svg ', `<svg x="${l - 50}" y="${H + 10}" `) : ''}</svg>`;
@@ -358,7 +407,7 @@ function chart() {
         const p = points.find((p) => p.id === Number(el.dataset.id));
         if (p)
           $('pointReadout').textContent =
-            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${pressureLabel()} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? 'No fit' : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
+            `Point ${p.id + 1} · Pressure ${num(p.p, 6)} ${pressureLabel()} · Volume ${num(p.v, 6)} ${$('vunit').value} · ${p.group === 'none' ? (autoExcluded.has(p.id) ? 'Left out by Deep fit' : 'No fit') : p.group === 'high' ? 'High-pressure fit' : 'Low-pressure fit'}`;
       };
       el.onmouseenter = inspect;
       el.onfocus = inspect;
@@ -455,7 +504,8 @@ $('demo').onclick = () => {
     rows.push(p.toFixed(3) + ',' + v.toFixed(3));
   }
   $('data').value = rows.join('\n');
-  $('model').value = '2';
+  $('shapeHigh').value = '2';
+  $('shapeLow').value = '2';
   $('case').value =
     'DEMONSTRATION · ' +
     ($('phase').value === 'dew' ? 'dew' : 'bubble') +
@@ -468,8 +518,11 @@ $('demo').onclick = () => {
   load();
   setupPhase();
 };
-['model', 'temp', 'tunit', 'punit', 'vunit'].forEach(
-  (id) => ($(id).onchange = () => fitNow()),
+// A new shape changes the fit, so it cancels a running Deep fit like a manual edit.
+$('shapeHigh').onchange = $('shapeLow').onchange = () => fitNow();
+// Units and temperature only relabel values: keep a running Deep fit and its search record.
+['temp', 'tunit', 'punit', 'vunit'].forEach(
+  (id) => ($(id).onchange = () => (fitWorker ? render() : fitNow(false))),
 );
 function currentReport() {
   return PVReport.buildModel({
@@ -485,6 +538,14 @@ function currentReport() {
     boundary: $('boundary').value,
     syntheticDemo: demo,
     grid: $('grid').value,
+    yCheck: yResult && {
+      pb: yResult.best.pb,
+      vb: yResult.best.vb,
+      relativeRmse: yResult.best.relativeRmse,
+      graphicalRelativeRmse: yResult.graphical?.relativeRmse ?? null,
+      atEdge: yResult.atEdge,
+      atmosphere: yResult.atmosphere,
+    },
   });
 }
 $('print').onclick = () => {
@@ -552,10 +613,25 @@ $('export').onclick = () => {
         mode: viewBounds ? 'custom' : 'auto',
         bounds: viewBounds || autoBounds,
       },
-      automaticSelection: searchInfo,
+      yFunctionCheck: yResult && {
+        note: 'Cross-check only; does not change the graphical result.',
+        atmosphereAdded: yResult.atmosphere,
+        mostLinearPb: yResult.best.pb,
+        vbAtMostLinearPb: yResult.best.vb,
+        relativeRmse: yResult.best.relativeRmse,
+        line: { intercept: yResult.best.intercept, slope: yResult.best.slope },
+        graphicalRelativeRmse: yResult.graphical?.relativeRmse ?? null,
+        bracket: yResult.bracket,
+        atBracketEdge: yResult.atEdge,
+      },
+      automaticSelection: searchInfo && {
+        ...searchInfo,
+        excludedPointIds: deepFitExcluded().map((p) => p.id),
+      },
       estimatedIntersection: r?.intersection || null,
       warning: r ? r.warning : 'Fit incomplete',
-      degree: Number($('model').value),
+      degree: degrees().high === degrees().low ? degrees().high : null,
+      trendShape: degrees(),
       branches: r
         ? {
             high: { coefficients: r.high.coeff, rmse: r.high.rmse, rSquared: r.high.r2 },
@@ -594,6 +670,120 @@ function equations() {
   $('equations').innerHTML = html;
 }
 
+// Standard atmosphere per pressure unit: gauge readings need it for the Y-function's P_abs.
+const ATMOSPHERE = { psi: 14.696, bar: 1.01325, kPa: 101.325, MPa: 0.101325 };
+let yResult = null;
+// Bubble-point Y-function cross-check of the graphical Pb. Display only: it never changes
+// the selections, fits or the main result.
+function yCheck() {
+  yResult = null;
+  const panel = $('yCheck');
+  panel.hidden = $('phase').value !== 'bubble' || !result;
+  if (panel.hidden) return;
+  const { unit, basis } = pressureSelection(),
+    atmosphere = basis === 'Gauge' ? ATMOSPHERE[unit] : 0,
+    label = pressureLabel(),
+    digits = unit === 'MPa' ? 4 : 2;
+  $('yNote').textContent =
+    (basis === 'Gauge'
+      ? `Gauge readings are converted with one standard atmosphere (${num(atmosphere, 6)} ${unit}); this is an assumption, not your laboratory's barometric reading. `
+      : 'Readings are treated as absolute pressure. ') +
+    'Y = (Pb − P) / (P_abs · (V/Vb − 1)), with Vb read from the high-pressure trend. It should be close to a straight line in P when Pb is right. Points just below Pb are the most sensitive. This check does not change the graphical result.';
+  try {
+    yResult = PV.yFunction(points, result, atmosphere);
+  } catch (e) {
+    $('ySummary').textContent = '· not available';
+    $('yResult').textContent = e.message;
+    $('yChart').innerHTML = '';
+    return;
+  }
+  const y = yResult,
+    best = y.best,
+    graph = result.intersection;
+  const pct = (v) => num(100 * v, 2) + '%';
+  $('ySummary').textContent = `· Pb ${num(best.pb, digits)} ${label}`;
+  let text = `Most linear Y at Pb = ${num(best.pb, digits)} ${label} (Vb ${num(best.vb, 4)} ${$('vunit').value}; Y line scatter ${pct(best.relativeRmse)} of mean Y).`;
+  if (graph) {
+    const diff = best.pb - graph.p;
+    text += ` Graphical Pb ${num(graph.p, digits)} ${label}: difference ${diff >= 0 ? '+' : '−'}${num(Math.abs(diff), digits)} ${label} (${diff >= 0 ? '+' : '−'}${pct(Math.abs(diff) / graph.p)}).`;
+    text += y.graphical
+      ? ` At the graphical Pb, Y scatter is ${pct(y.graphical.relativeRmse)}.`
+      : ' The graphical Pb is outside the range between the selected branches, so Y cannot be evaluated there.';
+  }
+  $('yResult').innerHTML =
+    esc(text) +
+    (y.atEdge
+      ? ` <span class="y-flag">${esc(`The most linear Pb is at the edge of the allowed range (${num(y.bracket[0], digits)}–${num(y.bracket[1], digits)} ${label}), so it is not resolved. Review the branch selections.`)}</span>`
+      : '');
+  $('yChart').innerHTML = yChart(y, label);
+}
+function redrawYChart() {
+  if (yResult && $('yCheck').open)
+    $('yChart').innerHTML = yChart(yResult, pressureLabel());
+}
+$('yCheck').ontoggle = redrawYChart;
+window.addEventListener?.('resize', redrawYChart);
+function esc(value) {
+  return String(value).replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  );
+}
+// Draw at the panel's real width (300–640 px) so text stays readable on phones.
+function yChart(y, label) {
+  const W = Math.round(Math.min(640, Math.max(300, $('yChart').clientWidth || 640))),
+    narrow = W < 480,
+    xDiv = narrow ? 4 : 6,
+    H = narrow ? 260 : 300,
+    l = 64,
+    r = 16,
+    t = 18,
+    b = 48,
+    sets = [y.best.rows, ...(y.graphical ? [y.graphical.rows] : [])].flat(),
+    ps = sets.map((q) => q.p),
+    ys = sets.map((q) => q.y),
+    pRange = Math.max(...ps) - Math.min(...ps) || 1,
+    yRange = Math.max(...ys) - Math.min(...ys) || Math.abs(ys[0]) || 1,
+    X = PVReport.niceAxis(
+      Math.max(0, Math.min(...ps) - pRange * 0.06),
+      Math.max(...ps) + pRange * 0.06,
+      xDiv,
+    ),
+    Y = PVReport.niceAxis(
+      Math.max(0, Math.min(...ys) - yRange * 0.1),
+      Math.max(...ys) + yRange * 0.1,
+      4,
+    );
+  const x = (p) => l + ((p - X.min) / (X.max - X.min)) * (W - l - r),
+    yy = (v) => H - b - ((v - Y.min) / (Y.max - Y.min)) * (H - t - b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Y-function versus pressure for the low-pressure points"><defs><clipPath id="yArea"><rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}"/></clipPath></defs>`;
+  for (let i = 0; i <= xDiv; i++) {
+    const p = X.min + X.step * i;
+    s += `<path d="M${x(p)} ${t}V${H - b}" stroke="#e8efe6"/><text x="${x(p)}" y="${H - b + 18}" text-anchor="middle" font-size="11" fill="#546e5c">${axisTick(p, X.step)}</text>`;
+  }
+  for (let i = 0; i <= 4; i++) {
+    const v = Y.min + Y.step * i;
+    s += `<path d="M${l} ${yy(v)}H${W - r}" stroke="#e8efe6"/><text x="${l - 8}" y="${yy(v) + 4}" text-anchor="end" font-size="11" fill="#546e5c">${axisTick(v, Y.step)}</text>`;
+  }
+  s += `<rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - b}" fill="none" stroke="#9db3a4"/><g clip-path="url(#yArea)">`;
+  const line = (fit, color) =>
+    `<path d="M${x(X.min)} ${yy(fit.intercept + fit.slope * X.min)}L${x(X.max)} ${yy(fit.intercept + fit.slope * X.max)}" stroke="${color}" stroke-width="1.6" fill="none"/>`;
+  if (y.graphical) {
+    s += line(y.graphical, '#a9b5ae');
+    y.graphical.rows.forEach(
+      (q) =>
+        (s += `<circle data-y="graphical" cx="${x(q.p)}" cy="${yy(q.y)}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"><title>Point ${q.id + 1} · Y ${num(q.y, 4)} at graphical Pb</title></circle>`),
+    );
+  }
+  s += line(y.best, '#c05a13');
+  y.best.rows.forEach(
+    (q) =>
+      (s += `<circle data-y="best" cx="${x(q.p)}" cy="${yy(q.y)}" r="4.2" fill="#c05a13"><title>Point ${q.id + 1} · Y ${num(q.y, 4)} at most-linear Pb</title></circle>`),
+  );
+  s += `</g><text x="${(W + l - r) / 2}" y="${H - 10}" text-anchor="middle" font-size="12" fill="#52685b">Pressure (${esc(label)})</text><text transform="translate(16 ${(H - b + t) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#52685b">Y (dimensionless)</text>`;
+  s += `<g font-size="11" fill="#52685b"><circle cx="${l + 12}" cy="${t + 14}" r="4" fill="#c05a13"/><text x="${l + 22}" y="${t + 18}">At most-linear Pb</text>${y.graphical ? `<circle cx="${l + (narrow ? 12 : 140)}" cy="${t + (narrow ? 30 : 14)}" r="4" fill="white" stroke="#82918c" stroke-width="1.5"/><text x="${l + (narrow ? 22 : 150)}" y="${t + (narrow ? 34 : 18)}">At graphical Pb</text>` : ''}</g></svg>`;
+  return s;
+}
 function phaseSymbol() {
   return $('phase').value === 'bubble'
     ? 'Pb'
@@ -749,7 +939,8 @@ function updateWorkspace() {
   $('inputVolumeLabel').textContent = 'Volume (' + $('vunit').value + ')';
   $('sampleBadge').hidden = !demo;
   if (presentation && !ready) {
-    ((presentation = false), (viewBounds = null), (autoBounds = null));
+    // Leave presentation but keep the user's graph scale.
+    presentation = false;
     document.body.classList.toggle('presentation', false);
     $('present').textContent = 'Present';
     $('present').setAttribute('aria-pressed', 'false');
@@ -818,7 +1009,8 @@ function updateScaleControls() {
     ['pMin', 'pmin'],
     ['pMax', 'pmax'],
   ])
-    $(id).value = bounds ? String(bounds[key]) : '';
+    // 12 significant digits hides float noise such as 32.400000000000006.
+    $(id).value = bounds ? String(Number(bounds[key].toPrecision(12))) : '';
   if (!ready) $('scaleStatus').textContent = 'Plot data to adjust the graph scale.';
 }
 function applyView(bounds) {
@@ -853,17 +1045,37 @@ function applyView(bounds) {
   $('scaleError').textContent = '';
   chart();
 }
-function zoomView(factor, focus = null) {
+// Zoom moves one round step smaller ('in') or larger ('out'); focus uses a quarter of the
+// automatic range around the intersection. Every result keeps round tick values.
+function zoomView(direction, focus = null) {
   if (!autoBounds || !points.length) return;
-  const b = viewBounds || autoBounds,
-    base = focus ? autoBounds : b;
-  const vc = focus ? focus.v : b.vmin + (b.vmax - b.vmin) / 2;
-  const pc = focus ? focus.p : b.pmin + (b.pmax - b.pmin) / 2;
-  const vs = (base.vmax - base.vmin) * factor,
-    ps = (base.pmax - base.pmin) * factor;
-  const vmin = Math.max(0, vc - vs / 2),
-    pmin = Math.max(0, pc - ps / 2);
-  applyView({ vmin, vmax: vmin + vs, pmin, pmax: pmin + ps });
+  const b = viewBounds || autoBounds;
+  const axis = (min, max, autoMin, autoMax, divisions, center) => {
+    const step = focus
+      ? PVReport.niceStep(((autoMax - autoMin) / divisions) * 0.25)
+      : PVReport.niceStep(
+          (max - min) / divisions,
+          direction === 'in' ? 'below' : 'above',
+        );
+    return PVReport.alignedAxis(center - (divisions * step) / 2, step, divisions);
+  };
+  const v = axis(
+      b.vmin,
+      b.vmax,
+      autoBounds.vmin,
+      autoBounds.vmax,
+      X_DIV,
+      focus ? focus.v : (b.vmin + b.vmax) / 2,
+    ),
+    p = axis(
+      b.pmin,
+      b.pmax,
+      autoBounds.pmin,
+      autoBounds.pmax,
+      Y_DIV,
+      focus ? focus.p : (b.pmin + b.pmax) / 2,
+    );
+  applyView({ vmin: v.min, vmax: v.max, pmin: p.min, pmax: p.max });
 }
 $('applyScale').onclick = () => {
   const ids = ['vMin', 'vMax', 'pMin', 'pMax'];
@@ -878,10 +1090,10 @@ $('applyScale').onclick = () => {
     pmax: Number($('pMax').value),
   });
 };
-$('zoomIn').onclick = () => zoomView(1 / 1.4);
-$('zoomOut').onclick = () => zoomView(1.4);
+$('zoomIn').onclick = () => zoomView('in');
+$('zoomOut').onclick = () => zoomView('out');
 $('focusScale').onclick = () => {
-  if (result?.intersection) zoomView(0.25, result.intersection);
+  if (result?.intersection) zoomView('in', result.intersection);
 };
 $('autoScale').onclick = () => {
   viewBounds = null;

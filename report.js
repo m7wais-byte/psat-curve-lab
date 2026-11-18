@@ -1,6 +1,6 @@
 (function (root) {
   const REPORT_CSS =
-    '\n      body {\n        margin: 0;\n        padding: 20px;\n        background: #f1f5f2;\n        font:\n          13px/1.5 Arial,\n          Helvetica,\n          sans-serif;\n        color: #29443a;\n      }\n      .preview-toolbar {\n        max-width: 680px;\n        margin: 0 auto 16px;\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 16px;\n      }\n      .preview-toolbar h1 {\n        font-size: 16px;\n        font-weight: 500;\n        margin: 0;\n      }\n      .preview-toolbar p {\n        font-size: 12px;\n        color: #687e70;\n        margin: 4px 0 0;\n      }\n      .preview-toolbar button,\n      .preview-toolbar a {\n        background: #0f766e;\n        color: white;\n        border: 0;\n        border-radius: 6px;\n        padding: 10px 14px;\n        font:\n          13px Arial,\n          sans-serif;\n        cursor: pointer;\n        white-space: nowrap;\n      }\n      .preview-toolbar button:focus-visible,\n      .preview-toolbar a:focus-visible {\n        outline: 3px solid #8dbca4;\n        outline-offset: 3px;\n      }\n      .preview-actions {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n      }\n      .preview-toolbar a {\n        display: inline-block;\n        text-decoration: none;\n        background: white;\n        color: #0f766e;\n        box-shadow: inset 0 0 0 1px #a7cbbb;\n      }\n      @media (max-width: 480px) {\n        body {\n          padding: 12px;\n        }\n        .preview-toolbar {\n          align-items: flex-start;\n        }\n        .preview-toolbar button,\n        .preview-toolbar a {\n          font-size: 11px;\n          padding: 9px 10px;\n        }\n      }\n      @media print {\n        body {\n          padding: 0;\n          margin: 0;\n          background: white;\n        }\n        .preview-toolbar {\n          display: none !important;\n        }\n      }\n    \n\n        #case-a4-report {\n          --paper: #fff;\n          --ink: #223b35;\n          --quiet: #66796f;\n          --rule: #d8e3dc;\n          --high: #0f766e;\n          --low: #c05a13;\n          max-width: 680px;\n          margin: 0 auto;\n          font:\n            13px/1.5 Arial,\n            Helvetica,\n            sans-serif;\n          color: var(--ink);\n        }\n        #case-a4-report * {\n          box-sizing: border-box;\n        }\n        #case-a4-report .paper {\n          background: var(--paper);\n          border: 1px solid var(--rule);\n          padding: 23px 34px 20px;\n          aspect-ratio: 210/297;\n          display: flex;\n          flex-direction: column;\n          gap: 9px;\n        }\n        #case-a4-report .report-header {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 20px;\n          padding-bottom: 16px;\n          border-bottom: 2px solid var(--high);\n        }\n        #case-a4-report .logo {\n          width: 128px;\n          min-width: 128px;\n          height: 76px;\n          display: flex;\n          align-items: center;\n          border: 0;\n        }\n        #case-a4-report .logo svg {\n          display: block;\n          width: 128px;\n          height: 76px;\n        }\n\n        #case-a4-report .heading {\n          text-align: right;\n        }\n        #case-a4-report h1 {\n          margin: 0;\n          font-size: 20px;\n          line-height: 1.25;\n          font-weight: 500;\n          letter-spacing: -0.35px;\n        }\n        #case-a4-report .subtitle {\n          margin-top: 5px;\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .draft {\n          display: inline-block;\n          margin-top: 7px;\n          font-size: 11px;\n          color: #927039;\n        }\n        #case-a4-report .details {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          column-gap: 25px;\n          row-gap: 7px;\n        }\n        #case-a4-report .detail {\n          display: flex;\n          gap: 10px;\n          justify-content: space-between;\n          border-bottom: 1px solid #edf1ed;\n          padding-bottom: 5px;\n          font-size: 12px;\n        }\n        #case-a4-report .label {\n          color: var(--quiet);\n        }\n        #case-a4-report .value {\n          text-align: right;\n          font-weight: 500;\n        }\n        #case-a4-report .results {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 23px;\n          padding: 13px 0 14px;\n          border-top: 1px solid var(--rule);\n          border-bottom: 1px solid var(--rule);\n        }\n        #case-a4-report .result-label {\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .result-number {\n          font-size: 30px;\n          font-weight: 500;\n          letter-spacing: -0.8px;\n          margin-top: 4px;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .result-number span {\n          font-size: 13px;\n          letter-spacing: 0;\n          margin-left: 5px;\n          color: var(--quiet);\n        }\n        #case-a4-report .plot-heading {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 10px;\n          font-size: 12px;\n          padding-top: 1px;\n        }\n        #case-a4-report .plot-heading strong {\n          font-weight: 500;\n        }\n        #case-a4-report .plot-heading span {\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        #case-a4-report .plot {\n          width: 100%;\n        }\n        #case-a4-report .plot svg {\n          display: block;\n          width: 100%;\n          height: auto;\n          overflow: visible;\n          font-family: Arial, Helvetica, sans-serif;\n        }\n        #case-a4-report .legend {\n          display: flex;\n          justify-content: center;\n          gap: 18px;\n          flex-wrap: wrap;\n          font-size: 11px;\n          color: var(--quiet);\n          margin-top: 1px;\n        }\n        #case-a4-report .legend span {\n          display: flex;\n          align-items: center;\n          gap: 6px;\n        }\n        #case-a4-report .swatch {\n          display: inline-block;\n          width: 20px;\n          height: 0;\n          border-top: 2px solid var(--high);\n        }\n        #case-a4-report .swatch.low {\n          border-color: var(--low);\n        }\n        #case-a4-report .swatch.extension {\n          border-color: #7e8d84;\n          border-top-style: dashed;\n        }\n\n        #case-a4-report .swatch.excluded {\n          width: 7px;\n          height: 7px;\n          border: 1.3px solid #8b9790;\n          border-radius: 50%;\n          background: white;\n        }\n        #case-a4-report .fit-summary {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 22px;\n          border-top: 1px solid var(--rule);\n          padding-top: 13px;\n        }\n        #case-a4-report .fit-label {\n          display: flex;\n          align-items: center;\n          gap: 7px;\n          font-size: 12px;\n        }\n        #case-a4-report .fit-label i {\n          width: 7px;\n          height: 7px;\n          background: var(--high);\n          border-radius: 50%;\n        }\n        #case-a4-report .fit-label .low {\n          background: var(--low);\n        }\n        #case-a4-report .r2 {\n          margin-top: 5px;\n          font-size: 20px;\n          font-weight: 500;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .report-footer {\n          margin-top: auto;\n          padding-top: 12px;\n          border-top: 1px solid var(--rule);\n          display: flex;\n          gap: 12px;\n          justify-content: space-between;\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        @media (max-width: 480px) {\n          #case-a4-report .paper {\n            padding: 19px 15px;\n            gap: 13px;\n            aspect-ratio: auto;\n          }\n          #case-a4-report .report-header {\n            gap: 12px;\n          }\n          #case-a4-report .logo {\n            width: 96px;\n            min-width: 96px;\n            height: 60px;\n          }\n          #case-a4-report .logo svg {\n            width: 96px;\n            height: 60px;\n          }\n          #case-a4-report h1 {\n            font-size: 17px;\n          }\n          #case-a4-report .details {\n            gap: 7px 15px;\n          }\n          #case-a4-report .detail {\n            flex-direction: column;\n            gap: 2px;\n            font-size: 11px;\n          }\n          #case-a4-report .value {\n            text-align: left;\n          }\n          #case-a4-report .result-number {\n            font-size: 24px;\n          }\n          #case-a4-report .result-number span {\n            font-size: 11px;\n          }\n          #case-a4-report .plot-heading {\n            align-items: flex-start;\n          }\n          #case-a4-report .plot-heading span {\n            max-width: 100px;\n            text-align: right;\n          }\n          #case-a4-report .legend {\n            gap: 10px;\n          }\n          #case-a4-report .r2 {\n            font-size: 18px;\n          }\n          #case-a4-report .report-footer {\n            flex-wrap: wrap;\n          }\n        }\n        @media print {\n          @page {\n            size: A4 portrait;\n            margin: 0;\n          }\n          #case-a4-report {\n            max-width: none;\n            width: 210mm;\n          }\n          #case-a4-report .paper {\n            width: 210mm;\n            min-height: 297mm;\n            padding: 12mm;\n            border: 0;\n          }\n        }\n      \n#case-a4-report .report-warning, #case-a4-report #reportError {font-size:12px;line-height:1.7;color:#94602e;background:#fff7ec;padding:10px 12px;border-radius:4px;}\n';
+    '\n      body {\n        margin: 0;\n        padding: 20px;\n        background: #f1f5f2;\n        font:\n          13px/1.5 Arial,\n          Helvetica,\n          sans-serif;\n        color: #29443a;\n      }\n      .preview-toolbar {\n        max-width: 680px;\n        margin: 0 auto 16px;\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        gap: 16px;\n      }\n      .preview-toolbar h1 {\n        font-size: 16px;\n        font-weight: 500;\n        margin: 0;\n      }\n      .preview-toolbar p {\n        font-size: 12px;\n        color: #687e70;\n        margin: 4px 0 0;\n      }\n      .preview-toolbar button,\n      .preview-toolbar a {\n        background: #0f766e;\n        color: white;\n        border: 0;\n        border-radius: 6px;\n        padding: 10px 14px;\n        font:\n          13px Arial,\n          sans-serif;\n        cursor: pointer;\n        white-space: nowrap;\n      }\n      .preview-toolbar button:focus-visible,\n      .preview-toolbar a:focus-visible {\n        outline: 3px solid #8dbca4;\n        outline-offset: 3px;\n      }\n      .preview-actions {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n      }\n      .preview-toolbar a {\n        display: inline-block;\n        text-decoration: none;\n        background: white;\n        color: #0f766e;\n        box-shadow: inset 0 0 0 1px #a7cbbb;\n      }\n      @media (max-width: 480px) {\n        body {\n          padding: 12px;\n        }\n        .preview-toolbar {\n          align-items: flex-start;\n        }\n        .preview-toolbar button,\n        .preview-toolbar a {\n          font-size: 11px;\n          padding: 9px 10px;\n        }\n      }\n      @media print {\n        body {\n          padding: 0;\n          margin: 0;\n          background: white;\n        }\n        .preview-toolbar {\n          display: none !important;\n        }\n      }\n    \n\n        #case-a4-report {\n          --paper: #fff;\n          --ink: #223b35;\n          --quiet: #66796f;\n          --rule: #d8e3dc;\n          --high: #0f766e;\n          --low: #c05a13;\n          max-width: 680px;\n          margin: 0 auto;\n          font:\n            13px/1.5 Arial,\n            Helvetica,\n            sans-serif;\n          color: var(--ink);\n        }\n        #case-a4-report * {\n          box-sizing: border-box;\n        }\n        #case-a4-report .paper {\n          background: var(--paper);\n          border: 1px solid var(--rule);\n          padding: 23px 34px 20px;\n          aspect-ratio: 210/297;\n          display: flex;\n          flex-direction: column;\n          gap: 9px;\n        }\n        #case-a4-report .report-header {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 20px;\n          padding-bottom: 16px;\n          border-bottom: 2px solid var(--high);\n        }\n        #case-a4-report .logo {\n          width: 128px;\n          min-width: 128px;\n          height: 76px;\n          display: flex;\n          align-items: center;\n          border: 0;\n        }\n        #case-a4-report .logo svg {\n          display: block;\n          width: 128px;\n          height: 76px;\n        }\n\n        #case-a4-report .heading {\n          text-align: right;\n        }\n        #case-a4-report h1 {\n          margin: 0;\n          font-size: 20px;\n          line-height: 1.25;\n          font-weight: 500;\n          letter-spacing: -0.35px;\n        }\n        #case-a4-report .subtitle {\n          margin-top: 5px;\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .draft {\n          display: inline-block;\n          margin-top: 7px;\n          font-size: 11px;\n          color: #927039;\n        }\n        #case-a4-report .details {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          column-gap: 25px;\n          row-gap: 7px;\n        }\n        #case-a4-report .detail {\n          display: flex;\n          gap: 10px;\n          justify-content: space-between;\n          border-bottom: 1px solid #edf1ed;\n          padding-bottom: 5px;\n          font-size: 12px;\n        }\n        #case-a4-report .label {\n          color: var(--quiet);\n        }\n        #case-a4-report .value {\n          text-align: right;\n          font-weight: 500;\n        }\n        #case-a4-report .results {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 23px;\n          padding: 13px 0 14px;\n          border-top: 1px solid var(--rule);\n          border-bottom: 1px solid var(--rule);\n        }\n        #case-a4-report .result-label {\n          font-size: 12px;\n          color: var(--quiet);\n        }\n        #case-a4-report .result-number {\n          font-size: 30px;\n          font-weight: 500;\n          letter-spacing: -0.8px;\n          margin-top: 4px;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .result-number span {\n          font-size: 13px;\n          letter-spacing: 0;\n          margin-left: 5px;\n          color: var(--quiet);\n        }\n        #case-a4-report .plot-heading {\n          display: flex;\n          align-items: center;\n          justify-content: space-between;\n          gap: 10px;\n          font-size: 12px;\n          padding-top: 1px;\n        }\n        #case-a4-report .plot-heading strong {\n          font-weight: 500;\n        }\n        #case-a4-report .plot-heading span {\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        #case-a4-report .plot {\n          width: 100%;\n        }\n        #case-a4-report .plot svg {\n          display: block;\n          width: 100%;\n          height: auto;\n          overflow: visible;\n          font-family: Arial, Helvetica, sans-serif;\n        }\n        #case-a4-report .legend {\n          display: flex;\n          justify-content: center;\n          gap: 18px;\n          flex-wrap: wrap;\n          font-size: 11px;\n          color: var(--quiet);\n          margin-top: 1px;\n        }\n        #case-a4-report .legend span {\n          display: flex;\n          align-items: center;\n          gap: 6px;\n        }\n        #case-a4-report .swatch {\n          display: inline-block;\n          width: 20px;\n          height: 0;\n          border-top: 2px solid var(--high);\n        }\n        #case-a4-report .swatch.low {\n          border-color: var(--low);\n        }\n        #case-a4-report .swatch.extension {\n          border-color: #7e8d84;\n          border-top-style: dashed;\n        }\n\n        #case-a4-report .swatch.excluded {\n          width: 7px;\n          height: 7px;\n          border: 1.3px solid #8b9790;\n          border-radius: 50%;\n          background: white;\n        }\n        #case-a4-report .y-check-report {\n          border-top: 1px solid var(--rule);\n          padding-top: 10px;\n          margin-top: 12px;\n          font-size: 11px;\n          line-height: 1.45;\n        }\n        #case-a4-report .y-check-report p {\n          margin: 3px 0 0;\n        }\n        #case-a4-report .y-check-report .quiet {\n          color: var(--quiet);\n        }\n        #case-a4-report .fit-summary {\n          display: grid;\n          grid-template-columns: 1fr 1fr;\n          gap: 22px;\n          border-top: 1px solid var(--rule);\n          padding-top: 13px;\n        }\n        #case-a4-report .fit-label {\n          display: flex;\n          align-items: center;\n          gap: 7px;\n          font-size: 12px;\n        }\n        #case-a4-report .fit-label i {\n          width: 7px;\n          height: 7px;\n          background: var(--high);\n          border-radius: 50%;\n        }\n        #case-a4-report .fit-label .low {\n          background: var(--low);\n        }\n        #case-a4-report .r2 {\n          margin-top: 5px;\n          font-size: 20px;\n          font-weight: 500;\n          font-variant-numeric: tabular-nums;\n        }\n        #case-a4-report .report-footer {\n          margin-top: auto;\n          padding-top: 12px;\n          border-top: 1px solid var(--rule);\n          display: flex;\n          gap: 12px;\n          justify-content: space-between;\n          color: var(--quiet);\n          font-size: 11px;\n        }\n        @media (max-width: 480px) {\n          #case-a4-report .paper {\n            padding: 19px 15px;\n            gap: 13px;\n            aspect-ratio: auto;\n          }\n          #case-a4-report .report-header {\n            gap: 12px;\n          }\n          #case-a4-report .logo {\n            width: 96px;\n            min-width: 96px;\n            height: 60px;\n          }\n          #case-a4-report .logo svg {\n            width: 96px;\n            height: 60px;\n          }\n          #case-a4-report h1 {\n            font-size: 17px;\n          }\n          #case-a4-report .details {\n            gap: 7px 15px;\n          }\n          #case-a4-report .detail {\n            flex-direction: column;\n            gap: 2px;\n            font-size: 11px;\n          }\n          #case-a4-report .value {\n            text-align: left;\n          }\n          #case-a4-report .result-number {\n            font-size: 24px;\n          }\n          #case-a4-report .result-number span {\n            font-size: 11px;\n          }\n          #case-a4-report .plot-heading {\n            align-items: flex-start;\n          }\n          #case-a4-report .plot-heading span {\n            max-width: 100px;\n            text-align: right;\n          }\n          #case-a4-report .legend {\n            gap: 10px;\n          }\n          #case-a4-report .r2 {\n            font-size: 18px;\n          }\n          #case-a4-report .report-footer {\n            flex-wrap: wrap;\n          }\n        }\n        @media print {\n          @page {\n            size: A4 portrait;\n            margin: 0;\n          }\n          #case-a4-report {\n            max-width: none;\n            width: 210mm;\n          }\n          #case-a4-report .paper {\n            width: 210mm;\n            min-height: 297mm;\n            padding: 12mm;\n            border: 0;\n          }\n        }\n      \n#case-a4-report .report-warning, #case-a4-report #reportError {font-size:12px;line-height:1.7;color:#94602e;background:#fff7ec;padding:10px 12px;border-radius:4px;} #case-a4-report #reportError:empty {display:none;}\n';
   const LOGO_SVG =
     '<svg\n              xmlns="http://www.w3.org/2000/svg"\n              viewBox="0 0 200 118"\n              role="img"\n              aria-label="VAPS logo, recreated vector draft"\n            >\n              <path\n                d="M7 8C33 5 47 12 54 35L69 85L111 30L61 109L39 50C31 25 25 12 7 8Z"\n                fill="#2d7db8"\n              />\n              <path d="M62 104L112 28" fill="none" stroke="#2d7db8" stroke-width="1.6" />\n              <path d="M66 108L116 30" fill="none" stroke="#25ad68" stroke-width="2.1" />\n              <g transform="translate(31 49)">\n                <circle r="16" fill="#fff" />\n                <g fill="#2d7db8">\n                  <rect x="-1.8" y="-16.1" width="3.6" height="5.5" rx=".5" />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(30)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(60)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(90)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(120)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(150)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(180)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(210)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(240)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(270)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(300)"\n                  />\n                  <rect\n                    x="-1.8"\n                    y="-16.1"\n                    width="3.6"\n                    height="5.5"\n                    rx=".5"\n                    transform="rotate(330)"\n                  />\n                </g>\n                <circle r="12.2" fill="#fff" stroke="#2d7db8" stroke-width="2.1" />\n                <circle r="8.7" fill="#28bf74" />\n              </g>\n              <text\n                x="94"\n                y="85"\n                font-family="Arial,Helvetica,sans-serif"\n                font-size="38"\n                font-weight="700"\n                letter-spacing=".1"\n                fill="#2d7db8"\n              >\n                APS\n              </text>\n            </svg>';
   const COLOR = {
@@ -21,6 +21,80 @@
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });
+  // Round axis steps: 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 × 10^k (at most 1.5× apart, so the
+  // data keeps most of the plot). Grid squares stay square because each
+  // major division keeps its size on the page; only the values the divisions carry change.
+  const STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
+  const clean = (value) => Number(value.toPrecision(12));
+  function niceStep(raw, mode = 'atLeast') {
+    if (!(raw > 0) || !Number.isFinite(raw)) return 1;
+    const e = Math.floor(Math.log10(raw)),
+      steps = [e - 1, e, e + 1].flatMap((k) => STEPS.map((s) => clean(s * 10 ** k)));
+    if (mode === 'below') return steps.filter((s) => s < raw * (1 - 1e-9)).at(-1);
+    if (mode === 'above') return steps.find((s) => s > raw * (1 + 1e-9));
+    return steps.find((s) => s >= raw * (1 - 1e-9));
+  }
+  // Nonnegative axis of `divisions` round steps starting at a multiple of the step.
+  function alignedAxis(start, step, divisions) {
+    const min = Math.max(0, clean(Math.floor(start / step + 1e-9) * step));
+    return { min, max: clean(min + divisions * step), step };
+  }
+  // Smallest round axis covering [min, max] with exactly `divisions` steps.
+  function niceAxis(min, max, divisions) {
+    let step = niceStep((max - min || Math.abs(max) || 1) / divisions);
+    for (let i = 0; i < 20; i++) {
+      const axis = alignedAxis(min, step, divisions);
+      if (axis.max >= max - 1e-9 * step) return axis;
+      step = niceStep(step, 'above');
+    }
+    return { min, max, step: (max - min) / divisions };
+  }
+  // Report precision gives similar resolution (about 0.01–0.15 psi) in every unit.
+  const PRESSURE_DIGITS = { psi: 2, bar: 2, MPa: 3, kPa: 1 };
+  const pressureDigits = (m) => PRESSURE_DIGITS[m.pressureUnit] ?? 2;
+  const symbol = (m) => (m.phase === 'bubble' ? 'Pb' : m.phase === 'dew' ? 'Pd' : 'Psat');
+  function resultTitle(m, separator) {
+    return m.phase === 'bubble'
+      ? 'Estimated bubble-point pressure' + separator + 'Pb'
+      : m.phase === 'dew'
+        ? 'Estimated dew-point pressure' + separator + 'Pd'
+        : 'Estimated saturation pressure' + separator + 'Psat';
+  }
+  function trendName(m) {
+    const d = m.degrees,
+      name = (degree) => (degree === 1 ? 'straight' : 'quadratic');
+    if (!d || ![1, 2].includes(d.high) || ![1, 2].includes(d.low)) return 'Not recorded';
+    if (d.high === d.low) return d.high === 1 ? 'Straight lines' : 'Quadratic curves';
+    return `High ${name(d.high)} · low ${name(d.low)}`;
+  }
+  function pointsUsed(m) {
+    const used = m.points.filter((p) => p.group !== 'none').length;
+    return used + ' of ' + m.points.length;
+  }
+  // Plain Latin-1 text (PDF-safe) summarising the Y-function cross-check.
+  function yCheckLines(m) {
+    const y = m.yCheck;
+    if (!y) return null;
+    const d = pressureDigits(m),
+      u = unit(m),
+      diff = y.pb - m.intersection.p,
+      sign = diff >= 0 ? '+' : '-',
+      pct = (v) => (100 * v).toFixed(2) + '%';
+    return [
+      `Most-linear Pb ${fmt(y.pb, d)} ${u} (Vb ${fmt(y.vb, 4)} ${m.volumeUnit}); ` +
+        `difference from the graphical Pb ${sign}${fmt(Math.abs(diff), d)} ${u} ` +
+        `(${sign}${pct(Math.abs(diff) / m.intersection.p)}).`,
+      `Y line scatter ${pct(y.relativeRmse)} at the most-linear Pb; ` +
+        (y.graphicalRelativeRmse === null
+          ? 'not evaluated at the graphical Pb (outside the range between branches).'
+          : `${pct(y.graphicalRelativeRmse)} at the graphical Pb.`) +
+        (y.atEdge ? ' Minimum at the edge of the allowed range: not resolved.' : ''),
+      'Cross-check only; the reported Pb is the graphical intersection. ' +
+        (y.atmosphere > 0
+          ? `Gauge readings converted with one standard atmosphere (${y.atmosphere} ${m.pressureUnit}).`
+          : 'Pressures treated as absolute.'),
+    ];
+  }
   function buildModel(input) {
     const r = input.result;
     if (!r?.intersection || !input.points?.length)
@@ -50,6 +124,22 @@
       syntheticDemo: !!input.syntheticDemo,
       warning: String(r.warning || ''),
       grid: ['paper', 'major', 'none'].includes(input.grid) ? input.grid : 'paper',
+      degrees: r.degrees ? { high: r.degrees.high, low: r.degrees.low } : null,
+      // Bubble-point Y-function cross-check, when the app computed one.
+      yCheck:
+        input.phase === 'bubble' && input.yCheck
+          ? {
+              pb: Number(input.yCheck.pb),
+              vb: Number(input.yCheck.vb),
+              relativeRmse: Number(input.yCheck.relativeRmse),
+              graphicalRelativeRmse:
+                input.yCheck.graphicalRelativeRmse == null
+                  ? null
+                  : Number(input.yCheck.graphicalRelativeRmse),
+              atEdge: !!input.yCheck.atEdge,
+              atmosphere: Number(input.yCheck.atmosphere) || 0,
+            }
+          : null,
       origin: r.origin,
       scale: r.scale,
       intersection: { p: r.intersection.p, v: r.intersection.v },
@@ -99,6 +189,13 @@
         !Number.isFinite(f.max)
       )
         throw new Error('Invalid fitted branch in report.');
+    const y = m.yCheck;
+    if (
+      y &&
+      (![y.pb, y.vb, y.relativeRmse, y.atmosphere].every(Number.isFinite) ||
+        (y.graphicalRelativeRmse !== null && !Number.isFinite(y.graphicalRelativeRmse)))
+    )
+      throw new Error('Invalid Y-function check in report.');
   }
   function unit(m, compact = false) {
     const suffix = m.pressureBasis === 'Gauge' ? 'g' : 'a';
@@ -114,8 +211,9 @@
   }
   function label(m) {
     return (
-      'Psat: ' +
-      fmt(m.intersection.p, 2) +
+      symbol(m) +
+      ': ' +
+      fmt(m.intersection.p, pressureDigits(m)) +
       ' ' +
       unit(m, true) +
       ' @ ' +
@@ -133,7 +231,7 @@
     const z = (v - m.origin) / m.scale;
     return f.coefficients.reduce((sum, c, i) => sum + c * z ** i, 0);
   }
-  function bounds(m) {
+  function bounds(m, cols, rows) {
     const volumes = [...m.points.map((p) => p.v), m.intersection.v],
       pressures = [...m.points.map((p) => p.p), m.intersection.p];
     let vmin = Math.min(...volumes),
@@ -142,12 +240,9 @@
       pmax = Math.max(...pressures);
     const vs = vmax - vmin || 1,
       ps = pmax - pmin || 1;
-    return {
-      vmin: Math.max(0, vmin - vs * 0.045),
-      vmax: vmax + vs * 0.045,
-      pmin: Math.max(0, pmin - ps * 0.07),
-      pmax: pmax + ps * 0.1,
-    };
+    const v = niceAxis(Math.max(0, vmin - vs * 0.045), vmax + vs * 0.045, cols),
+      p = niceAxis(Math.max(0, pmin - ps * 0.07), pmax + ps * 0.1, rows);
+    return { vmin: v.min, vmax: v.max, pmin: p.min, pmax: p.max };
   }
   function tick(v, step) {
     const d = Math.max(0, Math.ceil(-Math.log10(step)) + 1);
@@ -158,7 +253,7 @@
   function detailBounds(m) {
     validate(m);
     const c = m.intersection,
-      full = bounds(m),
+      full = bounds(m, 8, 3),
       span = full.vmax - full.vmin;
     const extent = Math.max(m.low.max - c.v, span * 0.12);
     const vmin = Math.max(0, c.v - extent * 0.14),
@@ -175,6 +270,7 @@
     let pmin = Math.min(...values),
       pmax = Math.max(...values),
       ps = pmax - pmin || Math.max(Math.abs(c.p) * 0.02, 1);
+    // Tight bounds on purpose: rounding them to whole steps would undo the magnification.
     return { vmin, vmax, pmin: Math.max(0, pmin - ps * 0.14), pmax: pmax + ps * 0.16 };
   }
   function detailScene(m, w = 608, h = 150) {
@@ -254,7 +350,7 @@
       mainHeight = t + ph + b,
       detailHeight = w >= 480 ? 130 : 180,
       h = mainHeight + detailHeight + 10,
-      B = bounds(m),
+      B = bounds(m, cols, rows),
       C = m.intersection;
     const x = (v) => l + ((v - B.vmin) / (B.vmax - B.vmin)) * (w - l - r),
       y = (p) => t + ph - ((p - B.pmin) / (B.pmax - B.pmin)) * ph;
@@ -303,7 +399,7 @@
     s += `<circle cx="${x(C.v)}" cy="${y(C.p)}" r="4.7" fill="white" stroke="${COLOR.ink}" stroke-width="1.6"/></g>`;
     const ax = w - r - 7,
       ay = Math.max(t + 14, Math.min(t + ph - 22, y(C.p) - 20));
-    s += `<text data-report-annotation="psat" x="${ax}" y="${ay}" text-anchor="end" font-size="11" fill="${COLOR.ink}" stroke="white" stroke-width="4" paint-order="stroke">${w >= 360 ? esc(label(m)) : `<tspan x="${ax}">Psat: ${fmt(C.p, 2)} ${esc(unit(m, true))}</tspan><tspan x="${ax}" dy="15">@ ${fmt(C.v, 3)} ${esc(m.volumeUnit)}</tspan>`}</text>`;
+    s += `<text data-report-annotation="psat" x="${ax}" y="${ay}" text-anchor="end" font-size="11" fill="${COLOR.ink}" stroke="white" stroke-width="4" paint-order="stroke">${w >= 360 ? esc(label(m)) : `<tspan x="${ax}">${symbol(m)}: ${fmt(C.p, pressureDigits(m))} ${esc(unit(m, true))}</tspan><tspan x="${ax}" dy="15">@ ${fmt(C.v, 3)} ${esc(m.volumeUnit)}</tspan>`}</text>`;
     return (
       s +
       `<text x="${l + (w - l - r) / 2}" y="${mainHeight - 6}" text-anchor="middle" font-size="12" fill="#344f3d">Volume (${esc(m.volumeUnit)})</text><text transform="translate(13 ${t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#344f3d">Pressure (${esc(unit(m, true))})</text>${detailSvg(m, w, detailHeight).replace('<svg ', `<svg x="0" y="${mainHeight + 10}" `)}</svg>`
@@ -318,7 +414,15 @@
       .replace(/</g, '\\u003c')
       .replace(/\u2028/g, '\\u2028')
       .replace(/\u2029/g, '\\u2029');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}</div><div class="results"><div><div class="result-label">Estimated saturation pressure · Psat</div><div class="result-number">${fmt(m.intersection.p, 2)}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div><div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=3"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${esc(base)}"><title>${esc(m.caseName)} - saturation pressure report</title><style>${REPORT_CSS}</style></head><body><header class="preview-toolbar"><div><h1>A4 report</h1><p>${esc(m.caseName)}</p></div><div class="preview-actions"><button onclick="window.print()">Print</button><button id="downloadCasePdf" disabled>Save as PDF</button></div></header><div id="case-a4-report"><article class="paper"><div class="report-header"><div class="logo">${LOGO_SVG}</div><div class="heading"><h1>Saturation pressure report</h1><div class="subtitle">Final pressure–volume plot</div><div class="draft">${m.syntheticDemo ? 'EXAMPLE DATA' : 'GRAPHICAL ESTIMATE'}</div></div></div><div class="details">${row('Sample / case', m.caseName)}${row('Date', m.date)}${row('Test type', phaseName(m))}${row('Temperature', m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit)}${row('Pressure unit', unit(m))}${row('Volume unit', m.volumeUnit)}${row('Trend shape', trendName(m))}${row('Points used', pointsUsed(m))}</div><div class="results"><div><div class="result-label">${esc(resultTitle(m, ' · '))}</div><div class="result-number">${fmt(m.intersection.p, pressureDigits(m))}<span>${esc(unit(m))}</span></div></div><div><div class="result-label">Volume at saturation · Vsat</div><div class="result-number">${fmt(m.intersection.v, 4)}<span>${esc(m.volumeUnit)}</span></div></div></div>${m.warning ? `<div class="report-warning">Review: ${esc(m.warning)}</div>` : ''}<div><div class="plot-heading"><strong>Pressure–volume graph</strong><span>${m.points.length - excluded} points used · ${excluded} excluded</span></div><div class="plot" id="finalGraph">${svg(m)}</div><div class="legend"><span><i class="swatch"></i>High-pressure fit</span><span><i class="swatch low"></i>Low-pressure fit</span><span><i class="swatch extension"></i>Extended trend</span><span><i class="swatch excluded"></i>Excluded points</span></div></div><div class="fit-summary"><div><div class="fit-label"><i></i>High-pressure fit</div><div class="r2">R² = ${rSquared(m.high)}</div></div><div><div class="fit-label"><i class="low"></i>Low-pressure fit</div><div class="r2">R² = ${rSquared(m.low)}</div></div></div>${
+      yCheckLines(m)
+        ? `<div class="y-check-report"><div class="fit-label">Y-function check · bubble point</div>${yCheckLines(
+            m,
+          )
+            .map((t, i) => `<p${i === 2 ? ' class="quiet"' : ''}>${esc(t)}</p>`)
+            .join('')}</div>`
+        : ''
+    }<div class="report-footer"><span>Excluded points shown; not used in either fit</span><span>A4 portrait · Page 1 of 1</span></div></article><div id="reportError" role="alert"></div></div><script src="vendor/jspdf.umd.min.js?v=4.2.1"><\/script><script src="report.js?v=7"><\/script><script>const caseReport=${payload};const plot=document.getElementById('finalGraph');function redraw(){plot.innerHTML=PVReport.svg(caseReport,plot.getBoundingClientRect().width||608);}redraw();if(window.ResizeObserver)new ResizeObserver(redraw).observe(plot);const pdfButton=document.getElementById('downloadCasePdf');pdfButton.disabled=false;pdfButton.onclick=()=>{try{PVReport.save(caseReport);}catch(e){document.getElementById('reportError').textContent=e.message;}};<\/script></body></html>`;
   }
   function open(m, options = {}) {
     const target = root.open('', '_blank');
@@ -461,6 +565,7 @@
         m.temperature === null ? 'Not recorded' : m.temperature + ' ' + m.temperatureUnit,
       ],
       ['Pressure unit', unit(m), 'Volume unit', m.volumeUnit],
+      ['Trend shape', trendName(m), 'Points used', pointsUsed(m)],
     ];
     let rowY = 134;
     for (const [a, b, d, e] of rows) {
@@ -480,12 +585,21 @@
     }
     const offset = Math.max(0, rowY - 197);
     line(M, 199 + offset, W - M, 199 + offset);
-    text(M, 217 + offset, 'Estimated saturation pressure - Psat', 9, COLOR.quiet);
+    text(M, 217 + offset, resultTitle(m, ' - '), 9, COLOR.quiet);
     text(mid, 217 + offset, 'Volume at saturation - Vsat', 9, COLOR.quiet);
-    text(M, 247 + offset, fmt(m.intersection.p, 2), 25);
-    text(M + 125, 247 + offset, unit(m), 10, COLOR.quiet);
-    text(mid, 247 + offset, fmt(m.intersection.v, 4), 25);
-    text(mid + 120, 247 + offset, m.volumeUnit, 10, COLOR.quiet);
+    // Units follow the measured number so large values never overlap them.
+    const pressureText = fmt(m.intersection.p, pressureDigits(m)),
+      volumeText = fmt(m.intersection.v, 4);
+    text(M, 247 + offset, pressureText, 25);
+    text(M + doc.getTextWidth(pressureText) + 6, 247 + offset, unit(m), 10, COLOR.quiet);
+    text(mid, 247 + offset, volumeText, 25);
+    text(
+      mid + doc.getTextWidth(volumeText) + 6,
+      247 + offset,
+      m.volumeUnit,
+      10,
+      COLOR.quiet,
+    );
     line(M, 263 + offset, W - M, 263 + offset);
     let warningHeight = 0;
     if (m.warning) {
@@ -496,11 +610,15 @@
       warningHeight = lines.length * 11 + 10;
     }
     const top = 309 + offset + warningHeight,
-      cell = Math.min((W - 2 * M - 48) / 8, (H - 319 - top) / 3),
-      left = M + 45,
+      yLines = yCheckLines(m),
+      // Bubble-point reports also carry the Y-function section: the detail panel is a little
+      // shorter and the main plot shrinks just enough to keep everything above the footer.
+      detailHeight = yLines ? 96 : 112,
+      cell = Math.min((W - 2 * M - 48) / 8, ((yLines ? H - 363 : H - 319) - top) / 3),
+      left = M + 45 + (W - 2 * M - 48 - cell * 8) / 2,
       right = left + cell * 8,
       bottom = top + cell * 3,
-      B = bounds(m),
+      B = bounds(m, 8, 3),
       C = m.intersection;
     if (cell < 30)
       throw new Error(
@@ -573,10 +691,16 @@
     );
     doc.setFontSize(9);
     doc.setTextColor('#344f3d');
-    doc.text('Pressure (' + unit(m, true) + ')', M + 4, (top + bottom) / 2, {
-      angle: 90,
-      align: 'center',
-    });
+    // jsPDF centres rotated text along the page x axis, so centre it manually on the plot.
+    const pressureTitle = 'Pressure (' + unit(m, true) + ')';
+    doc.text(
+      pressureTitle,
+      M + 9,
+      (top + bottom) / 2 + doc.getTextWidth(pressureTitle) / 2,
+      {
+        angle: 90,
+      },
+    );
     doc.saveGraphicsState();
     doc.rect(left, top, right - left, bottom - top);
     doc.clip();
@@ -617,7 +741,7 @@
     doc.circle(x(C.v), y(C.p), 3.5, 'FD');
     doc.restoreGraphicsState();
     text(right - 4, Math.max(top + 14, y(C.p) - 16), label(m), 9, COLOR.ink, 'right');
-    const D = detailScene(m, W - 2 * M, 112),
+    const D = detailScene(m, W - 2 * M, detailHeight),
       ox = M,
       oy = bottom + 43;
     text(
@@ -699,11 +823,15 @@
     );
     doc.setFontSize(7);
     doc.setTextColor(COLOR.ink);
-    doc.text('Pressure (' + unit(m, true) + ')', ox + 12, oy + (D.t + D.h - D.b) / 2, {
-      angle: 90,
-      align: 'center',
-    });
-    const detailShift = 120;
+    // Centre the rotated title manually (jsPDF centres rotated text along page x).
+    const detailTitle = 'Pressure (' + unit(m, true) + ')';
+    doc.text(
+      detailTitle,
+      ox + 18,
+      oy + (D.t + D.h - D.b) / 2 + doc.getTextWidth(detailTitle) / 2,
+      { angle: 90 },
+    );
+    const detailShift = detailHeight + 8;
     const ly = bottom + 51 + detailShift;
     for (const [xx, name, color, dashed] of [
       [M + 18, 'High-pressure fit', COLOR.high, false],
@@ -724,6 +852,19 @@
     text(mid, bottom + 91 + detailShift, 'Low-pressure fit', 10);
     text(M, bottom + 116 + detailShift, 'R² = ' + rSquared(m.high), 17);
     text(mid, bottom + 116 + detailShift, 'R² = ' + rSquared(m.low), 17);
+    if (yLines) {
+      const yTop = bottom + 116 + detailShift;
+      line(M, yTop + 14, W - M, yTop + 14);
+      text(M, yTop + 28, 'Y-function check - bubble point', 9.5);
+      let ty = yTop + 40;
+      yLines.forEach((t, i) => {
+        const wrapped = (doc.setFontSize(8), doc.splitTextToSize(t, W - 2 * M));
+        text(M, ty, wrapped, 8, i === 2 ? COLOR.quiet : COLOR.ink);
+        ty += wrapped.length * 10;
+      });
+      if (ty - 10 > H - 70)
+        throw new Error('The Y-function section does not fit on the page.');
+    }
     line(M, H - 63, W - M, H - 63);
     text(M, H - 48, 'Excluded points shown; not used in either fit', 8, COLOR.quiet);
     text(W - M, H - 48, 'A4 portrait - Page 1 of 1', 8, COLOR.quiet, 'right');
@@ -738,6 +879,9 @@
     save,
     label,
     filename,
+    niceStep,
+    niceAxis,
+    alignedAxis,
     detailSvg,
     detailBounds,
   };
